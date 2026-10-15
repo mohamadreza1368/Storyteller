@@ -23,39 +23,39 @@ const ICONS = {
     trash: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
 };
 
-// Genre Atmospheric Cover Images (High-quality literary imagery)
+// Genre Atmospheric Cover Images (Bespoke AI-generated literary artworks)
 const GENRE_COVERS = {
-    "Mystery & Crime": "https://images.unsplash.com/photo-1507842229451-7f01be8510ab?auto=format&fit=crop&w=800&q=80",
-    "Romance": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80",
-    "Sci-Fi": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80",
-    "Fantasy": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
-    "Historical": "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&q=80",
-    "Horror": "https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=800&q=80",
-    "Drama": "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80",
-    "Adventure": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80",
-    "default": "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=800&q=80"
+    "Mystery & Crime": "/static/assets/covers/blackwood.jpg",
+    "Romance": "/static/assets/covers/autumn_paris.jpg",
+    "Sci-Fi": "/static/assets/covers/protocol_zero.jpg",
+    "Fantasy": "/static/assets/covers/fantasy.jpg",
+    "Historical": "/static/assets/covers/historical.jpg",
+    "Horror": "/static/assets/covers/horror.jpg",
+    "Drama": "/static/assets/covers/autumn_paris.jpg",
+    "Adventure": "/static/assets/covers/fantasy.jpg",
+    "default": "/static/assets/covers/blackwood.jpg"
 };
 
-// Character Avatars by gender / archetype
+// Character Avatars by identity & persona
 const AVATAR_PORTRAITS = {
-    male: [
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80",
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
-        "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80"
-    ],
-    female: [
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
-        "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80",
-        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80"
-    ],
-    default: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80"
+    julian: "/static/assets/avatars/julian.jpg",
+    clara: "/static/assets/avatars/clara.jpg",
+    scholar: "/static/assets/avatars/scholar.jpg",
+    cyber: "/static/assets/avatars/cyber.jpg"
 };
 
-function getCharacterAvatar(name = "", gender = "Male") {
-    const list = gender.toLowerCase() === "female" ? AVATAR_PORTRAITS.female : AVATAR_PORTRAITS.male;
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
-    return list[Math.abs(hash) % list.length] || AVATAR_PORTRAITS.default;
+function getCharacterAvatar(name = "", gender = "Male", role = "") {
+    const combined = `${name} ${role}`.toLowerCase();
+    if (combined.includes("clara") || combined.includes("sterling") || combined.includes("journalist") || combined.includes("reporter") || gender.toLowerCase() === "female") {
+        return AVATAR_PORTRAITS.clara;
+    }
+    if (combined.includes("cyber") || combined.includes("hacker") || combined.includes("operative") || combined.includes("voss") || combined.includes("rebel")) {
+        return AVATAR_PORTRAITS.cyber;
+    }
+    if (combined.includes("scholar") || combined.includes("professor") || combined.includes("doctor") || combined.includes("thorne") || combined.includes("elder") || combined.includes("mentor") || combined.includes("historian")) {
+        return AVATAR_PORTRAITS.scholar;
+    }
+    return AVATAR_PORTRAITS.julian;
 }
 
 function getCoverForNovel(genre = "") {
@@ -179,23 +179,18 @@ async function loadLibrary() {
         
         if (novels.length === 0) {
             grid.innerHTML = `
-                <div style="grid-column: 1/-1; text-align: center; padding: 80px 24px; background: var(--bg-surface); border-radius: var(--radius-lg); border: 2px dashed var(--border-subtle);">
-                    <div style="width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 50%; background: var(--accent-subtle); display: flex; align-items: center; justify-content: center; color: var(--accent);">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-                            <path d="M6 6h10"/>
-                            <path d="M6 10h10"/>
-                        </svg>
+                <div style="grid-column: 1/-1; text-align: center; padding: 48px 24px; background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-subtle); overflow: hidden;">
+                    <div style="max-width: 640px; margin: 0 auto;">
+                        <div style="border-radius: var(--radius-md); overflow: hidden; margin-bottom: 24px; box-shadow: var(--shadow-lg); border: 1px solid var(--border-strong);">
+                            <img src="/static/assets/illustrations/studio_desk.jpg" alt="Author's Desk Sanctuary" style="width: 100%; height: 260px; object-fit: cover; display: block;">
+                        </div>
+                        <h3 style="font-weight: 800; font-size: 1.55rem; margin-bottom: 8px;">The Author's Desk is Ready</h3>
+                        <p style="color: var(--text-secondary); max-width: 480px; margin: 0 auto 24px;">Launch instantly using our curated visual presets or craft your own original narrative from scratch.</p>
+                        <button class="btn btn-primary btn-lg" onclick="startNewNovel()">
+                            ${ICONS.quill}
+                            Create Your First Novel
+                        </button>
                     </div>
-                    <h3 style="font-weight: 800; font-size: 1.5rem; margin-bottom: 8px;">Your Library is Empty</h3>
-                    <p style="color: var(--text-secondary); max-width: 480px; margin: 0 auto 24px;">Start by launching one of our curated visual presets or crafting your own original premise.</p>
-                    <button class="btn btn-primary" onclick="startNewNovel()" style="padding: 12px 28px; font-size: 1rem;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        Create First Novel
-                    </button>
                 </div>
             `;
             return;
@@ -463,7 +458,7 @@ async function refreshNovelView() {
         // Cast Tab with Authentic Portraits
         const castGrid = document.getElementById("castCardsGrid");
         castGrid.innerHTML = (currentNovel.cast.characters || []).map(c => {
-            const avatarUrl = getCharacterAvatar(c.core.name, c.core.gender);
+            const avatarUrl = getCharacterAvatar(c.core.name, c.core.gender, c.core.occupation);
             return `
             <div class="character-dossier-card">
                 <div class="character-dossier-header">
@@ -747,7 +742,8 @@ function renderBehindTheScenes(scenes) {
             <div style="font-size: 0.8rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">Multi-Agent Actor Turns</div>
             
             ${(s.turns || []).map(t => {
-                const avatar = getCharacterAvatar(t.character_key);
+                const charObj = (currentNovel?.cast?.characters || []).find(c => c.core.name === t.character_key);
+                const avatar = getCharacterAvatar(t.character_key, charObj?.core?.gender, charObj?.core?.occupation);
                 return `
                 <div class="turn-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
