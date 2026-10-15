@@ -4,6 +4,7 @@ import json
 import base64
 import logging
 import urllib.request
+import asyncio
 from typing import Tuple, Optional
 from app.models.blueprint import StoryBlueprint
 from app.models.episode import EpisodeResponse
@@ -145,41 +146,98 @@ class ChapterImageClient:
 </svg>"""
         return svg.encode("utf-8")
 
+    def build_concise_prompt(self, blueprint: StoryBlueprint, episode: EpisodeResponse) -> str:
+        """Constructs a high-impact, fast-rendering cinematic visual prompt."""
+        primary_scene = episode.scenes[0] if episode.scenes else None
+        location_name = primary_scene.location_key if primary_scene else blueprint.world.city
+        time_marker = primary_scene.time_marker if primary_scene else "Night"
+        
+        genre_vibes = {
+            "Mystery & Crime": "cinematic chiaroscuro, warm gas lamps, foggy cobblestone street, moody shadows, realistic novel art",
+            "Romance": "warm golden hour lighting, rainy cafe window, romantic atmospheric reflections, painterly realism",
+            "Sci-Fi": "neon cyberpunk lighting, holographic glow, futuristic architecture, rain reflections, cinematic 8k",
+            "Fantasy": "mystical twilight landscape, glowing arcane castle, starry sky, epic cinematic fantasy art",
+            "Historical": "19th century oil painting style, warm candle light, vintage architectural interior, rich textures",
+            "Horror": "gothic dark thriller, chilling moonlight, ancient misty mansion, dark silhouette, suspenseful chiaroscuro",
+            "Adventure": "sweeping mountain vista, dramatic golden sunlight, majestic wild landscape, epic concept art"
+        }
+        vibe = genre_vibes.get(blueprint.style.genre, "cinematic lighting, dramatic composition, master novel illustration")
+        return f"cinematic 16:9 illustration of {location_name} in {blueprint.world.city}, {time_marker}, {vibe}, highly detailed, wide angle, no text".strip()
+
+    async def generate_ai_free(self, prompt: str) -> Optional[Tuple[bytes, str]]:
+        """Generates authentic AI photorealistic/concept art via Pollinations without requiring any API key."""
+        try:
+            import urllib.parse
+            clean_prompt = re.sub(r'[\r\n\t]+', ' ', prompt).strip()
+            # 16:9 cinematic aspect ratio: 1024x576
+            encoded = urllib.parse.quote(clean_prompt[:300])
+            url = f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=576&nologo=true"
+            req = urllib.request.Request(url, headers={"User-Agent": "Storyteller/1.0 (Mozilla/5.0)"})
+            loop = asyncio.get_event_loop()
+
+            def _fetch():
+                with urllib.request.urlopen(req, timeout=35) as resp:
+                    return resp.read(), resp.headers.get("content-type", "image/jpeg")
+
+            data, content_type = await loop.run_in_executor(None, _fetch)
+            if data and len(data) > 1000:
+                mime = "image/jpeg" if ("jpeg" in content_type or "jpg" in content_type) else ("image/png" if "png" in content_type else "image/jpeg")
+                return data, mime
+        except Exception as e:
+            logger.warning(f"Smart AI image generation note: {e}")
+        return None
+
     async def generate(self, blueprint: StoryBlueprint, episode: EpisodeResponse) -> Tuple[bytes, str, str]:
         """
         Synthesizes an illustration for the chapter.
         Returns: (image_bytes, mime_type, prompt_used)
         """
-        prompt = self.build_chapter_prompt(blueprint, episode)
+        concise_prompt = self.build_concise_prompt(blueprint, episode)
+        full_prompt = self.build_chapter_prompt(blueprint, episode)
         cfg = store.get_system_settings()
-        prov = cfg.get("provider", "mock")
+        img_provider = cfg.get("image_provider", "auto")
         key = cfg.get("api_key", "")
         base_url = cfg.get("base_url", "")
+        img_model = cfg.get("image_model")
 
-        # Try Live Image Provider if configured
-        if prov in ("openai", "custom") and key:
+        # 1. Custom / OpenAI: ONLY if explicitly configured by the user for images
+        if (img_provider == "custom" and key) or (img_provider == "auto" and img_model and key):
+            target_model = img_model or "dall-e-3"
             try:
                 from openai import AsyncOpenAI
-                client = AsyncOpenAI(api_key=key, base_url=base_url or None, timeout=40.0)
-                logger.info(f"Generating chapter illustration with OpenAI/Custom API: {prompt[:80]}...")
+                client = AsyncOpenAI(api_key=key, base_url=base_url or None, timeout=30.0)
+                logger.info(f"Generating chapter illustration with {target_model}: {concise_prompt[:60]}...")
                 response = await client.images.generate(
-                    model="dall-e-3",
-                    prompt=prompt,
+                    model=target_model,
+                    prompt=full_prompt,
                     size="1024x1024",
                     quality="standard",
                     n=1
                 )
                 if response.data and response.data[0].url:
                     img_url = response.data[0].url
-                    req = urllib.request.Request(img_url, headers={"User-Agent": "Storyteller/1.0"})
-                    with urllib.request.urlopen(req, timeout=20) as resp:
-                        image_bytes = resp.read()
-                        return image_bytes, "image/jpeg", prompt
-            except Exception as e:
-                logger.warning(f"Live image generation error ({prov}): {e}. Falling back to thematic artwork.")
+                    loop = asyncio.get_event_loop()
 
-        # Fallback to high-fidelity thematic vector artwork
+                    def _fetch():
+                        req = urllib.request.Request(img_url, headers={"User-Agent": "Storyteller/1.0"})
+                        with urllib.request.urlopen(req, timeout=25) as resp:
+                            return resp.read()
+
+                    image_bytes = await loop.run_in_executor(None, _fetch)
+                    return image_bytes, "image/jpeg", full_prompt
+            except Exception as e:
+                logger.warning(f"Custom image endpoint ({target_model}) error: {e}. Switching seamlessly to Smart AI illustration engine.")
+
+        # 2. Smart AI Generator (Pollinations: Free, fast, realistic AI concept art, 0 keys needed)
+        if img_provider != "thematic":
+            ai_res = await self.generate_ai_free(concise_prompt)
+            if ai_res:
+                data, mime = ai_res
+                return data, mime, concise_prompt
+
+        # 3. Fallback to local high-fidelity thematic vector artwork
         svg_bytes = self.generate_thematic_svg(blueprint, episode)
-        return svg_bytes, "image/svg+xml", prompt
+        return svg_bytes, "image/svg+xml", concise_prompt
 
 chapter_image_client = ChapterImageClient()
+

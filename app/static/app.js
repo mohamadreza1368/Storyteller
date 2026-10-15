@@ -877,10 +877,24 @@ async function openSettingsModal() {
         if (info.base_url) {
             document.getElementById("cfgBaseUrl").value = info.base_url;
         }
+        if (info.image_provider && document.getElementById("cfgImageProvider")) {
+            document.getElementById("cfgImageProvider").value = info.image_provider;
+        }
+        if (info.image_model && document.getElementById("cfgImageModel")) {
+            document.getElementById("cfgImageModel").value = info.image_model;
+        }
         onProviderChanged();
+        onImageProviderChanged();
     } catch (e) {
         console.error("Failed to load system info:", e);
     }
+}
+
+function onImageProviderChanged() {
+    const prov = document.getElementById("cfgImageProvider")?.value || "auto";
+    const isCustom = (prov === "custom");
+    const grp = document.getElementById("grpCustomImageModel");
+    if (grp) grp.style.display = isCustom ? "block" : "none";
 }
 
 function closeSettingsModal() {
@@ -997,6 +1011,8 @@ async function saveSettings() {
     const apiKey = document.getElementById("cfgApiKey").value;
     const model = document.getElementById("cfgModel").value;
     const baseUrl = document.getElementById("cfgBaseUrl").value;
+    const imageProvider = document.getElementById("cfgImageProvider")?.value || "auto";
+    const imageModel = document.getElementById("cfgImageModel")?.value || undefined;
 
     try {
         const res = await fetch("/api/system/config", {
@@ -1006,7 +1022,9 @@ async function saveSettings() {
                 provider: provider,
                 api_key: apiKey || undefined,
                 model: model || undefined,
-                base_url: baseUrl || undefined
+                base_url: baseUrl || undefined,
+                image_provider: imageProvider,
+                image_model: imageModel
             })
         });
         await res.json();

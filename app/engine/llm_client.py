@@ -20,23 +20,27 @@ class LLMClient:
         if not self.api_key and self.provider not in ("mock", "ollama"):
             self.provider = "mock"
 
-    def update_config(self, provider: str = None, api_key: str = None, model: str = None, base_url: str = None):
+    def update_config(self, provider: str = None, api_key: str = None, model: str = None, base_url: str = None, image_provider: str = None, image_model: str = None):
+        saved = store.get_system_settings() or {}
         if provider:
             self.provider = provider.lower()
+            saved["provider"] = self.provider
         if api_key is not None:
             self.api_key = api_key
+            saved["api_key"] = self.api_key
         if model:
             self.model = model
+            saved["model"] = self.model
         if base_url is not None:
             self.base_url = base_url
+            saved["base_url"] = self.base_url
+        if image_provider is not None:
+            saved["image_provider"] = image_provider
+        if image_model is not None:
+            saved["image_model"] = image_model
 
         # Save to persistent storage
-        store.save_system_settings({
-            "provider": self.provider,
-            "api_key": self.api_key,
-            "model": self.model,
-            "base_url": self.base_url
-        })
+        store.save_system_settings(saved)
 
     async def test_connection(self, provider: str = None, api_key: str = None, model: str = None, base_url: str = None) -> Dict[str, Any]:
         """Tests live connectivity to the LLM endpoint and measures response latency."""
