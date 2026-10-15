@@ -1,0 +1,196 @@
+SystemInfoResponse
+ { 
+DemoMode = 
+, GoogleSignIn = 
+StoryBlueprintDto
+WorkingTitle = 
+, Premise = 
+, Genre = 
+, Style = 
+, World = 
+, Cast = 
+, Plot = 
+, ExtraNotes = 
+StyleSettingsDto
+ProseStyle = 
+, Theme = 
+, Tone = 
+WorldSettingsDto
+RealityMode = 
+, Rules = 
+, Country = 
+, City = 
+, Era = 
+, StoryTimeSpan = 
+, LocationCount = 
+, Locations = 
+LocationSeedDto
+Name = 
+, Kind = 
+, Description = 
+CastSettingsDto
+MainCount = 
+, SupportingCount = 
+, Characters = 
+, Relationships = 
+CharacterSeedDto
+Key = 
+, Role = 
+, Name = 
+, Gender = 
+, Age = 
+, Occupation = 
+, Persona = 
+, Arc = 
+, Notes = 
+RelationshipSeedDto
+FromKey = 
+, ToKey = 
+, Type = 
+PlotSettingsDto
+Structure = 
+, PlotLineCount = 
+, EpisodeCount = 
+, WordsPerEpisode = 
+, Perspective = 
+, Ending = 
+CreateNovelRequest
+Blueprint = 
+, AutoContinue = 
+, StartNow = 
+SetAutoContinueRequest
+Enabled = 
+RenameNovelRequest
+Title = 
+CreatedNovelResponse
+Id = 
+GenerationProgressDto
+Stage = 
+, Detail = 
+, EpisodeNumber = 
+, Step = 
+, TotalSteps = 
+, UpdatedAtUtc = 
+NovelSummaryResponse
+, Title = 
+, Logline = 
+, Status = 
+, TotalEpisodes = 
+, Progress = 
+, LastError = 
+, CreatedAtUtc = 
+NovelProgressResponse
+NovelResponse
+, Blueprint = 
+, Matrix = 
+, Memory = 
+, Episodes = 
+CharacterDto
+, Key = 
+, Summary = 
+, Core = 
+, Behavior = 
+, Motivation = 
+, State = 
+PersonaCoreDto
+Temperament = 
+, Values = 
+, Voice = 
+, Quirks = 
+BehaviorLayerDto
+Habits = 
+, Outlook = 
+MotivationDto
+Want = 
+, Need = 
+, Flaw = 
+, Secret = 
+CharacterArcDto
+Type = 
+, From = 
+, To = 
+, Milestones = 
+CharacterStateDto
+LocationKey = 
+, Emotion = 
+, CurrentGoal = 
+, Knowledge = 
+, ArcProgress = 
+, ReachedMilestones = 
+, Evolution = 
+, IsActive = 
+, ExitReason = 
+LocationDto
+, Atmosphere = 
+RelationshipDto
+StoryMemoryDto
+RunningSummary = 
+, WorldFacts = 
+, OpenThreads = 
+StoryMatrixDto
+Logline = 
+, Synopsis = 
+, WorldRules = 
+, Timeline = 
+, PlotLines = 
+, Events = 
+TimeMarkerDto
+, Label = 
+PlotLineDto
+, IsMain = 
+, CharacterKeys = 
+, Resolution = 
+ArcBeatDto
+CharacterKey = 
+, Beat = 
+MatrixEventDto
+, PlotLineKey = 
+, TimeKey = 
+, LocationKey = 
+, ArcBeats = 
+, Consequence = 
+EpisodeOutlineDto
+Number = 
+, PlotLineKeys = 
+, EventKeys = 
+, PovCharacterKey = 
+, Hook = 
+EpisodeSummaryDto
+, WordCount = 
+EpisodeResponse
+NovelId = 
+, NovelTitle = 
+, Number = 
+, Content = 
+, Scenes = 
+, CharacterNames = 
+, LocationNames = 
+SceneRecordDto
+Index = 
+, Time = 
+, Situation = 
+, Turns = 
+CharacterTurnDto
+, Round = 
+, Thought = 
+, Action = 
+, Dialogue = 
+RegisterRequest
+Email = 
+, DisplayName = 
+, Password = 
+LoginRequest
+UserResponse
+, Email = 
+, EmailConfirmed = 
+ConfirmEmailRequest
+Code = 
+EmailVerificationResponse
+, Confirmed = 
+, CodeSent = 
+, CodeExpiresAtUtc = 
+, ResendAfterSeconds = 
+ForgotPasswordRequest
+ResetPasswordRequest
+, Code = 
+, NewPassword = 

@@ -1,0 +1,1136 @@
+Options
+Label
+Value
+ValueChanged
+ChildContent
+main
+class
+auth-shell
+b-9k5gz668mz
+div
+auth-brand
+span
+auth-mark
+Name
+book
+Size
+<h1 b-9k5gz668mz>رمان‌ساز</h1>
+        
+<p b-9k5gz668mz>شخصیت‌ها را بسازید، دنیا را بچینید، و ببینید داستان چطور خودش را می‌نویسد.</p>
+auth-card
+<a class="visually-hidden-focusable skip-link" href="#main" b-s6hv7zt1n6>پرش به محتوا</a>
+
+
+header
+nav-bar liquid-glass
+b-s6hv7zt1n6
+a
+brand
+href
+<span b-s6hv7zt1n6>رمان‌ساز</span>
+Authorized
+demo-banner
+role
+note
+sparkles
+<span b-s6hv7zt1n6>حالت نمایشی: هنوز مدل زبانی وصل نشده و متن‌ها نمونه‌اند. برای نوشتن واقعی، درگاه مدل را در تنظیمات سرور وارد کنید.</span>
+id
+content
+SegmentOption
+ { 
+Value = 
+, Label = 
+, Icon = 
+svg
+icon 
+icon-directional
+width
+height
+viewBox
+0 0 24 24
+fill
+none
+stroke
+currentColor
+stroke-width
+1.8
+stroke-linecap
+round
+stroke-linejoin
+aria-hidden
+true
+focusable
+false
+plus
+play
+back
+next
+user
+grid
+text
+edit
+flag
+star
+minus
+pause
+trash
+globe
+check
+close
+clock
+alert
+chevron
+refresh
+theater
+wifi-off
+people
+logout
+eye
+pin
+text-size
+<path d='M12 5v14M5 12h14'/>
+<path d='M5 12h14'/>
+<path d='M9 6l6 6-6 6'/>
+<path d='M15 6l-6 6 6 6'/>
+<path d='M5 4.5h10.5a3.5 3.5 0 0 1 3.5 3.5v12H8.5A3.5 3.5 0 0 1 5 16.5z'/><path d='M8.5 8.5h7M8.5 12h7M8.5 15.5h4'/>
+<path d='M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z'/><path d='M18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z'/>
+<path d='M8 5.5v13l10.5-6.5z'/>
+<path d='M8.5 5.5v13M15.5 5.5v13'/>
+<path d='M19.5 12a7.5 7.5 0 1 1-2.2-5.3'/><path d='M19.5 4.5v4.2h-4.2'/>
+<path d='M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 12.5h9l1-12.5'/>
+<circle cx='12' cy='8.5' r='3.5'/><path d='M5 20c1-3.8 3.8-5.5 7-5.5s6 1.7 7 5.5'/>
+<circle cx='9' cy='9' r='3.2'/><path d='M3.5 19.5c.8-3.3 3-4.8 5.5-4.8s4.7 1.5 5.5 4.8'/><circle cx='16.5' cy='8' r='2.6'/><path d='M15.8 13.3c2.4 0 4.2 1.3 4.9 4.2'/>
+<path d='M14 4.5H7.5A1.5 1.5 0 0 0 6 6v12a1.5 1.5 0 0 0 1.5 1.5H14'/><path d='M14 12h7M18 8.5l3.5 3.5-3.5 3.5'/>
+<rect x='4' y='4' width='6.5' height='6.5' rx='1.5'/><rect x='13.5' y='4' width='6.5' height='6.5' rx='1.5'/><rect x='4' y='13.5' width='6.5' height='6.5' rx='1.5'/><rect x='13.5' y='13.5' width='6.5' height='6.5' rx='1.5'/>
+<circle cx='12' cy='12' r='8.5'/><path d='M3.5 12h17M12 3.5c2.5 2.6 3.5 5.4 3.5 8.5s-1 5.9-3.5 8.5c-2.5-2.6-3.5-5.4-3.5-8.5s1-5.9 3.5-8.5z'/>
+<path d='M5 6.5h14M5 11h14M5 15.5h9'/>
+<path d='M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z'/><circle cx='12' cy='12' r='2.8'/>
+<path d='M5 12.5l4.5 4.5L19 7.5'/>
+<path d='M6 6l12 12M18 6L6 18'/>
+<path d='M5 19l1-4.5L15.5 5a2 2 0 0 1 3 3L9 17.5z'/><path d='M13.5 7l3 3'/>
+<path d='M12 21s6.5-5.6 6.5-11a6.5 6.5 0 0 0-13 0c0 5.4 6.5 11 6.5 11z'/><circle cx='12' cy='10' r='2.3'/>
+<circle cx='12' cy='12' r='8.5'/><path d='M12 7.5V12l3 2'/>
+<path d='M6 20.5v-16M6 4.5h10.5l-2 4 2 4H6'/>
+<path d='M12 4l2.4 5 5.4.6-4 3.7 1.1 5.3L12 16l-4.9 2.6 1.1-5.3-4-3.7 5.4-.6z'/>
+<path d='M4 18l4.5-12L13 18M5.7 13.5h5.6'/><path d='M14.5 18l2.8-7.5L20 18M15.4 15.8h3.8'/>
+<path d='M3 3l18 18M8.5 16.2a5 5 0 0 1 7 0M5 12.7a10 10 0 0 1 4.3-2.5M19 12.7a10 10 0 0 0-3.3-2.2M2 9.2a15 15 0 0 1 4.6-2.9M22 9.2A15 15 0 0 0 12 5.5c-.8 0-1.6.1-2.4.2'/><circle cx='12' cy='19.5' r='.6'/>
+<path d='M12 4l9 16H3z'/><path d='M12 10v4.5M12 17.2v.3'/>
+<path d='M4 5.5c3 1.3 6 1.3 9 0v6a4.5 4.5 0 0 1-9 0z'/><path d='M13 9.5c2.3.9 4.7.9 7 0v5a4.5 4.5 0 0 1-7.4 3.4'/><path d='M6.8 9.5h.4M10 9.5h.4'/>
+<circle cx='12' cy='12' r='8'/>
+login?returnUrl=
+login
+chip-picker
+b-dmbcu6xd5d
+chips
+radiogroup
+aria-label
+button
+type
+radio
+aria-checked
+chip auto 
+selected
+onclick
+ خودکار
+            
+chip 
+ دلخواه
+            
+input
+field
+placeholder
+بنویسید…
+value
+maxlength
+300
+onchange
+empty-state
+b-a5ou07np75
+empty-icon
+h2
+empty-title
+p
+empty-message
+empty-actions
+error-banner 
+network
+b-rxz0ec2na5
+error-text
+btn-app small tinted
+تلاش دوباره
+form-row 
+stacked
+b-8vpzemf06x
+row-label
+small
+row-content
+section
+inset-group
+b-iz9sjhktpl
+h3
+group-header
+group-card
+group-footer
+loading-state
+status
+aria-live
+polite
+b-2vln7dedu7
+<span class="spinner" aria-hidden="true" b-2vln7dedu7></span>
+    
+در حال بارگذاری…
+progress-track
+progressbar
+aria-valuemin
+0
+aria-valuemax
+100
+aria-valuenow
+b-phv3l0kfw7
+progress-fill
+style
+inline-size: 
+%
+segmented 
+compact
+tablist
+b-4uv69j8k3n
+tab
+aria-selected
+segment 
+sheet-backdrop
+b-1qwv2cw7ip
+sheet liquid-glass
+dialog
+aria-modal
+<div class="grabber" aria-hidden="true" b-1qwv2cw7ip></div>
+sheet-title
+sheet-body
+status-chip 
+b-3usyjn9bb9
+<span class="pulse" aria-hidden="true" b-3usyjn9bb9></span>
+stepper
+group
+b-hi886nllfn
+step-btn
+کم کردن
+disabled
+output
+step-value
+افزودن
+ApiError
+Status = 
+, Message = 
+, Details = 
+, IsNetworkError = 
+ApiResult
+, Error = 
+, Ok = 
+Unit
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
+email_confirmed
+cookie
+api/auth/login
+api/auth/register
+api/auth/email-verification
+api/auth/email-verification/send
+api/auth/email-verification/confirm
+api/auth/password/reset
+api/novels
+api/novels/
+/progress
+/episodes/
+/start
+/next-episode
+/auto-continue
+/title
+؟
+همین حالا
+ دقیقه پیش
+ ساعت پیش
+ روز پیش
+کمتر از یک دقیقه
+ دقیقه
+ ساعت
+ ساعت و 
+پیش‌نویس
+در حال طراحی
+آماده
+در حال نوشتن
+تمام‌شده
+ساخت دنیا و شخصیت‌ها
+بافتن ماتریس داستان
+کارگردانی صحنه‌ها
+ایفای نقش شخصیت‌ها
+روایت
+ثبت حافظهٔ داستان
+فرعی
+اصلی
+مرد
+زن
+خودکار
+تحول مثبت
+سقوط
+ثابت‌قدم
+چندخطی
+تک‌خطی
+اول‌شخص
+سوم‌شخص محدود
+دانای کل
+فروردین
+اردیبهشت
+خرداد
+تیر
+مرداد
+شهریور
+مهر
+آبان
+آذر
+دی
+بهمن
+اسفند
+backstage
+b-o648h1ih42
+<p class="intro" b-o648h1ih42>
+        هر شخصیت را یک مدل جداگانه بازی کرده؛ با پرسونای خودش و فقط با دانسته‌های خودش. راوی متن نهایی را از همین حرکت‌ها نوشته است.
+    </p>
+scene
+scene-head
+scene-index
+صحنهٔ 
+scene-where
+situation
+ol
+turns
+li
+turn
+turn-head
+strong
+emotion
+thought
+<span class="tag" b-o648h1ih42>در دل</span>
+action
+<span class="tag" b-o648h1ih42>کار</span>
+speech
+«
+»
+reader-top
+b-ifrac47435
+back-link
+novels/
+رمان
+reader-tools
+tool 
+on
+aria-pressed
+title
+پشت صحنه
+<span b-ifrac47435>پشت صحنه</span>
+tool
+کوچک‌کردن متن
+بزرگ‌کردن متن
+Error
+OnRetry
+article
+reader
+--reader-size: 
+px
+chapter-head
+chapter-number
+قسمت 
+ از 
+h1
+chapter-meta
+ کلمه
+
+· از نگاه 
+Episode
+prose
+<div class="scene-break" aria-hidden="true" b-ifrac47435>✦</div>
+dialogue
+nav
+chapter-nav liquid-glass
+قسمت‌ها
+btn-app plain
+ قبلی
+            
+<span b-ifrac47435></span>
+nav-position
+ / 
+btn-app primary
+
+                بعدی 
+btn-app tinted
+بازگشت به رمان
+ · 
+قسمت
+cast
+b-pzhaserdix
+person 
+gone
+person-head
+avatar 
+person-title
+person-meta
+ ساله
+exit
+بیرون از داستان: 
+summary
+arc
+arc-head
+arc-type
+arc-percent
+٪
+arc-line
+پیشرفت آرک 
+milestones
+reached
+dl
+facts
+<dt b-pzhaserdix>سرشت</dt>
+dd
+<dt b-pzhaserdix>ارزش‌ها</dt>
+، 
+<dt b-pzhaserdix>صدا</dt>
+<dt b-pzhaserdix>عادت‌های امروز</dt>
+<dt b-pzhaserdix>نگاه به دیگران</dt>
+<dt b-pzhaserdix>می‌خواهد</dt>
+<dt b-pzhaserdix>نیاز دارد</dt>
+<dt b-pzhaserdix>ضعف یا باور غلط</dt>
+<dt b-pzhaserdix>راز</dt>
+now
+حال: 
+هدف: 
+details
+روابط (
+)
+ul
+plain-list
+: 
+آنچه می‌داند (
+open
+<summary b-pzhaserdix>تحول رفتاری</summary>
+                    
+panel 
+b-u3d65cu3ui
+panel-row
+orb
+panel-text
+stage
+در صف…
+live-line
+پیشرفت مرحله
+Status
+Stage
+طراحی داستان کامل نشد
+پیش‌نویس آماده است
+actions
+ساختن دنیا و ماتریس
+نوشتن خودکار 
+متوقف
+روشن
+ است.
+نوشتن قسمت 
+
+                        ادامهٔ خودکار تا پایان
+                    
+orb done
+<strong b-u3d65cu3ui>رمان کامل شد</strong>
+                    
+ قسمت و 
+ کلمه.
+btn-app tinted small
+ توقف پس از این قسمت
+                
+ ادامهٔ خودکار
+                
+working
+completed
+failed
+در حال نوشتن قسمت 
+طراح داستان مشغول کار است
+ نوشته شد
+دنیا و ماتریس داستان آماده است
+ کامل نشد
+spoiler-note
+b-h669y8luyn
+
+    نقشهٔ کامل داستان؛ رویدادهای قسمت‌های آینده هم این‌جا پیداست.
+
+block
+<h2 class="block-title" b-h669y8luyn>ماتریس شخصیت × قسمت</h2>
+    
+legend
+legend-item
+swatch plot-
+ (خط اصلی)
+ گام آرک
+grid-scroll
+tabindex
+region
+ماتریس داستان
+table
+matrix
+thead
+tr
+<th scope="col" class="corner" b-h669y8luyn>شخصیت</th>
+th
+scope
+col
+written
+tbody
+row
+who
+who-name
+who-role
+td
+pov
+event plot-
+<p class="grid-hint" b-h669y8luyn>ستون‌های پررنگ نوشته شده‌اند. خانهٔ قاب‌دار یعنی قسمت از نگاه همان شخصیت روایت می‌شود.</p>
+<h2 class="block-title" b-h669y8luyn>خط داستان</h2>
+    
+outline
+outline-item 
+outline-head
+outline-number
+Class
+written-mark
+outline-meta
+hook
+two-blocks
+<h2 class="block-title" b-h669y8luyn>خط‌های داستانی</h2>
+plot-card plot-
+plot-people
+<h2 class="block-title" b-h669y8luyn>زمان</h2>
+        
+timeline
+
+مکان: 
+ · زمان: 
+
+گام آرک: 
+b-c2tt0fvh5u
+ کتابخانه
+
+novel-header
+header-meta
+ قسمت
+logline
+Novel
+Busy
+OnStart
+OnNextEpisode
+OnSetAutoContinue
+tabs liquid-glass
+بخش‌های رمان
+tab-body
+world
+footer
+danger-zone
+btn-app danger small
+ حذف رمان
+        
+IsOpen
+OnClose
+Title
+این رمان حذف شود؟
+story
+داستان
+ماتریس
+شخصیت‌ها
+دنیا
+ · رمان‌ساز
+sheet-text
+
+            «
+» با همهٔ قسمت‌ها، شخصیت‌ها و ماتریس داستانش برای همیشه پاک می‌شود.
+
+ نوشتنِ در جریان هم همین حالا متوقف می‌شود.
+sheet-actions
+btn-app danger
+حذف همیشگی
+انصراف
+stage-path
+b-gqptu08rj5
+todo
+current
+done
+station 
+<span class="dot" aria-hidden="true" b-gqptu08rj5></span>
+            
+name
+Icon
+هنوز قسمتی نوشته نشده
+Message
+دنیا و ماتریس داستان آماده است. با نوشتن قسمت اول، کارگردان صحنه‌ها را می‌چیند و شخصیت‌ها وارد صحنه می‌شوند.
+episode-list
+b-6br6slk11r
+episode
+episode-number
+episode-text
+episode-title
+episode-summary
+episode-meta
+episode-chevron
+episode pending
+aria-busy
+<span class="episode-text" b-6br6slk11r><span class="episode-title" b-6br6slk11r>در حال نوشتن…</span>
+                        <span class="shimmer" b-6br6slk11r></span>
+                        <span class="shimmer short" b-6br6slk11r></span></span>
+b-h03zmhshrn
+<h2 class="block-title" b-h03zmhshrn>خلاصهٔ کل</h2>
+    
+Header
+لنگرهای روایت
+Footer
+راوی و شخصیت‌ها در همهٔ قسمت‌ها به این‌ها وفادار می‌مانند.
+<h2 class="block-title" b-h03zmhshrn>قواعد دنیا</h2>
+    
+rules
+<h2 class="block-title" b-h03zmhshrn>مکان‌ها</h2>
+    
+places
+place
+place-head
+kind
+where
+atmosphere
+here
+اکنون این‌جا: 
+<h2 class="block-title" b-h03zmhshrn>حافظهٔ داستان</h2>
+        
+گره‌های باز
+واقعیت‌های تثبیت‌شده
+page-header
+b-gorksfcdxs
+<h1 b-gorksfcdxs>کتابخانه</h1>
+    
+novels/new
+ رمان تازه
+    
+هنوز رمانی ننوشته‌اید
+نثر، درون‌مایه، دنیا و شخصیت‌ها را انتخاب کنید؛ بقیه را طراح داستان و شخصیت‌ها می‌سازند.
+novel-grid
+novel-card
+b-oq8agnvyvx
+card-top
+genre
+card-title
+card-bottom
+activity
+…
+<span class="activity error" b-oq8agnvyvx>متوقف شد؛ برای تلاش دوباره باز کنید</span>
+episodes
+updated
+پیشرفت نوشتن
+درام
+جنایی و معمایی
+عاشقانه
+تاریخی
+فانتزی
+علمی‌تخیلی
+وحشت
+ماجرایی
+اجتماعی
+رئالیسم جادویی
+ادبی و فاخر
+ساده و روان
+شاعرانه و تصویری
+موجز و مینیمال
+طنزآمیز و گزنده
+گزارشی و سرد
+سیال ذهن
+حماسی
+عشق و فداکاری
+قدرت و فساد
+هویت و تعلق
+بخشش و رستگاری
+انتقام و عدالت
+آزادی
+تنهایی و پیوند
+حقیقت و دروغ
+مرگ و میراث
+جنگ و انسانیت
+تاریک
+امیدوار
+تلخ‌وشیرین
+پرتنش
+طنز
+نوستالژیک
+خونسرد و بی‌طرف
+واقع‌گرا
+تاریخی دقیق
+پادآرمان‌شهر
+معاصر
+دههٔ ۱۳۴۰
+دههٔ ۱۳۵۰
+دههٔ ۱۳۶۰
+دورهٔ قاجار
+دورهٔ صفوی
+آیندهٔ نزدیک
+آیندهٔ دور
+دنیای خیالی بی‌زمان
+یک شب
+یک هفته
+یک فصل
+یک سال
+یک دهه
+سه نسل
+تهران
+تبریز
+اصفهان
+شیراز
+مشهد
+رشت
+بوشهر
+یزد
+کرمانشاه
+شهر
+محله
+ساختمان
+خانه
+کافه یا مغازه
+اداره یا نهاد
+روستا
+طبیعت
+وسیلهٔ سفر
+آرمان‌گرای پرشور
+بدبینِ زخم‌خورده
+حامی فداکار
+جاه‌طلب حسابگر
+شوخ‌طبعِ پنهان‌کار
+سنت‌گرای سخت‌گیر
+یاغی بی‌قرار
+دانای منزوی
+معصومِ کنجکاو
+فریبکار جذاب
+از ترس به شجاعت
+از خودخواهی به فداکاری
+از بی‌اعتمادی به اعتماد
+از انکار به پذیرش
+از تنهایی به پیوند
+از آرمان‌گرایی به فساد
+از عشق به وسواس
+از امید به سرخوردگی
+ایستادگی بر باور و دگرگون‌کردن دیگران
+خانواده
+زن و شوهر
+عشق یک‌طرفه
+دوستی
+رقابت
+دشمنی
+استاد و شاگرد
+همکار
+رازدار
+بدهکار و طلبکار
+خوش
+تلخ
+باز
+غافلگیرکننده
+سوم‌شخص
+کوتاه
+متوسط
+بلند
+معمای تبریز
+عکاسی پس از بیست سال به شهرش برمی‌گردد تا راز عکسی را بفهمد که خانواده‌اش را از هم پاشید.
+عاشقانهٔ تهران
+دو غریبه در یک ساختمان قدیمی در مرکز تهران، هر کدام با زخمی که از دیگری پنهان می‌کنند.
+فانتزی حماسی
+در سرزمینی که آتش‌ها نگهبان حافظهٔ مردگان‌اند، آخرین آتش خاموش شده است.
+در تهرانِ ۱۴۲۰ دستیاری هوشمند به خانواده‌ای می‌پیوندد و کم‌کم رازهایشان را بهتر از خودشان می‌داند.
+StoryTemplate
+Title = 
+, Description = 
+, Apply = 
+c
+شخصیت فرعی 
+شخصیت اصلی 
+ایران
+wizard-header
+b-wopboex8s0
+ کتابخانه
+    
+<h1 b-wopboex8s0>رمان تازه</h1>
+    
+step-dots
+مراحل
+step-dot 
+aria-current
+step
+dot-number
+dot-label
+step-body
+Draft
+Changed
+OnEdit
+action-bar liquid-glass
+پیمایش مراحل
+ قبلی
+            
+از نو
+bar-hint
+
+                بعدی 
+ شروع نوشتن
+            
+هرچه خالی مانده، طراح داستان انتخاب می‌کند
+bw.new-novel-draft
+ایده
+سبک
+مکان‌ها
+پیرنگ
+مرور
+ایده و سبک
+با «شروع نوشتن»، طراح داستان ماتریس شخصیت، مکان، زمان، رویداد و آرک را می‌سازد و خط داستان را از آن بیرون می‌کشد. بعد شخصیت‌ها قسمت‌به‌قسمت داستان را می‌سازند.
+چندخطی، 
+ خط
+ مکان؛ از جمله 
+ مکان
+عنوان
+Step
+ایدهٔ اصلی
+ژانر
+نثر
+درون‌مایه
+لحن
+نوع دنیا
+کشور و شهر
+دوره و مدت
+قواعد
+ قاعده
+اصلی و فرعی
+ اصلی، 
+ فرعی
+تعریف‌شده
+روابط
+ رابطه
+ساختار
+ قسمت، هر کدام حدود 
+ کلمه
+زاویهٔ دید
+پایان
+نوشتن خودکار
+خاموش
+نثر امضای نویسنده است؛ راوی همهٔ قسمت‌ها را با همین نثر می‌نویسد.
+پرسشی که داستان دربارهٔ آن است. در روایت حس می‌شود، اما موعظه نمی‌شود.
+Stacked
+Presets
+تعداد شخصیت‌ها
+هر شخصیت را در داستان یک مدل جداگانه بازی می‌کند؛ با پرسونای خودش و فقط با دانسته‌های خودش.
+برای تعیین نام، جنسیت، سن، پرسونا و آرک روی هر شخصیت بزنید.
+رابطه‌هایی که می‌خواهید حتماً در داستان باشد. طراح داستان رابطه‌های دیگری هم می‌سازد.
+شخصیت‌های اصلی
+Hint
+صاحب آرک و تحول روشن
+شخصیت‌های فرعی
+Min
+Max
+Slot
+relationship
+b-446yb9i8a1
+pair
+select
+شخصیت اول
+option
+<span class="link" aria-hidden="true" b-446yb9i8a1>و</span>
+                
+شخصیت دوم
+remove-btn
+حذف رابطه
+<p class="hint-error" b-446yb9i8a1>یک شخصیت نمی‌تواند با خودش رابطه داشته باشد.</p>
+نوع رابطه
+AllowAuto
+توضیح رابطه
+توضیح کوتاه (اختیاری)
+ افزودن رابطه
+            
+character 
+b-e6okhiotsv
+character-head
+aria-expanded
+head-text
+head-name
+head-summary
+head-chevron
+character-body
+two-col
+label
+mini-field
+<span b-e6okhiotsv>نام</span>
+                    
+<span b-e6okhiotsv>سن</span>
+                    
+number
+min
+1
+max
+120
+inputmode
+numeric
+<span b-e6okhiotsv>جنسیت</span>
+                
+جنسیت
+<span b-e6okhiotsv>شغل یا جایگاه</span>
+                
+<span b-e6okhiotsv>پرسونا <small b-e6okhiotsv>سرشت، ارزش‌ها و صدای شخصیت</small></span>
+                
+پرسونا
+Placeholder
+مثلاً: کم‌حرف، طعنه‌زن، وفادار تا پای جان
+<span b-e6okhiotsv>آرک شخصیت <small b-e6okhiotsv>تحول درونی از کجا به کجا</small></span>
+                
+آرک شخصیت
+مثلاً: از غرور به فروتنی
+<span b-e6okhiotsv>یادداشت</span>
+                
+textarea
+rows
+2
+2000
+گذشته، راز، یا هر چیزی که باید بداند
+همه‌چیز را طراح داستان انتخاب می‌کند
+یادداشت دارد
+templates
+شروع سریع
+b-hgrk8ye0r0
+<h2 class="section-title" b-hgrk8ye0r0>شروع سریع</h2>
+    
+template-grid
+template-card
+template-title
+template-text
+هر فیلدی را خالی بگذارید، طراح داستان خودش برایش تصمیم می‌گیرد.
+اختیاری
+یکی دو جمله از ماجرا
+200
+مثلاً: زمستانی که برنگشت
+3
+4000
+داستان دربارهٔ چه کسی است و چه چیزی را از دست می‌دهد؟
+تعداد مکان‌ها
+ساختمان‌ها، محله‌ها، خانه‌ها و هر جایی که رویدادها در آن رخ می‌دهد.
+مکان‌هایی که در ذهن دارید
+لازم نیست همه را تعریف کنید؛ بقیه را طراح داستان می‌سازد.
+مکان‌های فیزیکی
+b-hbjh2q5w90
+place-number
+نام مکان
+حذف مکان
+نوع مکان
+توصیف مکان
+توصیف، حال‌وهوا یا نقشش در داستان (اختیاری)
+ افزودن مکان
+            
+خط داستانی
+داستان قسمت‌به‌قسمت نوشته می‌شود و هر قسمت به محض آماده‌شدن نمایش داده می‌شود.
+پایان‌بندی
+موارد دیگر
+هر خواستهٔ دیگری که طراح داستان باید بداند؛ مثلاً «صحنهٔ آخر در ایستگاه قطار باشد».
+روند نوشتن
+چند خط موازی که در طول داستان به هم گره می‌خورند و پیش از پایان به هم می‌رسند.
+یک خط اصلی که همهٔ رویدادها را پیش می‌برد.
+تعداد خط‌ها
+ساختار پیرنگ
+تعداد خط‌های داستانی
+تعداد قسمت‌ها
+طول هر قسمت
+حدود 
+b-d8n94e84jd
+نوشتن خودکار قسمت‌ها
+خاموش باشد، هر قسمت را خودتان شروع می‌کنید
+switch
+checkbox
+checked
+
+            <span class="track" aria-hidden="true" b-d8n94e84jd></span>
+            
+<span class="visually-hidden-focusable" b-d8n94e84jd>نوشتن خودکار قسمت‌ها</span>
+review-row
+b-k0ikyf8n4o
+review-label
+review-value 
+auto
+review-chevron
+جغرافیا
+زمان
+قواعد دنیا
+قاعده‌هایی که هیچ رویدادی نباید بشکند؛ مثلاً «هر جادو بهایی دارد» یا «تلفن هنوز به روستا نرسیده».
+کشور
+b-a7d9j8ank8
+دوره
+مدت ماجرا
+داستان در چه بازه‌ای رخ می‌دهد
+form
+add-rule
+onsubmit
+قاعدهٔ تازه
+قاعدهٔ تازه…
+submit
+//
+?returnUrl=
+verify-email
+SubmitText
+ورود
+OnSubmit
+SwitchContent
+unverified
+ایمیل حساب گوگل شما تأیید نشده است. ایمیل را در گوگل تأیید کنید یا با ایمیل و گذرواژه ثبت‌نام کنید.
+ورود با گوگل کامل نشد. دوباره تلاش کنید.
+Text
+ورود با گوگل
+ReturnUrl
+ایمیل
+گذرواژه
+field field-ltr
+email
+autocomplete
+username
+dir
+ltr
+required
+password
+current-password
+forgot-password
+گذرواژه را فراموش کرده‌اید؟
+
+        <br>
+        حساب ندارید؟ 
+register
+ثبت‌نام کنید
+ساخت حساب
+ثبت‌نام با گوگل
+نام نمایشی
+کد تأیید به همین نشانی فرستاده می‌شود
+دست‌کم ۸ نویسه
+nickname
+80
+new-password
+minlength
+8
+
+        حساب دارید؟ 
+وارد شوید
+auth-form
+novalidate
+b-npt864cpvh
+btn-app primary submit
+<span class="spinner" aria-hidden="true" b-npt864cpvh></span>
+ارسال کد بازیابی
+تعیین گذرواژه و ورود
+b-jx6hd0o3c5
+
+            کد را قبلاً گرفته‌اید؟ 
+link
+واردش کنید
+
+            <br b-jx6hd0o3c5>
+            
+بازگشت به ورود
+intro
+<h2 b-jx6hd0o3c5>گذرواژهٔ تازه</h2>
+
+                        اگر حسابی با این ایمیل وجود داشته باشد، کد بازیابی برایش فرستاده شد. هر 
+ ساعت یک بار
+                        می‌شود کد تازه خواست؛ اگر در این مدت کدی گرفته‌اید، همان هنوز معتبر است.
+                    
+<p b-jx6hd0o3c5>کدی را که به ایمیلتان فرستادیم وارد کنید و گذرواژهٔ تازه را بنویسید.</p>
+کد بازیابی
+گذرواژهٔ تازه
+field field-ltr code
+one-time-code
+12
+
+            کدی نرسید؟ 
+دوباره درخواست کنید
+google-button
+b-epm4hvvjzc
+<svg class="google-logo" viewBox="0 0 48 48" width="20" height="20" aria-hidden="true" focusable="false" b-epm4hvvjzc><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z" b-epm4hvvjzc></path>
+            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" b-epm4hvvjzc></path>
+            <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" b-epm4hvvjzc></path>
+            <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z" b-epm4hvvjzc></path></svg>
+        
+<div class="divider" role="separator" b-epm4hvvjzc><span b-epm4hvvjzc>یا</span></div>
+api/auth/google-login
+در حال آماده‌سازی…
+تأیید ایمیل
+resend
+b-ldxnwa5zyv
+notice
+wait
+کد تازه را 
+ دیگر می‌توانید بخواهید.
+ارسال کد تأیید
+ارسال دوبارهٔ کد
+hint
+ایمیل را پیدا نمی‌کنید؟ پوشهٔ هرزنامه (Spam) را هم ببینید. هر 
+ ساعت یک بار می‌شود کد تازه خواست.
+btn-app plain small
+خروج از حساب
+<h2 b-ldxnwa5zyv>ایمیل خود را تأیید کنید</h2>
+کدی 
+ رقمی به 
+bdi
+ فرستادیم. آن را این‌جا وارد کنید.
+برای تأیید 
+، کد تأیید را بفرستید و آن را این‌جا وارد کنید.
+کد تأیید
+#app
+head::after
+AppAssembly
+Found
+NotFound
+در حال شناسایی…
+Layout
+پیدا نشد · رمان‌ساز
+این صفحه وجود ندارد
+شاید نشانی را اشتباه وارد کرده‌اید.
+<a class="btn-app tinted" href>بازگشت به کتابخانه</a>
+RouteData
+DefaultLayout
+NotAuthorized
+Authorizing
+nav-actions
+user-name
+icon-btn
+خروج
+ProblemPayload
+, Errors = 
+برای ادامه وارد حساب خود شوید.
+اجازهٔ این کار را ندارید.
+پیدا نشد.
+خطایی در سرور رخ داد. کمی بعد دوباره تلاش کنید.
+درخواست انجام نشد.
+One or more
+اتصال به سرور برقرار نشد. اینترنت یا سرور را بررسی کنید.
+api/auth/me
+api/auth/password/forgot
+api/auth/logout
+localStorage.getItem
+localStorage.removeItem
+localStorage.setItem
+api/system/info
+Block
+Text = 
+, IsDialogue = 
+, IsSceneBreak = 
+bw.reader-font-step
+مکان و زمان
+value start
+کتابخانه · رمان‌ساز
+ ساختن اولین رمان
+        
+عکاسی پس از بیست سال به تبریز برمی‌گردد تا راز عکسی را بفهمد که خانواده‌اش را از هم پاشید.
+آتش‌ها حافظهٔ مردگان را نگه می‌دارند.
+هر جادو بهایی از خاطرهٔ جادوگر می‌گیرد.
+رمان تازه · رمان‌ساز
+rule-text
+حذف قاعده
+ورود · رمان‌ساز
+ثبت‌نام · رمان‌ساز
+بازیابی گذرواژه · رمان‌ساز
+<div class="intro" b-jx6hd0o3c5><h2 b-jx6hd0o3c5>بازیابی گذرواژه</h2>
+                <p b-jx6hd0o3c5>ایمیل حسابتان را وارد کنید تا کد بازیابی برایتان بفرستیم.</p></div>
+تأیید ایمیل · رمان‌ساز
+کد تازه فرستاده شد.

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storyteller AI · Autonomous Multi-Agent Novel Studio</title>
+    <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+    <!-- Demo Banner -->
+    <div id="demoBanner" class="demo-banner" style="display: none;">
+        <span>💡</span>
+        <span id="demoMessage">Offline Creative Simulator Mode: Generating with local narrative engine. Configure an API key or Custom endpoint for live LLM generation.</span>
+        <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()">⚙️ Connect API</button>
+    </div>
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand" onclick="navigateTo('library')">
+                <div class="brand-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                        <path d="M6 6h10"/>
+                        <path d="M6 10h10"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="brand-title">Storyteller AI</div>
+                    <div style="font-size: 0.76rem; color: var(--text-tertiary); font-weight: 500;">Multi-Agent Story Simulation Studio</div>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <button class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle Theme">🌓 Theme</button>
+                <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()">⚙️ AI Model</button>
+                <button class="btn btn-primary" onclick="startNewNovel()">✨ New Novel</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- ==================== 1. VIEW: LIBRARY ==================== -->
+        <section id="viewLibrary">
+            <div style="margin-bottom: 28px;">
+                <h1 style="font-size: 2.1rem; font-weight: 900; margin-bottom: 6px;">Author's Desk</h1>
+                <p style="color: var(--text-secondary); font-size: 1.05rem;">Shape the world, cast autonomous characters, and watch the story weave itself across dynamic scenes.</p>
+            </div>
+
+            <!-- Novel Cards Grid -->
+            <div id="novelsGrid" class="novel-grid">
+                <!-- Dynamically loaded -->
+            </div>
+        </section>
+
+        <!-- ==================== 2. VIEW: WIZARD (NEW NOVEL) ==================== -->
+        <section id="viewWizard" style="display: none;">
+            <div class="card" style="max-width: 880px; margin: 0 auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <div>
+                        <h2 style="font-size: 1.6rem; font-weight: 900;">Create New Novel</h2>
+                        <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">Launch instantly from curated presets, or let AI expand your single-sentence idea.</p>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="navigateTo('library')">Cancel</button>
+                </div>
+
+                <!-- 🌟 1-Click Inspirations -->
+                <div style="margin-bottom: 24px;">
+                    <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span>⚡ Instant Launch with Curated Presets:</span>
+                    </div>
+                    <div class="presets-grid">
+                        <div class="preset-card" onclick="applyPreset('mystery')">
+                            <div class="preset-icon">🔍</div>
+                            <div class="preset-title">The Blackwood Mystery</div>
+                            <div class="preset-desc">An archival conservator returns to foggy Edinburgh to unravel a 20-year-old ledger conspiracy.</div>
+                        </div>
+                        <div class="preset-card" onclick="applyPreset('romance')">
+                            <div class="preset-icon">☕</div>
+                            <div class="preset-title">Autumn in Saint-Germain</div>
+                            <div class="preset-desc">Two guarded souls cross paths during a Parisian downpour, hiding wounds they dare not speak aloud.</div>
+                        </div>
+                        <div class="preset-card" onclick="applyPreset('sci-fi')">
+                            <div class="preset-icon">🤖</div>
+                            <div class="preset-title">Protocol Zero: London 2045</div>
+                            <div class="preset-desc">A city-wide neural blackout exposes a syndicate altering human biological memories.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ✨ Magic AI Prompt Auto-Fill -->
+                <div class="magic-box">
+                    <label class="form-label" style="display: flex; align-items: center; gap: 8px; font-size: 1rem; color: var(--accent);">
+                        <span>✨ Magic Idea Co-Pilot (Single-sentence auto-complete):</span>
+                    </label>
+                    <div style="display: flex; gap: 10px; margin-top: 8px;">
+                        <input type="text" id="magicPromptInput" class="form-input" placeholder="e.g. A reclusive harbor detective investigates a ghost ship that sailed in during a storm...">
+                        <button class="btn btn-primary" onclick="triggerMagicAutoFill()" style="white-space: nowrap;">✨ AI Auto-Fill</button>
+                    </div>
+                    <div class="form-hint" style="color: var(--text-tertiary);">Provide a single premise or prompt, and the AI will forge characters, world rules, and plotlines for you.</div>
+                </div>
+
+                <!-- Step Navigator Tabs -->
+                <div class="tab-nav">
+                    <button class="tab-btn active" id="tabNav1" onclick="setWizardStep(1)">1. Premise & Style</button>
+                    <button class="tab-btn" id="tabNav2" onclick="setWizardStep(2)">2. World & Rules</button>
+                    <button class="tab-btn" id="tabNav3" onclick="setWizardStep(3)">3. Cast & Characters</button>
+                    <button class="tab-btn" id="tabNav4" onclick="setWizardStep(4)">4. Plot & Launch</button>
+                </div>
+
+                <!-- Wizard Step 1: Idea & Style -->
+                <div id="wizardStep1">
+                    <div class="form-group">
+                        <label class="form-label">Novel Title</label>
+                        <input type="text" id="wizTitle" class="form-input" placeholder="e.g. The Whispering Archives of Blackwood">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Core Premise & Story Hook</label>
+                        <textarea id="wizPremise" class="form-textarea" rows="3" placeholder="Who is the protagonist, what is at stake, and what secret is driving the conflict?"></textarea>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Primary Genre</label>
+                            <select id="wizGenre" class="form-select"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Prose Style</label>
+                            <select id="wizProseStyle" class="form-select"></select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Central Theme</label>
+                            <select id="wizTheme" class="form-select"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Narrative Tone</label>
+                            <select id="wizTone" class="form-select"></select>
+                        </div>
+                    </div>
+
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="setWizardStep(2)">Next: World & Setting ➔</button>
+                    </div>
+                </div>
+
+                <!-- Wizard Step 2: World & Rules -->
+                <div id="wizardStep2" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">City & Country</label>
+                            <input type="text" id="wizCity" class="form-input" value="Edinburgh, United Kingdom">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Era / Time Period</label>
+                            <input type="text" id="wizEra" class="form-input" value="Contemporary">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Immutable World Rules (Laws and truths that cannot be violated)</label>
+                        <textarea id="wizRules" class="form-textarea" rows="2" placeholder="e.g. No secret buried in the district survives beyond a single generation."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Key Atmospheric Locations</label>
+                        <div id="wizLocationsList">
+                            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                <input type="text" class="form-input loc-name" placeholder="Location Name" value="The Vaulted Archives">
+                                <input type="text" class="form-input loc-desc" placeholder="Sensory details and atmosphere" value="Smell of aged paper, iron gall ink, and cold gas lamps">
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" onclick="addLocationRow()">+ Add Another Location</button>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 24px;">
+                        <button class="btn btn-secondary" onclick="setWizardStep(1)">⬅ Previous Step</button>
+                        <button class="btn btn-primary" onclick="setWizardStep(3)">Next: Cast & Characters ➔</button>
+                    </div>
+                </div>
+
+                <!-- Wizard Step 3: Characters -->
+                <div id="wizardStep3" style="display: none;">
+                    <div style="background: var(--bg-surface-subtle); padding: 14px 18px; border-radius: var(--radius-sm); margin-bottom: 20px; border-left: 4px solid var(--accent);">
+                        <strong>Multi-Agent Directive:</strong> Each character is roleplayed by an independent autonomous agent with distinct motivations, fatal flaws, and strictly isolated knowledge.
+                    </div>
+
+                    <div id="wizCharactersList">
+                        <!-- Loaded dynamically -->
+                    </div>
+
+                    <button class="btn btn-secondary btn-sm" onclick="addCharacterCard()">+ Add Another Character</button>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 24px;">
+                        <button class="btn btn-secondary" onclick="setWizardStep(2)">⬅ Previous Step</button>
+                        <button class="btn btn-primary" onclick="setWizardStep(4)">Next: Structure & Launch ➔</button>
+                    </div>
+                </div>
+
+                <!-- Wizard Step 4: Structure & Launch -->
+                <div id="wizardStep4" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Total Planned Episodes / Chapters</label>
+                            <input type="number" id="wizEpisodesCount" class="form-input" value="4" min="1" max="20">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Target Words Per Chapter (Approx.)</label>
+                            <input type="number" id="wizWordsPerEpisode" class="form-input" value="1200" step="100">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Narrative Perspective</label>
+                            <select id="wizPerspective" class="form-select"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Resolution / Ending Style</label>
+                            <select id="wizEnding" class="form-select"></select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="background: var(--bg-surface-subtle); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                        <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                            <input type="checkbox" id="wizAutoContinue" checked style="width: 20px; height: 20px; accent-color: var(--accent);">
+                            <span style="font-weight: 800; font-size: 1rem;">Auto-Continue Writing to Completion</span>
+                        </label>
+                        <div class="form-hint" style="margin-left: 32px;">Automatically advances chapter generation after world building completes.</div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+                        <button class="btn btn-secondary" onclick="setWizardStep(3)">⬅ Previous Step</button>
+                        <button class="btn btn-primary" onclick="submitCreateNovel()" style="padding: 12px 32px; font-size: 1.05rem;">🚀 Launch Novel Simulation</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ==================== 3. VIEW: NOVEL OVERVIEW ==================== -->
+        <section id="viewNovel" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <button class="btn btn-ghost btn-sm" onclick="navigateTo('library')" style="margin-bottom: 8px;">⬅ Back to Author's Desk</button>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <h1 id="novelTitle" style="font-size: 2.2rem; font-weight: 900;">...</h1>
+                        <span id="novelStatusBadge" class="badge badge-ready">Ready</span>
+                    </div>
+                    <p id="novelLogline" style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 6px; max-width: 800px;">...</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="btnWriteNext" class="btn btn-primary" onclick="triggerWriteNext()">✍️ Write Next Chapter</button>
+                    <button class="btn btn-secondary btn-sm" onclick="confirmDeleteNovel()" style="color: var(--danger);">🗑️ Delete</button>
+                </div>
+            </div>
+
+            <!-- LIVE PRODUCTION STEPPER -->
+            <div id="novelProgressCard" class="card" style="border: 2px solid var(--accent); background: var(--bg-surface); display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.3rem;">⚙️</span>
+                        <div>
+                            <strong id="progressStepTitle" style="font-size: 1.1rem; color: var(--accent);">Generating...</strong>
+                            <div id="progressDetail" style="font-size: 0.85rem; color: var(--text-tertiary);">Processing pipeline stage...</div>
+                        </div>
+                    </div>
+                    <span id="progressPercentage" style="font-size: 1.4rem; font-weight: 900; color: var(--accent);">0%</span>
+                </div>
+
+                <div class="progress-bar-bg">
+                    <div id="progressFill" class="progress-bar-fill" style="width: 0%;"></div>
+                </div>
+
+                <!-- 6 Visual Stages -->
+                <div class="stage-stepper">
+                    <div class="stage-step" id="stage1Ind"><span>🌍</span> 1. World Architect</div>
+                    <div class="stage-step" id="stage2Ind"><span>📐</span> 2. Story Matrix</div>
+                    <div class="stage-step" id="stage3Ind"><span>🎬</span> 3. Scene Director</div>
+                    <div class="stage-step" id="stage4Ind"><span>🎭</span> 4. Character Actors</div>
+                    <div class="stage-step" id="stage5Ind"><span>🖋️</span> 5. Master Novelist</div>
+                    <div class="stage-step" id="stage6Ind"><span>🧠</span> 6. Story Memory</div>
+                </div>
+            </div>
+
+            <!-- Novel Details Tabs -->
+            <div class="card">
+                <div class="tab-nav">
+                    <button class="tab-btn active" onclick="switchNovelTab('episodes')">📖 Chapters</button>
+                    <button class="tab-btn" onclick="switchNovelTab('cast')">🎭 Cast & Dossiers</button>
+                    <button class="tab-btn" onclick="switchNovelTab('world')">🌍 Setting & Laws</button>
+                    <button class="tab-btn" onclick="switchNovelTab('synopsis')">📜 Synopsis & Matrix</button>
+                </div>
+
+                <!-- Tab: Episodes -->
+                <div id="tabEpisodes">
+                    <div id="episodesList" style="display: flex; flex-direction: column; gap: 14px;"></div>
+                </div>
+
+                <!-- Tab: Cast -->
+                <div id="tabCast" style="display: none;">
+                    <div id="castCardsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 18px;"></div>
+                </div>
+
+                <!-- Tab: World -->
+                <div id="tabWorld" style="display: none;">
+                    <div id="worldDetailsContent"></div>
+                </div>
+
+                <!-- Tab: Synopsis -->
+                <div id="tabSynopsis" style="display: none;">
+                    <div id="synopsisContent"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 4. VIEW: BOOK READER ==================== -->
+        <section id="viewReader" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; max-width: 840px; margin-left: auto; margin-right: auto;">
+                <button class="btn btn-ghost btn-sm" onclick="navigateTo('novel')">⬅ Back to Novel</button>
+                
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <!-- Reading Theme Switcher -->
+                    <div style="display: flex; background: var(--bg-surface-subtle); padding: 3px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                        <button class="btn btn-ghost btn-sm" onclick="setReaderTheme('light')" title="Light Theme">☀️</button>
+                        <button class="btn btn-ghost btn-sm" onclick="setReaderTheme('sepia')" title="Sepia Book Paper Theme">📜</button>
+                        <button class="btn btn-ghost btn-sm" onclick="setReaderTheme('dark')" title="Dark Theme">🌙</button>
+                    </div>
+
+                    <!-- Font size -->
+                    <button class="btn btn-secondary btn-sm" onclick="toggleFontSize(-1)">A-</button>
+                    <button class="btn btn-secondary btn-sm" onclick="toggleFontSize(1)">A+</button>
+                    
+                    <!-- Behind the scenes trigger -->
+                    <button class="btn btn-primary" onclick="toggleDrawer()">🎭 Behind the Scenes</button>
+                </div>
+            </div>
+
+            <!-- Book Page -->
+            <div class="card" style="max-width: 840px; margin: 0 auto; padding: 48px 56px; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+                <div style="text-align: center; margin-bottom: 36px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 24px;">
+                    <span id="readerEpisodeNum" class="badge badge-ready" style="font-size: 0.9rem;">Chapter 1</span>
+                    <h1 id="readerEpisodeTitle" style="font-size: 2.2rem; font-weight: 900; margin: 16px 0 8px;">...</h1>
+                    <div style="font-size: 0.92rem; color: var(--text-tertiary); display: flex; justify-content: center; gap: 16px;">
+                        <span>POV: <strong id="readerPovChar" style="color: var(--text-primary);">...</strong></span>
+                        <span>·</span>
+                        <span id="readerWordCount">... words</span>
+                        <span>·</span>
+                        <span id="readerReadTime">⏱️ 3 min read</span>
+                    </div>
+                </div>
+
+                <div id="readerContent" class="reader-prose">
+                    <!-- Loaded prose -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== BEHIND THE SCENES DRAWER ==================== -->
+    <aside id="behindTheScenesDrawer" class="drawer">
+        <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface-elevated);">
+            <div>
+                <h3 style="font-size: 1.25rem; font-weight: 900; display: flex; align-items: center; gap: 8px;">
+                    <span>🎭</span> Behind the Scenes
+                </h3>
+                <div style="font-size: 0.82rem; color: var(--text-tertiary);">Directorial blocking, physical gestures, and secret thoughts</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="toggleDrawer()" style="font-size: 1.2rem;">✕</button>
+        </div>
+
+        <div id="drawerContent" style="flex: 1; overflow-y: auto; padding: 24px;">
+            <!-- Rendered scenes and turns -->
+        </div>
+    </aside>
+
+    <!-- ==================== SETTINGS MODAL ==================== -->
+    <div id="settingsModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box" style="max-width: 580px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 1.3rem; font-weight: 900; display: flex; align-items: center; gap: 8px;">
+                    <span>⚙️</span> AI Engine Configuration
+                </h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeSettingsModal()">✕</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Provider</label>
+                <select id="cfgProvider" class="form-select" onchange="onProviderChanged()">
+                    <option value="custom">🌐 Custom API (OpenAI-Compatible Endpoint)</option>
+                    <option value="gemini">Google Gemini (Recommended)</option>
+                    <option value="openai">OpenAI (Official)</option>
+                    <option value="openrouter">OpenRouter</option>
+                    <option value="ollama">Ollama (Local on your machine)</option>
+                    <option value="mock">Offline Creative Simulator (No Key Needed)</option>
+                </select>
+            </div>
+
+            <!-- Quick presets for Custom API -->
+            <div id="customPresetsRow" style="margin-bottom: 16px;">
+                <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-tertiary); margin-bottom: 8px;">Quick Gateway Presets:</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('groq')">⚡ Groq (Ultra-Fast)</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('openrouter')">🌐 OpenRouter</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('avalai')">🇮🇷 AvalAI Proxy</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('lmstudio')">💻 LM Studio / vLLM</button>
+                </div>
+            </div>
+
+            <div class="form-group" id="grpBaseUrl">
+                <label class="form-label">Server Base URL</label>
+                <input type="text" id="cfgBaseUrl" class="form-input" placeholder="https://api.openai.com/v1 or https://api.groq.com/openai/v1">
+                <div class="form-hint" style="color: var(--text-tertiary);">OpenAI-compatible base URL (ending in /v1)</div>
+            </div>
+
+            <div class="form-group" id="grpApiKey">
+                <label class="form-label">API Key</label>
+                <input type="password" id="cfgApiKey" class="form-input" placeholder="sk-...">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Model Name</label>
+                <input type="text" id="cfgModel" class="form-input" placeholder="e.g. gpt-4o-mini, deepseek-chat, or llama-3.3-70b-versatile">
+            </div>
+
+            <!-- Test Connection Result Box -->
+            <div id="testResultBox" style="display: none; padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 0.88rem; line-height: 1.5;"></div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px;">
+                <button type="button" id="btnTestConn" class="btn btn-secondary" onclick="testConnection()">
+                    <span>🔌</span> Test Live Connection
+                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-ghost" onclick="closeSettingsModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
