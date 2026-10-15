@@ -811,4 +811,137 @@ h1, h2, h3, h4, h5 {
     .novel-grid { grid-template-columns: 1fr; }
     .stage-stepper { grid-template-columns: repeat(3, 1fr); }
     .drawer { width: 100vw; }
+    .chapter-list-item { flex-direction: column; align-items: flex-start !important; gap: 12px; }
+    .chapter-thumb-container { width: 100% !important; height: 140px !important; }
 }
+
+/* ==================== CHAPTER HERO ARTWORK ==================== */
+.reader-hero-wrapper {
+    margin-bottom: 36px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-md);
+    background: #090D16;
+}
+
+.reader-hero-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 400px;
+    overflow: hidden;
+    background: #0B1120;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reader-hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reader-hero-frame:hover .reader-hero-img {
+    transform: scale(1.02);
+}
+
+.reader-hero-overlay {
+    position: absolute;
+    inset: auto 0 0 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(8, 12, 20, 0.7) 40%, rgba(8, 12, 20, 0.95) 100%);
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.reader-hero-caption-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.reader-hero-badge {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: #818CF8;
+}
+
+.reader-hero-location {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #F8FAFC;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.btn-hero-regen {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-hero-regen:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-1px);
+}
+
+/* ==================== CHAPTER LIST ITEM & THUMBNAIL ==================== */
+.chapter-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--bg-surface-subtle);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    gap: 16px;
+}
+
+.chapter-list-item:hover {
+    border-color: var(--accent);
+    background: var(--bg-surface-elevated);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+.chapter-thumb-container {
+    width: 104px;
+    height: 64px;
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #0B1120;
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chapter-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+

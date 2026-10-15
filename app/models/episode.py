@@ -18,6 +18,8 @@ class EpisodeResponse(BaseModel):
     content: str = Field(..., description="Full prose narrative text of the chapter")
     word_count: int
     scenes: List[SceneRecord] = Field(default_factory=list, description="Breakdown of scenes and actor turns")
+    image_url: Optional[str] = Field(None, description="URL to the generated chapter illustration")
+    image_prompt: Optional[str] = Field(None, description="AI visual prompt used to synthesize the illustration")
     created_at_utc: str = ""
 
 class EpisodeSummary(BaseModel):
@@ -26,6 +28,7 @@ class EpisodeSummary(BaseModel):
     summary: str
     word_count: int
     pov_character: str
+    image_url: Optional[str] = None
 
 class GenerationProgress(BaseModel):
     novel_id: str

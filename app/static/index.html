@@ -629,7 +629,27 @@
             </div>
 
             <!-- Book Page -->
-            <div class="card" style="max-width: 860px; margin: 0 auto; padding: 56px 64px; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+            <div class="card" style="max-width: 860px; margin: 0 auto; padding: 48px 56px; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+                <!-- Chapter Hero Artwork Banner -->
+                <div id="readerHeroContainer" class="reader-hero-wrapper" style="display: none;">
+                    <div class="reader-hero-frame">
+                        <img id="readerHeroImg" src="" alt="Chapter Illustration" class="reader-hero-img" />
+                        <div class="reader-hero-overlay">
+                            <div class="reader-hero-caption-box">
+                                <span class="reader-hero-badge">Scene Illustration</span>
+                                <span id="readerHeroLocation" class="reader-hero-location">Setting Atmosphere</span>
+                            </div>
+                            <button id="btnRegenerateArt" class="btn-hero-regen" onclick="regenerateCurrentChapterArt()" title="Regenerate scene illustration">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                </svg>
+                                <span>Regenerate Art</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div style="text-align: center; margin-bottom: 40px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 28px;">
                     <span id="readerEpisodeNum" class="badge badge-ready" style="font-size: 0.85rem;">Chapter 1</span>
                     <h1 id="readerEpisodeTitle" style="font-size: 2.3rem; font-weight: 800; margin: 16px 0 10px;">...</h1>

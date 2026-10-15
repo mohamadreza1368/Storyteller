@@ -12,6 +12,7 @@ from app.engine.stage3_director import execute_stage3
 from app.engine.stage4_character_sim import execute_stage4
 from app.engine.stage5_narrator import execute_stage5
 from app.engine.stage6_memory import execute_stage6
+from app.engine.image_client import chapter_image_client
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +113,17 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
             word_count=word_count,
             scenes=scenes
         )
+
+        # Illustrate Chapter Scene Artwork
+        try:
+            await update_progress(novel_id, f"Illustrating scene for Chapter {ep_num}", 6, 6, 98, ep_num, blueprint.total_episodes)
+            img_data, mime_type, prompt_used = await chapter_image_client.generate(blueprint, ep_response)
+            store.save_episode_image(novel_id, ep_num, img_data, mime_type)
+            ep_response.image_url = f"/api/novels/{novel_id}/episodes/{ep_num}/image"
+            ep_response.image_prompt = prompt_used
+        except Exception as img_err:
+            logger.warning(f"Failed to generate chapter artwork for Chapter {ep_num}: {img_err}")
+
         store.save_episode(ep_response)
 
         # Check completion

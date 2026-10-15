@@ -569,19 +569,28 @@ async function loadEpisodesList() {
         }
 
         listDiv.innerHTML = episodes.map(ep => `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: var(--bg-surface-subtle); border-radius: var(--radius-md); border: 1px solid var(--border-subtle); cursor: pointer; transition: all 0.2s ease;" onclick="openReader(${ep.episode_number})" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border-subtle)'">
-                <div>
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                        <span class="badge badge-ready">Chapter ${ep.episode_number}</span>
-                        <strong style="font-size: 1.15rem; color: var(--text-primary);">${ep.title}</strong>
+            <div class="chapter-list-item" onclick="openReader(${ep.episode_number})">
+                <div style="display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0;">
+                    <div class="chapter-thumb-container">
+                        <img src="/api/novels/${currentNovelId}/episodes/${ep.episode_number}/image" 
+                             alt="Chapter ${ep.episode_number} Art" 
+                             class="chapter-thumb-img" 
+                             loading="lazy"
+                             onerror="this.parentElement.style.display='none'">
                     </div>
-                    <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5;">${ep.summary || ''}</div>
+                    <div style="min-width: 0; flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
+                            <span class="badge badge-ready">Chapter ${ep.episode_number}</span>
+                            <strong style="font-size: 1.15rem; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${ep.title}</strong>
+                        </div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${ep.summary || ''}</div>
+                    </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="display: flex; align-items: center; gap: 14px; flex-shrink: 0;">
                     <span style="font-size: 0.85rem; color: var(--text-tertiary); font-weight: 600; display: flex; align-items: center; gap: 6px;">
                         ${ICONS.clock} ${Math.ceil(ep.word_count / 220)} min read
                     </span>
-                    <button class="btn btn-secondary btn-sm">
+                    <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openReader(${ep.episode_number})">
                         ${ICONS.book}
                         Read Chapter
                     </button>
@@ -685,6 +694,25 @@ async function openReader(episodeNumber) {
         const res = await fetch(`/api/novels/${currentNovelId}/episodes/${episodeNumber}`);
         currentEpisodeData = await res.json();
 
+        // Update Chapter Artwork Hero
+        const heroContainer = document.getElementById("readerHeroContainer");
+        const heroImg = document.getElementById("readerHeroImg");
+        const heroLoc = document.getElementById("readerHeroLocation");
+        
+        if (heroContainer && heroImg) {
+            heroImg.src = `/api/novels/${currentNovelId}/episodes/${episodeNumber}/image`;
+            heroContainer.style.display = "block";
+            
+            const firstScene = (currentEpisodeData.scenes && currentEpisodeData.scenes[0]) ? currentEpisodeData.scenes[0] : null;
+            if (firstScene && firstScene.location_key) {
+                heroLoc.innerText = `${firstScene.location_key} · ${firstScene.time_marker || 'Scene'}`;
+            } else if (currentNovel && currentNovel.world) {
+                heroLoc.innerText = `${currentNovel.world.city} · ${currentNovel.world.era}`;
+            } else {
+                heroLoc.innerText = currentEpisodeData.title;
+            }
+        }
+
         document.getElementById("readerEpisodeNum").innerText = `Chapter ${currentEpisodeData.episode_number}`;
         document.getElementById("readerEpisodeTitle").innerText = currentEpisodeData.title;
         document.getElementById("readerPovChar").innerText = currentEpisodeData.pov_character;
@@ -700,6 +728,52 @@ async function openReader(episodeNumber) {
         showToast("Error loading chapter: " + e.message, "error");
     }
 }
+
+// Regenerate Chapter Artwork
+async function regenerateCurrentChapterArt() {
+    if (!currentNovelId || !currentEpisodeNumber) return;
+    const btn = document.getElementById("btnRegenerateArt");
+    if (!btn) return;
+    
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+            <line x1="12" y1="2" x2="12" y2="6"></line>
+            <line x1="12" y1="18" x2="12" y2="22"></line>
+            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+            <line x1="2" y1="12" x2="6" y2="12"></line>
+            <line x1="18" y1="12" x2="22" y2="12"></line>
+            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+        </svg>
+        <span>Creating...</span>
+    `;
+
+    try {
+        showToast("Synthesizing tailored scene illustration...", "info");
+        const res = await fetch(`/api/novels/${currentNovelId}/episodes/${currentEpisodeNumber}/generate-image`, {
+            method: "POST"
+        });
+        const data = await res.json();
+        if (data.success) {
+            const heroImg = document.getElementById("readerHeroImg");
+            if (heroImg) {
+                heroImg.src = `${data.image_url}?t=${Date.now()}`;
+            }
+            showToast("Chapter artwork updated successfully!", "success");
+        } else {
+            showToast("Failed to regenerate artwork", "error");
+        }
+    } catch (e) {
+        showToast("Error generating artwork: " + e.message, "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+    }
+}
+
 
 function toggleFontSize(delta) {
     readerFontSize = Math.max(1.0, Math.min(2.0, readerFontSize + delta * 0.1));

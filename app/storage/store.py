@@ -111,6 +111,38 @@ class StorageManager:
         with open(path, "r", encoding="utf-8") as f:
             return EpisodeResponse.model_validate_json(f.read())
 
+    def save_episode_image(self, novel_id: str, episode_number: int, data: bytes, mime_type: str = "image/jpeg"):
+        d = self._novel_dir(novel_id)
+        img_dir = os.path.join(d, "episodes", "images")
+        os.makedirs(img_dir, exist_ok=True)
+        ext = "svg" if "svg" in mime_type else "jpg"
+        file_path = os.path.join(img_dir, f"{episode_number}.{ext}")
+        with open(file_path, "wb") as f:
+            f.write(data)
+        meta_path = os.path.join(img_dir, f"{episode_number}.meta")
+        with open(meta_path, "w", encoding="utf-8") as f:
+            f.write(mime_type)
+
+    def get_episode_image(self, novel_id: str, episode_number: int) -> Optional[Tuple[bytes, str]]:
+        d = self._novel_dir(novel_id)
+        img_dir = os.path.join(d, "episodes", "images")
+        if not os.path.exists(img_dir):
+            return None
+        for ext in ("jpg", "png", "svg", "jpeg"):
+            path = os.path.join(img_dir, f"{episode_number}.{ext}")
+            if os.path.exists(path):
+                meta_path = os.path.join(img_dir, f"{episode_number}.meta")
+                mime_type = "image/svg+xml" if ext == "svg" else "image/jpeg"
+                if os.path.exists(meta_path):
+                    try:
+                        with open(meta_path, "r", encoding="utf-8") as mf:
+                            mime_type = mf.read().strip()
+                    except Exception:
+                        pass
+                with open(path, "rb") as f:
+                    return f.read(), mime_type
+        return None
+
     def list_episodes(self, novel_id: str) -> List[EpisodeSummary]:
         episodes_dir = os.path.join(self._novel_dir(novel_id), "episodes")
         summaries = []
@@ -125,7 +157,8 @@ class StorageManager:
                         title=ep.title,
                         summary=ep.summary,
                         word_count=ep.word_count,
-                        pov_character=ep.pov_character
+                        pov_character=ep.pov_character,
+                        image_url=ep.image_url
                     ))
         summaries.sort(key=lambda x: x.episode_number)
         return summaries

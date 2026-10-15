@@ -2,7 +2,7 @@ import uuid
 import asyncio
 from datetime import datetime, timezone
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Response
 from pydantic import BaseModel
 
 from app.models.blueprint import (
@@ -15,6 +15,7 @@ from app.models.episode import EpisodeResponse, EpisodeSummary, GenerationProgre
 from app.models.enums import NovelStatus, Genre, ProseStyle, Theme, Tone, Perspective, EndingType
 from app.storage.store import store
 from app.engine.pipeline import initialize_novel, generate_single_episode, run_novel_episodes
+from app.engine.image_client import chapter_image_client
 
 router = APIRouter(prefix="/api/novels", tags=["Novels"])
 
@@ -281,3 +282,47 @@ async def get_episode(novel_id: str, episode_number: int):
     if not ep:
         raise HTTPException(status_code=404, detail="Episode not found")
     return ep
+
+@router.get("/{novel_id}/episodes/{episode_number}/image")
+async def get_episode_image(novel_id: str, episode_number: int):
+    """Serve the chapter illustration or dynamically generate it on demand."""
+    img_data = store.get_episode_image(novel_id, episode_number)
+    if img_data:
+        data, mime_type = img_data
+        return Response(content=data, media_type=mime_type, headers={"Cache-Control": "public, max-age=86400"})
+
+    # Auto-generate if missing and episode exists
+    bp = store.get_blueprint(novel_id)
+    ep = store.get_episode(novel_id, episode_number)
+    if not bp or not ep:
+        raise HTTPException(status_code=404, detail="Episode or novel not found")
+
+    data, mime_type, prompt = await chapter_image_client.generate(bp, ep)
+    store.save_episode_image(novel_id, episode_number, data, mime_type)
+    ep.image_url = f"/api/novels/{novel_id}/episodes/{episode_number}/image"
+    ep.image_prompt = prompt
+    store.save_episode(ep)
+
+    return Response(content=data, media_type=mime_type, headers={"Cache-Control": "public, max-age=86400"})
+
+@router.post("/{novel_id}/episodes/{episode_number}/generate-image")
+async def generate_episode_image(novel_id: str, episode_number: int):
+    """Regenerate the chapter artwork based on current settings and episode content."""
+    bp = store.get_blueprint(novel_id)
+    ep = store.get_episode(novel_id, episode_number)
+    if not bp or not ep:
+        raise HTTPException(status_code=404, detail="Episode or novel not found")
+
+    data, mime_type, prompt = await chapter_image_client.generate(bp, ep)
+    store.save_episode_image(novel_id, episode_number, data, mime_type)
+    ep.image_url = f"/api/novels/{novel_id}/episodes/{episode_number}/image"
+    ep.image_prompt = prompt
+    store.save_episode(ep)
+
+    return {
+        "success": True,
+        "image_url": ep.image_url,
+        "image_prompt": prompt,
+        "mime_type": mime_type
+    }
+
