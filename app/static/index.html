@@ -8,11 +8,24 @@
 </head>
 <body>
 
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
     <!-- Demo Banner -->
     <div id="demoBanner" class="demo-banner" style="display: none;">
-        <span>💡</span>
-        <span id="demoMessage">Offline Creative Simulator Mode: Generating with local narrative engine. Configure an API key or Custom endpoint for live LLM generation.</span>
-        <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()">⚙️ Connect API</button>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span id="demoMessage">Offline Creative Simulator Mode active. Configure an API key or Custom endpoint for live LLM generation.</span>
+        <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Connect API
+        </button>
     </div>
 
     <!-- Header -->
@@ -20,7 +33,7 @@
         <div class="header-container">
             <div class="brand" onclick="navigateTo('library')">
                 <div class="brand-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
                         <path d="M6 6h10"/>
                         <path d="M6 10h10"/>
@@ -33,9 +46,26 @@
             </div>
 
             <div class="nav-actions">
-                <button class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle Theme">🌓 Theme</button>
-                <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()">⚙️ AI Model</button>
-                <button class="btn btn-primary" onclick="startNewNovel()">✨ New Novel</button>
+                <button class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle Theme" id="themeToggleBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    Theme
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    AI Model
+                </button>
+                <button class="btn btn-primary" onclick="startNewNovel()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    New Novel
+                </button>
             </div>
         </div>
     </header>
@@ -45,70 +75,142 @@
 
         <!-- ==================== 1. VIEW: LIBRARY ==================== -->
         <section id="viewLibrary">
-            <div style="margin-bottom: 28px;">
-                <h1 style="font-size: 2.1rem; font-weight: 900; margin-bottom: 6px;">Author's Desk</h1>
-                <p style="color: var(--text-secondary); font-size: 1.05rem;">Shape the world, cast autonomous characters, and watch the story weave itself across dynamic scenes.</p>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <h1 style="font-size: 2.2rem; font-weight: 800; margin-bottom: 6px;">Author's Desk</h1>
+                    <p style="color: var(--text-secondary); font-size: 1.05rem;">Shape the world, cast autonomous characters, and watch the story weave itself across dynamic scenes.</p>
+                </div>
+                <div>
+                    <button class="btn btn-primary" onclick="startNewNovel()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Create Novel
+                    </button>
+                </div>
             </div>
 
             <!-- Novel Cards Grid -->
             <div id="novelsGrid" class="novel-grid">
-                <!-- Dynamically loaded -->
+                <!-- Dynamically loaded with rich visual cards -->
             </div>
         </section>
 
         <!-- ==================== 2. VIEW: WIZARD (NEW NOVEL) ==================== -->
         <section id="viewWizard" style="display: none;">
-            <div class="card" style="max-width: 880px; margin: 0 auto;">
+            <div class="card" style="max-width: 920px; margin: 0 auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                     <div>
-                        <h2 style="font-size: 1.6rem; font-weight: 900;">Create New Novel</h2>
-                        <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">Launch instantly from curated presets, or let AI expand your single-sentence idea.</p>
+                        <h2 style="font-size: 1.6rem; font-weight: 800;">Create New Novel</h2>
+                        <p style="color: var(--text-secondary); font-size: 0.92rem; margin-top: 4px;">Launch instantly from visual presets, or let AI expand your single-sentence idea.</p>
                     </div>
-                    <button class="btn btn-ghost btn-sm" onclick="navigateTo('library')">Cancel</button>
+                    <button class="btn btn-ghost btn-sm" onclick="navigateTo('library')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        Cancel
+                    </button>
                 </div>
 
-                <!-- 🌟 1-Click Inspirations -->
+                <!-- Visual 1-Click Inspirations -->
                 <div style="margin-bottom: 24px;">
-                    <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                        <span>⚡ Instant Launch with Curated Presets:</span>
+                    <div style="font-weight: 700; font-size: 0.92rem; color: var(--text-primary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        </svg>
+                        <span>Instant Launch with Visual Presets:</span>
                     </div>
                     <div class="presets-grid">
+                        <!-- Preset 1: Mystery -->
                         <div class="preset-card" onclick="applyPreset('mystery')">
-                            <div class="preset-icon">🔍</div>
-                            <div class="preset-title">The Blackwood Mystery</div>
-                            <div class="preset-desc">An archival conservator returns to foggy Edinburgh to unravel a 20-year-old ledger conspiracy.</div>
+                            <img class="preset-bg" src="https://images.unsplash.com/photo-1507842229451-7f01be8510ab?auto=format&fit=crop&w=700&q=80" alt="Gothic Mystery" loading="lazy">
+                            <div class="preset-overlay">
+                                <span class="preset-badge">Mystery & Crime</span>
+                                <div class="preset-title">The Blackwood Mystery</div>
+                                <div class="preset-desc">An archival conservator returns to foggy Edinburgh to unravel a 20-year-old ledger conspiracy.</div>
+                            </div>
                         </div>
+                        <!-- Preset 2: Romance -->
                         <div class="preset-card" onclick="applyPreset('romance')">
-                            <div class="preset-icon">☕</div>
-                            <div class="preset-title">Autumn in Saint-Germain</div>
-                            <div class="preset-desc">Two guarded souls cross paths during a Parisian downpour, hiding wounds they dare not speak aloud.</div>
+                            <img class="preset-bg" src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=700&q=80" alt="Parisian Romance" loading="lazy">
+                            <div class="preset-overlay">
+                                <span class="preset-badge">Literary Romance</span>
+                                <div class="preset-title">Autumn in Saint-Germain</div>
+                                <div class="preset-desc">Two guarded souls cross paths during a Parisian downpour, hiding wounds they dare not speak aloud.</div>
+                            </div>
                         </div>
+                        <!-- Preset 3: Sci-Fi -->
                         <div class="preset-card" onclick="applyPreset('sci-fi')">
-                            <div class="preset-icon">🤖</div>
-                            <div class="preset-title">Protocol Zero: London 2045</div>
-                            <div class="preset-desc">A city-wide neural blackout exposes a syndicate altering human biological memories.</div>
+                            <img class="preset-bg" src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=700&q=80" alt="Cyberpunk Sci-Fi" loading="lazy">
+                            <div class="preset-overlay">
+                                <span class="preset-badge">Sci-Fi & Cyberpunk</span>
+                                <div class="preset-title">Protocol Zero: London 2045</div>
+                                <div class="preset-desc">A city-wide neural blackout exposes a syndicate altering human biological memories.</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ✨ Magic AI Prompt Auto-Fill -->
+                <!-- Magic AI Prompt Auto-Fill -->
                 <div class="magic-box">
-                    <label class="form-label" style="display: flex; align-items: center; gap: 8px; font-size: 1rem; color: var(--accent);">
-                        <span>✨ Magic Idea Co-Pilot (Single-sentence auto-complete):</span>
+                    <label class="form-label" style="display: flex; align-items: center; gap: 8px; font-size: 0.95rem; color: var(--accent);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                            <path d="M5 3v4"/>
+                            <path d="M19 17v4"/>
+                            <path d="M3 5h4"/>
+                            <path d="M17 19h4"/>
+                        </svg>
+                        <span>Idea Co-Pilot (Single-sentence auto-complete):</span>
                     </label>
                     <div style="display: flex; gap: 10px; margin-top: 8px;">
                         <input type="text" id="magicPromptInput" class="form-input" placeholder="e.g. A reclusive harbor detective investigates a ghost ship that sailed in during a storm...">
-                        <button class="btn btn-primary" onclick="triggerMagicAutoFill()" style="white-space: nowrap;">✨ AI Auto-Fill</button>
+                        <button class="btn btn-primary" onclick="triggerMagicAutoFill()" style="white-space: nowrap;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                            </svg>
+                            AI Auto-Fill
+                        </button>
                     </div>
                     <div class="form-hint" style="color: var(--text-tertiary);">Provide a single premise or prompt, and the AI will forge characters, world rules, and plotlines for you.</div>
                 </div>
 
                 <!-- Step Navigator Tabs -->
                 <div class="tab-nav">
-                    <button class="tab-btn active" id="tabNav1" onclick="setWizardStep(1)">1. Premise & Style</button>
-                    <button class="tab-btn" id="tabNav2" onclick="setWizardStep(2)">2. World & Rules</button>
-                    <button class="tab-btn" id="tabNav3" onclick="setWizardStep(3)">3. Cast & Characters</button>
-                    <button class="tab-btn" id="tabNav4" onclick="setWizardStep(4)">4. Plot & Launch</button>
+                    <button class="tab-btn active" id="tabNav1" onclick="setWizardStep(1)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                        </svg>
+                        1. Premise & Style
+                    </button>
+                    <button class="tab-btn" id="tabNav2" onclick="setWizardStep(2)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                        2. World & Rules
+                    </button>
+                    <button class="tab-btn" id="tabNav3" onclick="setWizardStep(3)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        3. Cast & Characters
+                    </button>
+                    <button class="tab-btn" id="tabNav4" onclick="setWizardStep(4)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="9" y1="21" x2="9" y2="9"></line>
+                        </svg>
+                        4. Plot & Launch
+                    </button>
                 </div>
 
                 <!-- Wizard Step 1: Idea & Style -->
@@ -146,7 +248,13 @@
                     </div>
 
                     <div style="text-align: right; margin-top: 20px;">
-                        <button class="btn btn-primary" onclick="setWizardStep(2)">Next: World & Setting ➔</button>
+                        <button class="btn btn-primary" onclick="setWizardStep(2)">
+                            Next: World & Setting
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
@@ -159,7 +267,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Era / Time Period</label>
-                            <input type="text" id="wizEra" class="form-input" value="Contemporary">
+                            <input type="text" id="wizEra" class="form-input" value="Late Victorian">
                         </div>
                     </div>
 
@@ -176,30 +284,74 @@
                                 <input type="text" class="form-input loc-desc" placeholder="Sensory details and atmosphere" value="Smell of aged paper, iron gall ink, and cold gas lamps">
                             </div>
                         </div>
-                        <button class="btn btn-secondary btn-sm" onclick="addLocationRow()">+ Add Another Location</button>
+                        <button class="btn btn-secondary btn-sm" onclick="addLocationRow()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add Location
+                        </button>
                     </div>
 
                     <div style="display: flex; justify-content: space-between; margin-top: 24px;">
-                        <button class="btn btn-secondary" onclick="setWizardStep(1)">⬅ Previous Step</button>
-                        <button class="btn btn-primary" onclick="setWizardStep(3)">Next: Cast & Characters ➔</button>
+                        <button class="btn btn-secondary" onclick="setWizardStep(1)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="19" y1="12" x2="5" y2="12"></line>
+                                <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                            Previous
+                        </button>
+                        <button class="btn btn-primary" onclick="setWizardStep(3)">
+                            Next: Cast & Characters
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
                 <!-- Wizard Step 3: Characters -->
                 <div id="wizardStep3" style="display: none;">
-                    <div style="background: var(--bg-surface-subtle); padding: 14px 18px; border-radius: var(--radius-sm); margin-bottom: 20px; border-left: 4px solid var(--accent);">
-                        <strong>Multi-Agent Directive:</strong> Each character is roleplayed by an independent autonomous agent with distinct motivations, fatal flaws, and strictly isolated knowledge.
+                    <div style="background: var(--bg-surface-subtle); padding: 14px 18px; border-radius: var(--radius-sm); margin-bottom: 20px; border-left: 4px solid var(--accent); display: flex; align-items: center; gap: 12px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <div>
+                            <strong>Multi-Agent Cast:</strong> Each character acts with distinct psychological goals, fatal flaws, and strictly isolated personal knowledge.
+                        </div>
                     </div>
 
                     <div id="wizCharactersList">
                         <!-- Loaded dynamically -->
                     </div>
 
-                    <button class="btn btn-secondary btn-sm" onclick="addCharacterCard()">+ Add Another Character</button>
+                    <button class="btn btn-secondary btn-sm" onclick="addCharacterCard()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add Character
+                    </button>
 
                     <div style="display: flex; justify-content: space-between; margin-top: 24px;">
-                        <button class="btn btn-secondary" onclick="setWizardStep(2)">⬅ Previous Step</button>
-                        <button class="btn btn-primary" onclick="setWizardStep(4)">Next: Structure & Launch ➔</button>
+                        <button class="btn btn-secondary" onclick="setWizardStep(2)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="19" y1="12" x2="5" y2="12"></line>
+                                <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                            Previous
+                        </button>
+                        <button class="btn btn-primary" onclick="setWizardStep(4)">
+                            Next: Structure & Launch
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
@@ -207,7 +359,7 @@
                 <div id="wizardStep4" style="display: none;">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                         <div class="form-group">
-                            <label class="form-label">Total Planned Episodes / Chapters</label>
+                            <label class="form-label">Total Planned Chapters</label>
                             <input type="number" id="wizEpisodesCount" class="form-input" value="4" min="1" max="20">
                         </div>
                         <div class="form-group">
@@ -222,7 +374,7 @@
                             <select id="wizPerspective" class="form-select"></select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Resolution / Ending Style</label>
+                            <label class="form-label">Ending Style</label>
                             <select id="wizEnding" class="form-select"></select>
                         </div>
                     </div>
@@ -230,14 +382,25 @@
                     <div class="form-group" style="background: var(--bg-surface-subtle); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
                         <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
                             <input type="checkbox" id="wizAutoContinue" checked style="width: 20px; height: 20px; accent-color: var(--accent);">
-                            <span style="font-weight: 800; font-size: 1rem;">Auto-Continue Writing to Completion</span>
+                            <span style="font-weight: 700; font-size: 0.95rem;">Auto-Continue Writing to Completion</span>
                         </label>
                         <div class="form-hint" style="margin-left: 32px;">Automatically advances chapter generation after world building completes.</div>
                     </div>
 
                     <div style="display: flex; justify-content: space-between; margin-top: 30px;">
-                        <button class="btn btn-secondary" onclick="setWizardStep(3)">⬅ Previous Step</button>
-                        <button class="btn btn-primary" onclick="submitCreateNovel()" style="padding: 12px 32px; font-size: 1.05rem;">🚀 Launch Novel Simulation</button>
+                        <button class="btn btn-secondary" onclick="setWizardStep(3)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="19" y1="12" x2="5" y2="12"></line>
+                                <polyline points="12 19 5 12 12 5"></polyline>
+                            </svg>
+                            Previous
+                        </button>
+                        <button class="btn btn-primary btn-lg" onclick="submitCreateNovel()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            Launch Novel Simulation
+                        </button>
                     </div>
                 </div>
 
@@ -248,54 +411,142 @@
         <section id="viewNovel" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
                 <div>
-                    <button class="btn btn-ghost btn-sm" onclick="navigateTo('library')" style="margin-bottom: 8px;">⬅ Back to Author's Desk</button>
+                    <button class="btn btn-ghost btn-sm" onclick="navigateTo('library')" style="margin-bottom: 10px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        Back to Author's Desk
+                    </button>
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <h1 id="novelTitle" style="font-size: 2.2rem; font-weight: 900;">...</h1>
+                        <h1 id="novelTitle" style="font-size: 2.2rem; font-weight: 800;">...</h1>
                         <span id="novelStatusBadge" class="badge badge-ready">Ready</span>
                     </div>
-                    <p id="novelLogline" style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 6px; max-width: 800px;">...</p>
+                    <p id="novelLogline" style="color: var(--text-secondary); font-size: 1.05rem; margin-top: 6px; max-width: 800px;">...</p>
                 </div>
                 <div style="display: flex; gap: 10px;">
-                    <button id="btnWriteNext" class="btn btn-primary" onclick="triggerWriteNext()">✍️ Write Next Chapter</button>
-                    <button class="btn btn-secondary btn-sm" onclick="confirmDeleteNovel()" style="color: var(--danger);">🗑️ Delete</button>
+                    <button id="btnWriteNext" class="btn btn-primary" onclick="triggerWriteNext()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                        </svg>
+                        Write Next Chapter
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="confirmDeleteNovel()" style="color: var(--danger);">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Delete
+                    </button>
                 </div>
             </div>
 
             <!-- LIVE PRODUCTION STEPPER -->
-            <div id="novelProgressCard" class="card" style="border: 2px solid var(--accent); background: var(--bg-surface); display: none;">
+            <div id="novelProgressCard" class="card" style="border: 2px solid var(--accent); background: var(--bg-surface); display: none; margin-bottom: 24px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 1.3rem;">⚙️</span>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="brand-icon" style="width: 32px; height: 32px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
                         <div>
-                            <strong id="progressStepTitle" style="font-size: 1.1rem; color: var(--accent);">Generating...</strong>
+                            <strong id="progressStepTitle" style="font-size: 1.05rem; color: var(--accent);">Generating...</strong>
                             <div id="progressDetail" style="font-size: 0.85rem; color: var(--text-tertiary);">Processing pipeline stage...</div>
                         </div>
                     </div>
-                    <span id="progressPercentage" style="font-size: 1.4rem; font-weight: 900; color: var(--accent);">0%</span>
+                    <span id="progressPercentage" style="font-size: 1.3rem; font-weight: 800; color: var(--accent);">0%</span>
                 </div>
 
                 <div class="progress-bar-bg">
                     <div id="progressFill" class="progress-bar-fill" style="width: 0%;"></div>
                 </div>
 
-                <!-- 6 Visual Stages -->
+                <!-- 6 Visual Stages with Clean SVGs -->
                 <div class="stage-stepper">
-                    <div class="stage-step" id="stage1Ind"><span>🌍</span> 1. World Architect</div>
-                    <div class="stage-step" id="stage2Ind"><span>📐</span> 2. Story Matrix</div>
-                    <div class="stage-step" id="stage3Ind"><span>🎬</span> 3. Scene Director</div>
-                    <div class="stage-step" id="stage4Ind"><span>🎭</span> 4. Character Actors</div>
-                    <div class="stage-step" id="stage5Ind"><span>🖋️</span> 5. Master Novelist</div>
-                    <div class="stage-step" id="stage6Ind"><span>🧠</span> 6. Story Memory</div>
+                    <div class="stage-step" id="stage1Ind">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                        <span>1. World Architect</span>
+                    </div>
+                    <div class="stage-step" id="stage2Ind">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="9" y1="21" x2="9" y2="9"></line>
+                        </svg>
+                        <span>2. Story Matrix</span>
+                    </div>
+                    <div class="stage-step" id="stage3Ind">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                        </svg>
+                        <span>3. Scene Director</span>
+                    </div>
+                    <div class="stage-step" id="stage4Ind">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span>4. Actor Simulation</span>
+                    </div>
+                    <div class="stage-step" id="stage5Ind">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                        </svg>
+                        <span>5. Master Novelist</span>
+                    </div>
+                    <div class="stage-step" id="stage6Ind">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                            <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                            <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                        </svg>
+                        <span>6. Memory Keeper</span>
+                    </div>
                 </div>
             </div>
 
             <!-- Novel Details Tabs -->
             <div class="card">
                 <div class="tab-nav">
-                    <button class="tab-btn active" onclick="switchNovelTab('episodes')">📖 Chapters</button>
-                    <button class="tab-btn" onclick="switchNovelTab('cast')">🎭 Cast & Dossiers</button>
-                    <button class="tab-btn" onclick="switchNovelTab('world')">🌍 Setting & Laws</button>
-                    <button class="tab-btn" onclick="switchNovelTab('synopsis')">📜 Synopsis & Matrix</button>
+                    <button class="tab-btn active" onclick="switchNovelTab('episodes')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                        </svg>
+                        Chapters
+                    </button>
+                    <button class="tab-btn" onclick="switchNovelTab('cast')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                        </svg>
+                        Cast & Dossiers
+                    </button>
+                    <button class="tab-btn" onclick="switchNovelTab('world')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                        </svg>
+                        Setting & Laws
+                    </button>
+                    <button class="tab-btn" onclick="switchNovelTab('synopsis')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        Synopsis & Matrix
+                    </button>
                 </div>
 
                 <!-- Tab: Episodes -->
@@ -305,7 +556,7 @@
 
                 <!-- Tab: Cast -->
                 <div id="tabCast" style="display: none;">
-                    <div id="castCardsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 18px;"></div>
+                    <div id="castCardsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;"></div>
                 </div>
 
                 <!-- Tab: World -->
@@ -322,15 +573,42 @@
 
         <!-- ==================== 4. VIEW: BOOK READER ==================== -->
         <section id="viewReader" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; max-width: 840px; margin-left: auto; margin-right: auto;">
-                <button class="btn btn-ghost btn-sm" onclick="navigateTo('novel')">⬅ Back to Novel</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; max-width: 860px; margin-left: auto; margin-right: auto; flex-wrap: wrap; gap: 14px;">
+                <button class="btn btn-ghost btn-sm" onclick="navigateTo('novel')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Back to Novel
+                </button>
                 
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <!-- Reading Theme Switcher -->
+                    <!-- Reading Theme Switcher with SVGs -->
                     <div style="display: flex; background: var(--bg-surface-subtle); padding: 3px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
-                        <button class="btn btn-ghost btn-sm" onclick="setReaderTheme('light')" title="Light Theme">☀️</button>
-                        <button class="btn btn-ghost btn-sm" onclick="setReaderTheme('sepia')" title="Sepia Book Paper Theme">📜</button>
-                        <button class="btn btn-ghost btn-sm" onclick="setReaderTheme('dark')" title="Dark Theme">🌙</button>
+                        <button class="btn btn-ghost btn-sm" onclick="setReaderTheme('light')" title="Light Paper">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="5"></circle>
+                                <line x1="12" y1="1" x2="12" y2="3"></line>
+                                <line x1="12" y1="21" x2="12" y2="23"></line>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                <line x1="1" y1="12" x2="3" y2="12"></line>
+                                <line x1="21" y1="12" x2="23" y2="12"></line>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                            </svg>
+                        </button>
+                        <button class="btn btn-ghost btn-sm" onclick="setReaderTheme('sepia')" title="Sepia Book Paper">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                        </button>
+                        <button class="btn btn-ghost btn-sm" onclick="setReaderTheme('dark')" title="Night Dark Theme">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </button>
                     </div>
 
                     <!-- Font size -->
@@ -338,21 +616,29 @@
                     <button class="btn btn-secondary btn-sm" onclick="toggleFontSize(1)">A+</button>
                     
                     <!-- Behind the scenes trigger -->
-                    <button class="btn btn-primary" onclick="toggleDrawer()">🎭 Behind the Scenes</button>
+                    <button class="btn btn-primary" onclick="toggleDrawer()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M2 12h20"></path>
+                            <path d="M20 12v8H4v-8"></path>
+                            <path d="m4 4 16 0"></path>
+                            <path d="m4 8 16 0"></path>
+                        </svg>
+                        Behind the Scenes
+                    </button>
                 </div>
             </div>
 
             <!-- Book Page -->
-            <div class="card" style="max-width: 840px; margin: 0 auto; padding: 48px 56px; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
-                <div style="text-align: center; margin-bottom: 36px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 24px;">
-                    <span id="readerEpisodeNum" class="badge badge-ready" style="font-size: 0.9rem;">Chapter 1</span>
-                    <h1 id="readerEpisodeTitle" style="font-size: 2.2rem; font-weight: 900; margin: 16px 0 8px;">...</h1>
-                    <div style="font-size: 0.92rem; color: var(--text-tertiary); display: flex; justify-content: center; gap: 16px;">
+            <div class="card" style="max-width: 860px; margin: 0 auto; padding: 56px 64px; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+                <div style="text-align: center; margin-bottom: 40px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 28px;">
+                    <span id="readerEpisodeNum" class="badge badge-ready" style="font-size: 0.85rem;">Chapter 1</span>
+                    <h1 id="readerEpisodeTitle" style="font-size: 2.3rem; font-weight: 800; margin: 16px 0 10px;">...</h1>
+                    <div style="font-size: 0.92rem; color: var(--text-tertiary); display: flex; justify-content: center; align-items: center; gap: 16px;">
                         <span>POV: <strong id="readerPovChar" style="color: var(--text-primary);">...</strong></span>
                         <span>·</span>
                         <span id="readerWordCount">... words</span>
                         <span>·</span>
-                        <span id="readerReadTime">⏱️ 3 min read</span>
+                        <span id="readerReadTime">3 min read</span>
                     </div>
                 </div>
 
@@ -366,14 +652,23 @@
 
     <!-- ==================== BEHIND THE SCENES DRAWER ==================== -->
     <aside id="behindTheScenesDrawer" class="drawer">
-        <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface-elevated);">
+        <div style="padding: 22px 26px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface-elevated);">
             <div>
-                <h3 style="font-size: 1.25rem; font-weight: 900; display: flex; align-items: center; gap: 8px;">
-                    <span>🎭</span> Behind the Scenes
+                <h3 style="font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                        <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                    </svg>
+                    Behind the Scenes
                 </h3>
                 <div style="font-size: 0.82rem; color: var(--text-tertiary);">Directorial blocking, physical gestures, and secret thoughts</div>
             </div>
-            <button class="btn btn-ghost btn-sm" onclick="toggleDrawer()" style="font-size: 1.2rem;">✕</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleDrawer()" style="padding: 6px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
         </div>
 
         <div id="drawerContent" style="flex: 1; overflow-y: auto; padding: 24px;">
@@ -385,16 +680,25 @@
     <div id="settingsModal" class="modal-overlay" style="display: none;">
         <div class="modal-box" style="max-width: 580px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="font-size: 1.3rem; font-weight: 900; display: flex; align-items: center; gap: 8px;">
-                    <span>⚙️</span> AI Engine Configuration
+                <h3 style="font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    AI Engine Configuration
                 </h3>
-                <button class="btn btn-ghost btn-sm" onclick="closeSettingsModal()">✕</button>
+                <button class="btn btn-ghost btn-sm" onclick="closeSettingsModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
             
             <div class="form-group">
                 <label class="form-label">Provider</label>
                 <select id="cfgProvider" class="form-select" onchange="onProviderChanged()">
-                    <option value="custom">🌐 Custom API (OpenAI-Compatible Endpoint)</option>
+                    <option value="custom">Custom API (OpenAI-Compatible Endpoint)</option>
                     <option value="gemini">Google Gemini (Recommended)</option>
                     <option value="openai">OpenAI (Official)</option>
                     <option value="openrouter">OpenRouter</option>
@@ -407,10 +711,10 @@
             <div id="customPresetsRow" style="margin-bottom: 16px;">
                 <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-tertiary); margin-bottom: 8px;">Quick Gateway Presets:</div>
                 <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('groq')">⚡ Groq (Ultra-Fast)</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('openrouter')">🌐 OpenRouter</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('avalai')">🇮🇷 AvalAI Proxy</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('lmstudio')">💻 LM Studio / vLLM</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('groq')">Groq (Ultra-Fast)</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('openrouter')">OpenRouter</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('avalai')">AvalAI Proxy</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('lmstudio')">LM Studio / vLLM</button>
                 </div>
             </div>
 
@@ -435,7 +739,10 @@
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px;">
                 <button type="button" id="btnTestConn" class="btn btn-secondary" onclick="testConnection()">
-                    <span>🔌</span> Test Live Connection
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    Test Live Connection
                 </button>
                 <div style="display: flex; gap: 8px;">
                     <button type="button" class="btn btn-ghost" onclick="closeSettingsModal()">Cancel</button>

@@ -6,6 +6,87 @@ let currentEpisodeData = null;
 let readerFontSize = 1.25;
 let progressPollTimer = null;
 
+// Modern SVG Icons Dictionary
+const ICONS = {
+    book: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>`,
+    quill: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`,
+    clock: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    target: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+    seedling: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a6 6 0 0 0-6-6H3v3a6 6 0 0 0 6 6h3"/><path d="M12 14a6 6 0 0 1 6-6h3v3a6 6 0 0 1-6 6h-3"/><line x1="12" y1="10" x2="12" y2="22"/></svg>`,
+    lock: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+    mapPin: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+    lightbulb: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5.76.76 1.23 1.52 1.41 2.5"/></svg>`,
+    user: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    check: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+    alert: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+    theater: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
+    trash: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
+};
+
+// Genre Atmospheric Cover Images (High-quality literary imagery)
+const GENRE_COVERS = {
+    "Mystery & Crime": "https://images.unsplash.com/photo-1507842229451-7f01be8510ab?auto=format&fit=crop&w=800&q=80",
+    "Romance": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80",
+    "Sci-Fi": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80",
+    "Fantasy": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
+    "Historical": "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&q=80",
+    "Horror": "https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=800&q=80",
+    "Drama": "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80",
+    "Adventure": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80",
+    "default": "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=800&q=80"
+};
+
+// Character Avatars by gender / archetype
+const AVATAR_PORTRAITS = {
+    male: [
+        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80",
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+        "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80"
+    ],
+    female: [
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+        "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80",
+        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80"
+    ],
+    default: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80"
+};
+
+function getCharacterAvatar(name = "", gender = "Male") {
+    const list = gender.toLowerCase() === "female" ? AVATAR_PORTRAITS.female : AVATAR_PORTRAITS.male;
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
+    return list[Math.abs(hash) % list.length] || AVATAR_PORTRAITS.default;
+}
+
+function getCoverForNovel(genre = "") {
+    for (const key of Object.keys(GENRE_COVERS)) {
+        if (genre.toLowerCase().includes(key.toLowerCase())) {
+            return GENRE_COVERS[key];
+        }
+    }
+    return GENRE_COVERS.default;
+}
+
+// Toast System
+function showToast(message, type = "info") {
+    const container = document.getElementById("toastContainer");
+    if (!container) return;
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    const iconSvg = type === "success" ? ICONS.check : (type === "error" ? ICONS.alert : ICONS.quill);
+    toast.innerHTML = `
+        <span style="display: flex; align-items: center; color: ${type === 'success' ? 'var(--success)' : (type === 'error' ? 'var(--danger)' : 'var(--accent)')};">${iconSvg}</span>
+        <span>${message}</span>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(10px)";
+        toast.style.transition = "all 0.3s ease";
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
 const ENUMS = {
     genres: ["Drama", "Mystery & Crime", "Romance", "Historical", "Fantasy", "Sci-Fi", "Horror", "Adventure", "Social Drama", "Magical Realism"],
     proseStyles: ["Literary & Elegant", "Clear & Fluent", "Poetic & Vivid", "Crisp & Minimalist", "Witty & Satirical", "Cold & Journalistic", "Stream of Consciousness", "Epic & Grand"],
@@ -52,6 +133,7 @@ function navigateTo(viewName) {
         stopProgressPolling();
         loadLibrary();
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // System Info
@@ -86,10 +168,10 @@ function setReaderTheme(themeName) {
     }
 }
 
-// Load Library
+// Load Library with Visual Cover Art
 async function loadLibrary() {
     const grid = document.getElementById("novelsGrid");
-    grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-tertiary); padding: 40px;">Preparing Author's Desk…</div>`;
+    grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-tertiary); padding: 50px;">Preparing Author's Desk…</div>`;
     
     try {
         const res = await fetch("/api/novels");
@@ -97,36 +179,57 @@ async function loadLibrary() {
         
         if (novels.length === 0) {
             grid.innerHTML = `
-                <div style="grid-column: 1/-1; text-align: center; padding: 70px 24px; background: var(--bg-surface); border-radius: var(--radius-lg); border: 2px dashed var(--border-subtle);">
-                    <div style="font-size: 3.5rem; margin-bottom: 16px;">📚</div>
-                    <h3 style="font-weight: 900; font-size: 1.5rem; margin-bottom: 8px;">Your Library is Empty</h3>
-                    <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 24px;">Start by launching one of our instant presets or crafting your own original premise.</p>
-                    <button class="btn btn-primary" onclick="startNewNovel()" style="padding: 12px 28px; font-size: 1.05rem;">✨ Create First Novel</button>
+                <div style="grid-column: 1/-1; text-align: center; padding: 80px 24px; background: var(--bg-surface); border-radius: var(--radius-lg); border: 2px dashed var(--border-subtle);">
+                    <div style="width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 50%; background: var(--accent-subtle); display: flex; align-items: center; justify-content: center; color: var(--accent);">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                            <path d="M6 6h10"/>
+                            <path d="M6 10h10"/>
+                        </svg>
+                    </div>
+                    <h3 style="font-weight: 800; font-size: 1.5rem; margin-bottom: 8px;">Your Library is Empty</h3>
+                    <p style="color: var(--text-secondary); max-width: 480px; margin: 0 auto 24px;">Start by launching one of our curated visual presets or crafting your own original premise.</p>
+                    <button class="btn btn-primary" onclick="startNewNovel()" style="padding: 12px 28px; font-size: 1rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Create First Novel
+                    </button>
                 </div>
             `;
             return;
         }
 
-        grid.innerHTML = novels.map(n => `
+        grid.innerHTML = novels.map(n => {
+            const coverUrl = getCoverForNovel(n.genre);
+            const statusClass = n.status === 'Completed' ? 'badge-completed' : (n.status === 'Writing Episode' ? 'badge-writing' : 'badge-ready');
+            return `
             <div class="novel-card" onclick="openNovel('${n.novel_id}')">
-                <div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <span class="badge ${n.status === 'Completed' ? 'badge-completed' : (n.status === 'Writing Episode' ? 'badge-writing' : 'badge-ready')}">
-                            ${n.status === 'Writing Episode' ? '● ' : ''}${n.status}
+                <div class="novel-card-cover">
+                    <img src="${coverUrl}" alt="${n.title}" loading="lazy">
+                    <div class="novel-card-cover-overlay">
+                        <span class="badge ${statusClass}">
+                            ${n.status}
                         </span>
-                        <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-tertiary);">${n.genre}</span>
+                        <span style="font-size: 0.78rem; font-weight: 700; color: #FFFFFF; background: rgba(0,0,0,0.45); padding: 3px 8px; border-radius: 4px; backdrop-filter: blur(4px);">${n.genre}</span>
                     </div>
-                    <h3 style="font-size: 1.35rem; font-weight: 900; margin-bottom: 8px; color: var(--text-primary); line-height: 1.4;">${n.title}</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-                        ${n.premise || 'No initial premise provided'}
-                    </p>
                 </div>
-                <div style="margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--text-tertiary); font-weight: 600;">
-                    <span>📖 ${n.written_episodes} of ${n.total_episodes} Chapters</span>
-                    <span>✍️ ${n.total_words ? n.total_words.toLocaleString() + ' words' : 'Draft'}</span>
+                <div class="novel-card-body">
+                    <div>
+                        <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 8px; color: var(--text-primary); line-height: 1.4;">${n.title}</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                            ${n.premise || 'No initial premise provided'}
+                        </p>
+                    </div>
+                    <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-tertiary); font-weight: 600;">
+                        <span style="display: flex; align-items: center; gap: 6px;">${ICONS.book} ${n.written_episodes} of ${n.total_episodes} Chapters</span>
+                        <span style="display: flex; align-items: center; gap: 6px;">${ICONS.quill} ${n.total_words ? n.total_words.toLocaleString() + ' words' : 'Draft'}</span>
+                    </div>
                 </div>
             </div>
-        `).join("");
+            `;
+        }).join("");
 
     } catch (e) {
         grid.innerHTML = `<div style="grid-column: 1/-1; color: var(--danger); text-align: center;">Error connecting to server: ${e.message}</div>`;
@@ -158,9 +261,9 @@ async function applyPreset(presetName) {
         const bp = await res.json();
         fillWizardWithBlueprint(bp);
         setWizardStep(1);
-        alert(`Preset "${presetName}" loaded into the wizard!`);
+        showToast(`Preset loaded into the wizard!`, "success");
     } catch (e) {
-        alert("Error loading preset: " + e.message);
+        showToast("Error loading preset: " + e.message, "error");
     }
 }
 
@@ -168,13 +271,13 @@ async function applyPreset(presetName) {
 async function triggerMagicAutoFill() {
     const prompt = document.getElementById("magicPromptInput").value.trim();
     if (!prompt) {
-        alert("Please write a short sentence or premise in the input box.");
+        showToast("Please provide a prompt or premise in the input box.", "error");
         return;
     }
 
     const btn = event.target;
     const oldText = btn.innerHTML;
-    btn.innerHTML = "⏳ Generating...";
+    btn.innerHTML = `<span>Expanding...</span>`;
     btn.disabled = true;
 
     try {
@@ -185,10 +288,10 @@ async function triggerMagicAutoFill() {
         });
         const bp = await res.json();
         fillWizardWithBlueprint(bp);
-        alert("✨ AI expanded your premise into complete characters, world rules, and plotlines!");
+        showToast("AI synthesized characters, world rules, and plotlines!", "success");
         setWizardStep(1);
     } catch (e) {
-        alert("Error: " + e.message);
+        showToast("Error: " + e.message, "error");
     } finally {
         btn.innerHTML = oldText;
         btn.disabled = false;
@@ -329,9 +432,10 @@ async function submitCreateNovel() {
             body: JSON.stringify(payload)
         });
         const novel = await res.json();
+        showToast("Novel initiated! Directing story matrix...", "success");
         openNovel(novel.novel_id);
     } catch (e) {
-        alert("Error creating novel: " + e.message);
+        showToast("Error creating novel: " + e.message, "error");
     }
 }
 
@@ -356,45 +460,68 @@ async function refreshNovelView() {
         badge.innerText = currentNovel.status;
         badge.className = `badge ${currentNovel.status === 'Completed' ? 'badge-completed' : (currentNovel.status === 'Writing Episode' ? 'badge-writing' : 'badge-ready')}`;
 
-        // Cast Tab
+        // Cast Tab with Authentic Portraits
         const castGrid = document.getElementById("castCardsGrid");
-        castGrid.innerHTML = (currentNovel.cast.characters || []).map(c => `
-            <div class="card" style="padding: 20px; margin: 0; background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <strong style="font-size: 1.2rem; color: var(--accent);">${c.core.name}</strong>
-                    <span class="badge ${c.is_main ? 'badge-ready' : 'badge-draft'}">${c.core.role} · ${c.core.gender}</span>
+        castGrid.innerHTML = (currentNovel.cast.characters || []).map(c => {
+            const avatarUrl = getCharacterAvatar(c.core.name, c.core.gender);
+            return `
+            <div class="character-dossier-card">
+                <div class="character-dossier-header">
+                    <div class="character-avatar">
+                        <img src="${avatarUrl}" alt="${c.core.name}" loading="lazy">
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <strong style="font-size: 1.15rem; color: var(--text-primary);">${c.core.name}</strong>
+                            <span class="badge ${c.is_main ? 'badge-ready' : 'badge-draft'}">${c.core.role}</span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-tertiary); font-weight: 500;">
+                            ${c.core.occupation || 'Unspecified'} · ${c.core.temperament || ''}
+                        </div>
+                    </div>
                 </div>
-                <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600;">
-                    ${c.core.occupation || 'Unspecified'} · ${c.core.temperament || ''}
-                </div>
-                <div style="font-size: 0.88rem; line-height: 1.7; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
-                    <div>🎯 <strong>Want:</strong> ${c.motivation.want || 'Formulating'}</div>
-                    <div>🌱 <strong>Need:</strong> ${c.motivation.need || 'Formulating'}</div>
-                    <div style="color: var(--danger);">🔒 <strong>Secret:</strong> ${c.motivation.secret || 'Guarded'}</div>
+
+                <div class="character-dossier-traits">
+                    <div class="trait-row">
+                        <span class="trait-label" style="display: flex; align-items: center; gap: 4px;">${ICONS.target} Want</span>
+                        <span style="color: var(--text-primary); font-size: 0.88rem;">${c.motivation.want || 'Formulating'}</span>
+                    </div>
+                    <div class="trait-row">
+                        <span class="trait-label" style="display: flex; align-items: center; gap: 4px;">${ICONS.seedling} Need</span>
+                        <span style="color: var(--text-primary); font-size: 0.88rem;">${c.motivation.need || 'Formulating'}</span>
+                    </div>
+                    <div class="trait-row">
+                        <span class="trait-label" style="color: var(--danger); display: flex; align-items: center; gap: 4px;">${ICONS.lock} Secret</span>
+                        <span style="color: var(--text-primary); font-size: 0.88rem;">${c.motivation.secret || 'Guarded'}</span>
+                    </div>
                 </div>
             </div>
-        `).join("");
+            `;
+        }).join("");
 
         // World Tab
         const worldDiv = document.getElementById("worldDetailsContent");
         worldDiv.innerHTML = `
             <div style="margin-bottom: 24px;">
-                <h4 style="font-weight: 800; font-size: 1.1rem; margin-bottom: 8px;">Geography & Era</h4>
+                <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 8px;">Geography & Era</h4>
                 <p style="color: var(--text-secondary);">${currentNovel.world.city}, ${currentNovel.world.country} · Era: ${currentNovel.world.era} · Timeline: ${currentNovel.world.story_time_span}</p>
             </div>
             <div style="margin-bottom: 24px;">
-                <h4 style="font-weight: 800; font-size: 1.1rem; margin-bottom: 8px;">Immutable World Rules</h4>
+                <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 8px;">Immutable World Rules</h4>
                 <ul style="padding-left: 20px; line-height: 2; color: var(--text-secondary);">
                     ${(currentNovel.world.world_rules || []).map(r => `<li>${r}</li>`).join("") || '<li>No explicit rules recorded.</li>'}
                 </ul>
             </div>
             <div>
-                <h4 style="font-weight: 800; font-size: 1.1rem; margin-bottom: 12px;">Key Atmospheric Locations</h4>
+                <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 14px;">Key Atmospheric Locations</h4>
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;">
                     ${(currentNovel.world.locations || []).map(l => `
                         <div class="card" style="padding: 16px; margin: 0; background: var(--bg-surface-subtle);">
-                            <strong style="color: var(--text-primary); font-size: 1rem;">📍 ${l.name}</strong>
-                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px;">${l.description || l.atmosphere || ''}</div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                <span style="color: var(--accent);">${ICONS.mapPin}</span>
+                                <strong style="color: var(--text-primary); font-size: 0.95rem;">${l.name}</strong>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">${l.description || l.atmosphere || ''}</div>
                         </div>
                     `).join("")}
                 </div>
@@ -405,12 +532,12 @@ async function refreshNovelView() {
         const synDiv = document.getElementById("synopsisContent");
         synDiv.innerHTML = `
             <div style="line-height: 2; margin-bottom: 24px;">
-                <h4 style="font-weight: 800; font-size: 1.1rem; margin-bottom: 8px;">Full Narrative Synopsis</h4>
+                <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 8px;">Full Narrative Synopsis</h4>
                 <p style="color: var(--text-secondary);">${currentNovel.synopsis || 'Structuring narrative overview...'}</p>
             </div>
             <div>
-                <h4 style="font-weight: 800; font-size: 1.1rem; margin-bottom: 8px;">Opening Hook</h4>
-                <blockquote style="border-left: 4px solid var(--accent); padding-left: 16px; font-style: italic; color: var(--text-primary); font-size: 1.05rem;">
+                <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 8px;">Opening Hook</h4>
+                <blockquote style="border-left: 3px solid var(--accent); padding-left: 16px; font-style: italic; color: var(--text-primary); font-size: 1.05rem;">
                     "${currentNovel.hook || '...'}"
                 </blockquote>
             </div>
@@ -432,10 +559,15 @@ async function loadEpisodesList() {
         if (episodes.length === 0) {
             listDiv.innerHTML = `
                 <div style="text-align: center; padding: 50px 20px; color: var(--text-secondary);">
-                    <div style="font-size: 2.5rem; margin-bottom: 10px;">✍️</div>
+                    <div style="width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 50%; background: var(--accent-subtle); display: flex; align-items: center; justify-content: center; color: var(--accent);">
+                        ${ICONS.quill}
+                    </div>
                     <div style="font-weight: 800; font-size: 1.15rem; margin-bottom: 6px;">No chapters written yet for this novel.</div>
                     <p style="font-size: 0.92rem; color: var(--text-tertiary); margin-bottom: 18px;">World and story matrix are ready. You can commence with Chapter 1.</p>
-                    <button class="btn btn-primary" onclick="triggerWriteNext()">✍️ Write Chapter 1</button>
+                    <button class="btn btn-primary" onclick="triggerWriteNext()">
+                        ${ICONS.quill}
+                        Write Chapter 1
+                    </button>
                 </div>
             `;
             return;
@@ -446,13 +578,18 @@ async function loadEpisodesList() {
                 <div>
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
                         <span class="badge badge-ready">Chapter ${ep.episode_number}</span>
-                        <strong style="font-size: 1.2rem; color: var(--text-primary);">${ep.title}</strong>
+                        <strong style="font-size: 1.15rem; color: var(--text-primary);">${ep.title}</strong>
                     </div>
                     <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5;">${ep.summary || ''}</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 16px;">
-                    <span style="font-size: 0.88rem; color: var(--text-tertiary); font-weight: 600;">⏱️ ${Math.ceil(ep.word_count / 220)} min read</span>
-                    <button class="btn btn-secondary btn-sm">Read Chapter 📖</button>
+                    <span style="font-size: 0.85rem; color: var(--text-tertiary); font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                        ${ICONS.clock} ${Math.ceil(ep.word_count / 220)} min read
+                    </span>
+                    <button class="btn btn-secondary btn-sm">
+                        ${ICONS.book}
+                        Read Chapter
+                    </button>
                 </div>
             </div>
         `).join("");
@@ -490,7 +627,7 @@ function startProgressPolling() {
             } else {
                 card.style.display = "none";
                 if (p.last_error) {
-                    alert("Generation Error: " + p.last_error);
+                    showToast("Generation Error: " + p.last_error, "error");
                 }
                 await refreshNovelView();
             }
@@ -511,12 +648,13 @@ async function triggerWriteNext() {
         const res = await fetch(`/api/novels/${currentNovelId}/write-next`, { method: "POST" });
         if (!res.ok) {
             const err = await res.json();
-            alert(err.detail || "Error initiating generation");
+            showToast(err.detail || "Error initiating generation", "error");
             return;
         }
+        showToast("Generating next chapter...", "info");
         startProgressPolling();
     } catch (e) {
-        alert("Error: " + e.message);
+        showToast("Error: " + e.message, "error");
     }
 }
 
@@ -525,9 +663,10 @@ async function confirmDeleteNovel() {
     if (!confirm("Are you sure you want to permanently delete this novel and all chapters?")) return;
     try {
         await fetch(`/api/novels/${currentNovelId}`, { method: "DELETE" });
+        showToast("Novel removed from Author's Desk", "info");
         navigateTo('library');
     } catch (e) {
-        alert("Error deleting novel: " + e.message);
+        showToast("Error deleting novel: " + e.message, "error");
     }
 }
 
@@ -555,7 +694,7 @@ async function openReader(episodeNumber) {
         document.getElementById("readerEpisodeTitle").innerText = currentEpisodeData.title;
         document.getElementById("readerPovChar").innerText = currentEpisodeData.pov_character;
         document.getElementById("readerWordCount").innerText = `${currentEpisodeData.word_count.toLocaleString()} words`;
-        document.getElementById("readerReadTime").innerText = `⏱️ ~${Math.ceil(currentEpisodeData.word_count / 220)} min read`;
+        document.getElementById("readerReadTime").innerText = `~${Math.ceil(currentEpisodeData.word_count / 220)} min read`;
 
         const paragraphs = currentEpisodeData.content.split("\n\n").filter(p => p.trim());
         document.getElementById("readerContent").innerHTML = paragraphs.map(p => `<p>${p}</p>`).join("");
@@ -563,7 +702,7 @@ async function openReader(episodeNumber) {
         renderBehindTheScenes(currentEpisodeData.scenes);
 
     } catch (e) {
-        alert("Error loading chapter: " + e.message);
+        showToast("Error loading chapter: " + e.message, "error");
     }
 }
 
@@ -586,45 +725,65 @@ function renderBehindTheScenes(scenes) {
 
     container.innerHTML = scenes.map(s => `
         <div class="scene-block">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <strong style="color: var(--accent); font-size: 1.15rem;">🎬 Scene ${s.scene_number}: ${s.title}</strong>
-                <span class="badge badge-draft" style="font-size: 0.78rem;">${s.time_marker} · 📍 ${s.location_key}</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: var(--accent);">${ICONS.theater}</span>
+                    <strong style="color: var(--text-primary); font-size: 1.05rem;">Scene ${s.scene_number}: ${s.title}</strong>
+                </div>
+                <span class="badge badge-draft" style="font-size: 0.74rem;">${s.time_marker} · ${s.location_key}</span>
             </div>
             
-            <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 14px;">
-                <div>🎯 <strong>Dramatic Goal:</strong> ${s.goal}</div>
-                <div>⚡ <strong>Immediate Conflict:</strong> ${s.conflict}</div>
+            <div style="font-size: 0.86rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 14px;">
+                <div style="display: flex; align-items: flex-start; gap: 6px; margin-bottom: 4px;">
+                    <span style="color: var(--accent);">${ICONS.target}</span>
+                    <span><strong>Goal:</strong> ${s.goal}</span>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 6px;">
+                    <span style="color: var(--gold);">${ICONS.alert}</span>
+                    <span><strong>Conflict:</strong> ${s.conflict}</span>
+                </div>
             </div>
 
-            <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">🎭 Multi-Agent Actor Turns:</div>
+            <div style="font-size: 0.8rem; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">Multi-Agent Actor Turns</div>
             
-            ${(s.turns || []).map(t => `
+            ${(s.turns || []).map(t => {
+                const avatar = getCharacterAvatar(t.character_key);
+                return `
                 <div class="turn-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <strong style="color: var(--accent); font-size: 1rem;">👤 ${t.character_key}</strong>
-                        <span style="font-size: 0.78rem; color: var(--text-tertiary); font-weight: 600;">Emotion: ${t.emotion}</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <img src="${avatar}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" alt="${t.character_key}">
+                            <strong style="color: var(--accent); font-size: 0.95rem;">${t.character_key}</strong>
+                        </div>
+                        <span style="font-size: 0.76rem; color: var(--text-tertiary); font-weight: 600;">Emotion: ${t.emotion}</span>
                     </div>
-                    <div style="font-size: 0.92rem; margin: 8px 0; color: var(--text-primary);">
-                        <strong>Physical Action:</strong> ${t.action}
+
+                    <div style="font-size: 0.88rem; margin: 6px 0; color: var(--text-secondary);">
+                        <strong style="color: var(--text-primary);">Action:</strong> ${t.action}
                     </div>
+
                     ${t.dialogue ? `
-                        <div style="font-size: 0.95rem; color: var(--text-primary); background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: 6px; margin: 6px 0; border-left: 3px solid var(--accent);">
-                            <strong>Spoken Dialogue:</strong> "${t.dialogue}"
+                        <div style="font-size: 0.92rem; color: var(--text-primary); background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: 6px; margin: 8px 0; border-left: 3px solid var(--accent);">
+                            "${t.dialogue}"
                         </div>
                     ` : ''}
                     
                     <div class="thought-box">
-                        <strong>🔒 Secret Internal Thought:</strong>
+                        <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--danger); font-size: 0.78rem; text-transform: uppercase;">
+                            ${ICONS.lock} Secret Internal Thought
+                        </div>
                         <div style="margin-top: 4px;">"${t.thought}"</div>
                     </div>
 
                     ${t.knowledge_gain ? `
-                        <div style="font-size: 0.82rem; color: var(--success); margin-top: 8px; font-weight: 700;">
-                            💡 New Knowledge Acquired: ${t.knowledge_gain}
+                        <div style="font-size: 0.8rem; color: var(--success); margin-top: 8px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                            ${ICONS.lightbulb}
+                            <span>Knowledge Acquired: ${t.knowledge_gain}</span>
                         </div>
                     ` : ''}
                 </div>
-            `).join("")}
+                `;
+            }).join("")}
         </div>
     `).join("");
 }
@@ -676,7 +835,7 @@ function onProviderChanged() {
         modelInput.placeholder = "gpt-4o-mini or gpt-4o";
         if (!modelInput.value || modelInput.value.includes("gemini")) modelInput.value = "gpt-4o-mini";
     } else if (prov === "custom") {
-        modelInput.placeholder = "gpt-4o-mini, deepseek-chat, or your custom server model";
+        modelInput.placeholder = "gpt-4o-mini, deepseek-chat, or custom model name";
     }
 }
 
@@ -700,6 +859,7 @@ function applyCustomApiPreset(preset) {
         baseUrlInput.value = "http://localhost:1234/v1";
         modelInput.value = "local-model";
     }
+    showToast(`Applied ${preset.toUpperCase()} gateway preset`, "info");
 }
 
 async function testConnection() {
@@ -711,7 +871,7 @@ async function testConnection() {
     const btn = document.getElementById("btnTestConn");
 
     const oldText = btn.innerHTML;
-    btn.innerHTML = `<span>⏳</span> Testing connection...`;
+    btn.innerHTML = `<span>Testing connection...</span>`;
     btn.disabled = true;
     resultBox.style.display = "none";
 
@@ -734,7 +894,9 @@ async function testConnection() {
             resultBox.style.border = "1px solid var(--success)";
             resultBox.style.color = "var(--success)";
             resultBox.innerHTML = `
-                <div><strong>✅ Connection Successful!</strong> (Latency: ${data.latency_ms} ms)</div>
+                <div style="font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                    ${ICONS.check} Connection Successful (${data.latency_ms} ms)
+                </div>
                 <div style="margin-top: 6px; font-size: 0.82rem; color: var(--text-primary);">Response: "${data.message}"</div>
             `;
         } else {
@@ -742,7 +904,9 @@ async function testConnection() {
             resultBox.style.border = "1px solid var(--danger)";
             resultBox.style.color = "var(--danger)";
             resultBox.innerHTML = `
-                <div><strong>❌ Connection Failed:</strong></div>
+                <div style="font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                    ${ICONS.alert} Connection Failed
+                </div>
                 <div style="margin-top: 4px; font-size: 0.82rem;">${data.error || 'No response received.'}</div>
             `;
         }
@@ -751,7 +915,7 @@ async function testConnection() {
         resultBox.style.background = "var(--danger-subtle)";
         resultBox.style.border = "1px solid var(--danger)";
         resultBox.style.color = "var(--danger)";
-        resultBox.innerHTML = `<div><strong>❌ Network Error:</strong> ${e.message}</div>`;
+        resultBox.innerHTML = `<div style="font-weight: 700; display: flex; align-items: center; gap: 6px;">${ICONS.alert} Network Error: ${e.message}</div>`;
     } finally {
         btn.innerHTML = oldText;
         btn.disabled = false;
@@ -778,8 +942,8 @@ async function saveSettings() {
         await res.json();
         closeSettingsModal();
         await checkSystemInfo();
-        alert("✅ Configuration saved successfully!");
+        showToast("Configuration saved successfully", "success");
     } catch (e) {
-        alert("Error saving configuration: " + e.message);
+        showToast("Error saving configuration: " + e.message, "error");
     }
 }
