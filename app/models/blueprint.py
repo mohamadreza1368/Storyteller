@@ -83,6 +83,8 @@ class StoryBlueprint(BaseModel):
     status: str = Field(NovelStatus.DRAFT.value)
     created_at_utc: str = Field("")
     updated_at_utc: str = Field("")
+    owner_id: Optional[str] = None
+    owner_name: Optional[str] = None
 
 class CreateNovelRequest(BaseModel):
     title: Optional[str] = None
@@ -105,6 +107,8 @@ class CreateNovelRequest(BaseModel):
     ending: Optional[str] = EndingType.SURPRISING.value
     auto_continue: Optional[bool] = False
     start_now: Optional[bool] = True
+    owner_id: Optional[str] = None
+    owner_name: Optional[str] = None
 
 class NovelSummary(BaseModel):
     novel_id: str
@@ -117,3 +121,6 @@ class NovelSummary(BaseModel):
     total_words: int
     created_at_utc: str
     updated_at_utc: str
+    owner_id: Optional[str] = None
+    owner_name: Optional[str] = None
+

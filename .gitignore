@@ -7,6 +7,8 @@ __pycache__/
 .env
 .env.*
 data/settings.json
+data/users.json
+data/sessions.json
 
 # Local runtime data
 data/novels/*

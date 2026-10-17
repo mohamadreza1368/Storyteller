@@ -7,6 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.api.novels import router as novels_router
 from app.api.system import router as system_router
+from app.api.auth import router as auth_router
+from app.api.admin import router as admin_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -23,6 +25,8 @@ app.add_middleware(
 )
 
 # API Routers
+app.include_router(auth_router)
+app.include_router(admin_router)
 app.include_router(novels_router)
 app.include_router(system_router)
 

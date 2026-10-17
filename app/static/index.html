@@ -12,22 +12,6 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- Demo Banner -->
-    <div id="demoBanner" class="demo-banner" style="display: none;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-        </svg>
-        <span id="demoMessage">Offline Creative Simulator Mode active. Configure an API key or Custom endpoint for live LLM generation.</span>
-        <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-            Connect API
-        </button>
-    </div>
-
     <!-- Header -->
     <header class="app-header">
         <div class="header-container">
@@ -45,27 +29,88 @@
                 </div>
             </div>
 
-            <div class="nav-actions">
-                <button class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle Theme" id="themeToggleBtn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                    </svg>
-                    Theme
-                </button>
-                <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()">
+            <!-- Navigation Links -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button class="btn btn-ghost btn-sm" onclick="navigateTo('library')" id="navLinkLibrary">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
                     </svg>
-                    AI Model
+                    Author's Desk
                 </button>
-                <button class="btn btn-primary" onclick="startNewNovel()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <button class="btn btn-ghost btn-sm" onclick="startNewNovel()" id="navLinkNewNovel">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                     New Novel
                 </button>
+                <button class="btn btn-ghost btn-sm" onclick="navigateTo('admin')" id="navLinkAdmin" style="display: none; color: #8B5CF6; border: 1px solid rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08);">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Admin Console
+                </button>
+            </div>
+
+            <!-- Right Actions -->
+            <div class="nav-actions">
+                <button class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle Theme" id="themeToggleBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+
+                <!-- Guest Actions -->
+                <div id="navGuestSection" style="display: flex; align-items: center; gap: 8px;">
+                    <button class="btn btn-ghost btn-sm" onclick="openAuthModal('login')">Sign In</button>
+                    <button class="btn btn-primary btn-sm" onclick="openAuthModal('register')">Get Started</button>
+                </div>
+
+                <!-- Logged In User Section -->
+                <div id="navUserSection" style="display: none; position: relative;">
+                    <div class="user-nav-capsule" onclick="toggleUserDropdown(event)">
+                        <div id="navUserAvatar" class="user-nav-avatar">U</div>
+                        <div style="display: flex; flex-direction: column; text-align: left;">
+                            <span id="navUserName" style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary); line-height: 1.2;">Author</span>
+                            <span id="navUserRoleBadge" class="badge badge-role-author" style="font-size: 0.68rem; padding: 1px 6px; width: fit-content;">Author</span>
+                        </div>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+
+                    <!-- Dropdown Menu -->
+                    <div id="userDropdownMenu" class="user-dropdown-menu">
+                        <button class="dropdown-item" onclick="openProfileModal()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            My Profile & Stats
+                        </button>
+                        <button class="dropdown-item" id="dropdownAdminLink" style="display: none;" onclick="navigateTo('admin')">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            Admin Console
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item danger" onclick="handleLogout()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            Sign Out
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -668,6 +713,223 @@
             </div>
         </section>
 
+        <!-- ==================== 5. VIEW: ADMIN CONSOLE ==================== -->
+        <section id="viewAdmin" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                        <h1 style="font-size: 2.1rem; font-weight: 800;">Administration Console</h1>
+                        <span class="badge badge-role-admin">Admin Dashboard</span>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 1rem;">Manage registered authors, oversee story volume metrics, and configure global AI engine credentials.</p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary btn-sm" onclick="loadAdminDashboard()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        Refresh Dashboard
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4 Analytics KPI Cards -->
+            <div class="admin-kpi-grid">
+                <div class="admin-kpi-card">
+                    <div class="admin-kpi-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="admin-kpi-value" id="kpiTotalUsers">0</div>
+                        <div class="admin-kpi-label">Registered Authors</div>
+                    </div>
+                </div>
+
+                <div class="admin-kpi-card">
+                    <div class="admin-kpi-icon" style="background: rgba(16, 185, 129, 0.12); color: #10B981;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="admin-kpi-value" id="kpiTotalNovels">0</div>
+                        <div class="admin-kpi-label">Stories Created</div>
+                    </div>
+                </div>
+
+                <div class="admin-kpi-card">
+                    <div class="admin-kpi-icon" style="background: rgba(245, 158, 11, 0.12); color: #F59E0B;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="admin-kpi-value" id="kpiTotalEpisodes">0</div>
+                        <div class="admin-kpi-label">Chapters Generated</div>
+                    </div>
+                </div>
+
+                <div class="admin-kpi-card">
+                    <div class="admin-kpi-icon" style="background: rgba(139, 92, 246, 0.12); color: #8B5CF6;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="admin-kpi-value" id="kpiTotalWords">0</div>
+                        <div class="admin-kpi-label">Words Authored</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Sub-Navigation Tabs -->
+            <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 30px;">
+                <div class="tab-nav" style="padding: 12px 18px; margin: 0; border-bottom: 1px solid var(--border-subtle);">
+                    <button class="tab-btn active" id="tabBtnAdminUsers" onclick="switchAdminTab('users')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                        </svg>
+                        Authors & User Accounts
+                    </button>
+                    <button class="tab-btn" id="tabBtnAdminAI" onclick="switchAdminTab('ai')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                        Global AI API & Models
+                    </button>
+                </div>
+
+                <!-- Admin Tab 1: Users List -->
+                <div id="adminTabUsersContent" style="padding: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h3 style="font-size: 1.15rem; font-weight: 700;">Platform Authors & Story Volumes</h3>
+                            <p style="font-size: 0.88rem; color: var(--text-tertiary);">Live overview of all accounts and authored stories (user novel contents remain private).</p>
+                        </div>
+                        <input type="text" id="adminUserSearchInput" class="form-input" placeholder="Search user by name or email..." style="max-width: 280px;" oninput="filterAdminUsersTable()">
+                    </div>
+
+                    <div class="admin-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Author</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Stories Authored</th>
+                                    <th>Joined Date</th>
+                                    <th style="text-align: right;">Account Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Admin Tab 2: Global AI Configuration -->
+                <div id="adminTabAIContent" style="padding: 24px; display: none;">
+                    <div style="max-width: 680px;">
+                        <div style="margin-bottom: 24px;">
+                            <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 6px;">Global AI Engine Configuration</h3>
+                            <p style="font-size: 0.92rem; color: var(--text-secondary);">Set the central LLM and visual image model credentials. All authors automatically utilize these settings without needing their own API keys.</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Global LLM Provider</label>
+                            <select id="adminCfgProvider" class="form-select" onchange="onAdminProviderChanged()">
+                                <option value="custom">Custom API (OpenAI-Compatible Endpoint)</option>
+                                <option value="gemini">Google Gemini (Recommended)</option>
+                                <option value="openai">OpenAI (Official)</option>
+                                <option value="openrouter">OpenRouter</option>
+                                <option value="ollama">Ollama (Local)</option>
+                                <option value="mock">Offline Creative Simulator (No Key Needed)</option>
+                            </select>
+                        </div>
+
+                        <!-- Quick Presets -->
+                        <div id="adminCustomPresetsRow" style="margin-bottom: 16px;">
+                            <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-tertiary); margin-bottom: 8px;">Quick Gateway Presets:</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="applyAdminCustomApiPreset('groq')">Groq (Ultra-Fast)</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="applyAdminCustomApiPreset('openrouter')">OpenRouter</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="applyAdminCustomApiPreset('avalai')">AvalAI Proxy</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="applyAdminCustomApiPreset('lmstudio')">LM Studio / vLLM</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="adminGrpBaseUrl">
+                            <label class="form-label">Server Base URL</label>
+                            <input type="text" id="adminCfgBaseUrl" class="form-input" placeholder="https://api.openai.com/v1 or custom proxy URL">
+                        </div>
+
+                        <div class="form-group" id="adminGrpApiKey">
+                            <label class="form-label">Global API Key</label>
+                            <input type="password" id="adminCfgApiKey" class="form-input" placeholder="sk-...">
+                            <div id="adminApiKeyMaskedNotice" style="font-size: 0.8rem; color: var(--text-tertiary); margin-top: 4px;"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Language Model Name</label>
+                            <input type="text" id="adminCfgModel" class="form-input" placeholder="e.g. gpt-4o-mini, ag/gemini-3.8-flash-high">
+                        </div>
+
+                        <!-- Illustration Engine Settings -->
+                        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+                            <div style="font-weight: 700; font-size: 1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                <span>Platform Chapter Illustration Engine</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Image Generation Mode</label>
+                                <select id="adminCfgImageProvider" class="form-select" onchange="onAdminImageProviderChanged()">
+                                    <option value="auto">Smart AI (Flux / Free Online AI Concept Art - Recommended)</option>
+                                    <option value="custom">Custom API / OpenAI (DALL-E 3 or Custom Image Model)</option>
+                                    <option value="thematic">Offline Vector Art Only (No Internet Needed)</option>
+                                </select>
+                            </div>
+
+                            <div id="adminGrpCustomImageModel" style="display: none;">
+                                <div class="form-group">
+                                    <label class="form-label">Dedicated Image Model</label>
+                                    <input type="text" id="adminCfgImageModel" class="form-input" placeholder="dall-e-3 (or leave blank for default)">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Test Connection Result -->
+                        <div id="adminTestResultBox" style="display: none; padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 0.88rem; line-height: 1.5;"></div>
+
+                        <div style="display: flex; gap: 12px; margin-top: 28px;">
+                            <button type="button" id="btnAdminTestConn" class="btn btn-secondary" onclick="testAdminAiConnection()">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                </svg>
+                                Test Live API Connection
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="saveAdminAiConfig()">
+                                Save Global AI Configuration
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- ==================== BEHIND THE SCENES DRAWER ==================== -->
@@ -696,108 +958,181 @@
         </div>
     </aside>
 
-    <!-- ==================== SETTINGS MODAL ==================== -->
-    <div id="settingsModal" class="modal-overlay" style="display: none;">
-        <div class="modal-box" style="max-width: 580px;">
+    <!-- ==================== AUTHENTICATION MODAL ==================== -->
+    <div id="authModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box" style="max-width: 440px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                <h3 id="authModalTitle" style="font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 10px;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
                     </svg>
-                    AI Engine Configuration
+                    <span>Welcome to Storyteller</span>
                 </h3>
-                <button class="btn btn-ghost btn-sm" onclick="closeSettingsModal()">
+                <button class="btn btn-ghost btn-sm" onclick="closeAuthModal()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
                 </button>
             </div>
-            
-            <div class="form-group">
-                <label class="form-label">Provider</label>
-                <select id="cfgProvider" class="form-select" onchange="onProviderChanged()">
-                    <option value="custom">Custom API (OpenAI-Compatible Endpoint)</option>
-                    <option value="gemini">Google Gemini (Recommended)</option>
-                    <option value="openai">OpenAI (Official)</option>
-                    <option value="openrouter">OpenRouter</option>
-                    <option value="ollama">Ollama (Local on your machine)</option>
-                    <option value="mock">Offline Creative Simulator (No Key Needed)</option>
-                </select>
+
+            <!-- Auth Tabs -->
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab-btn active" id="authTabBtnLogin" onclick="switchAuthTab('login')">Sign In</button>
+                <button type="button" class="auth-tab-btn" id="authTabBtnRegister" onclick="switchAuthTab('register')">Create Account</button>
             </div>
 
-            <!-- Quick presets for Custom API -->
-            <div id="customPresetsRow" style="margin-bottom: 16px;">
-                <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-tertiary); margin-bottom: 8px;">Quick Gateway Presets:</div>
-                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('groq')">Groq (Ultra-Fast)</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('openrouter')">OpenRouter</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('avalai')">AvalAI Proxy</button>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomApiPreset('lmstudio')">LM Studio / vLLM</button>
-                </div>
-            </div>
-
-            <div class="form-group" id="grpBaseUrl">
-                <label class="form-label">Server Base URL</label>
-                <input type="text" id="cfgBaseUrl" class="form-input" placeholder="https://api.openai.com/v1 or https://api.groq.com/openai/v1">
-                <div class="form-hint" style="color: var(--text-tertiary);">OpenAI-compatible base URL (ending in /v1)</div>
-            </div>
-
-            <div class="form-group" id="grpApiKey">
-                <label class="form-label">API Key</label>
-                <input type="password" id="cfgApiKey" class="form-input" placeholder="sk-...">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Model Name</label>
-                <input type="text" id="cfgModel" class="form-input" placeholder="e.g. gpt-4o-mini, deepseek-chat, or llama-3.3-70b-versatile">
-            </div>
-
-            <!-- Chapter Illustration Engine Settings -->
-            <div style="margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border-subtle);">
-                <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                        <polyline points="21 15 16 10 5 21"></polyline>
-                    </svg>
-                    <span>Chapter Illustration Engine</span>
-                </div>
-
+            <!-- Login Form -->
+            <form id="authLoginForm" onsubmit="handleLoginSubmit(event)">
                 <div class="form-group">
-                    <label class="form-label">Illustration Mode</label>
-                    <select id="cfgImageProvider" class="form-select" onchange="onImageProviderChanged()">
-                        <option value="auto">Smart AI (Flux / Free Online AI Concept Art - Recommended)</option>
-                        <option value="custom">Custom API / OpenAI (DALL-E 3 or Custom Image Model)</option>
-                        <option value="thematic">Offline Vector Art Only (No Internet Needed)</option>
-                    </select>
-                    <div class="form-hint" style="color: var(--text-tertiary); font-size: 0.8rem; margin-top: 4px;">Smart AI creates photorealistic 16:9 scene artwork automatically without requiring OpenAI credentials.</div>
+                    <label class="form-label">Email or Username</label>
+                    <input type="text" id="loginIdentifier" class="form-input" placeholder="admin@storyteller.ai or your username" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required>
                 </div>
 
-                <div id="grpCustomImageModel" style="display: none;">
-                    <div class="form-group">
-                        <label class="form-label">Image Model (if your API supports /v1/images/generations)</label>
-                        <input type="text" id="cfgImageModel" class="form-input" placeholder="dall-e-3 (or leave blank for default)">
+                <div style="margin-top: 24px;">
+                    <button type="submit" id="btnLoginSubmit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">
+                        Sign In to Author's Desk
+                    </button>
+                </div>
+            </form>
+
+            <!-- Register Form -->
+            <form id="authRegisterForm" style="display: none;" onsubmit="handleRegisterSubmit(event)">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="regFullName" class="form-input" placeholder="e.g. Arthur Conan Doyle">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="regUsername" class="form-input" placeholder="e.g. doyle_author" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="regEmail" class="form-input" placeholder="author@domain.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password (min 6 characters)</label>
+                    <input type="password" id="regPassword" class="form-input" placeholder="••••••••" required minlength="6">
+                </div>
+
+                <div style="margin-top: 24px;">
+                    <button type="submit" id="btnRegisterSubmit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">
+                        Create Author Account
+                    </button>
+                </div>
+            </form>
+
+            <!-- Quick Demo Login Hint -->
+            <div style="margin-top: 20px; padding: 12px; background: var(--bg-surface-subtle); border-radius: var(--radius-sm); border: 1px dashed var(--border-strong); text-align: center;">
+                <div style="font-size: 0.8rem; color: var(--text-tertiary); margin-bottom: 6px;">Need fast testing access?</div>
+                <button type="button" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center;" onclick="fillDemoAdminLogin()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    1-Click Admin Demo Login
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== USER PROFILE MODAL ==================== -->
+    <div id="profileModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box" style="max-width: 520px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 style="font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Author Profile
+                </h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Profile Summary Card -->
+            <div style="display: flex; align-items: center; gap: 16px; padding: 18px; background: var(--bg-surface-subtle); border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-bottom: 24px;">
+                <div id="profileAvatarBig" style="width: 54px; height: 54px; border-radius: 50%; background: var(--accent-gradient); color: #fff; font-size: 1.4rem; font-weight: 800; display: flex; align-items: center; justify-content: center; text-transform: uppercase;">
+                    A
+                </div>
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <strong id="profileDisplayName" style="font-size: 1.15rem; color: var(--text-primary);">...</strong>
+                        <span id="profileRoleBadge" class="badge badge-role-author">Author</span>
+                    </div>
+                    <div id="profileEmail" style="font-size: 0.85rem; color: var(--text-tertiary);">...</div>
+                    <div style="margin-top: 6px; font-size: 0.8rem; font-weight: 600; color: var(--accent);">
+                        <span id="profileStoriesCount">0</span> Stories Created
                     </div>
                 </div>
             </div>
 
-            <!-- Test Connection Result Box -->
-            <div id="testResultBox" style="display: none; padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 0.88rem; line-height: 1.5;"></div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px;">
-                <button type="button" id="btnTestConn" class="btn btn-secondary" onclick="testConnection()">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                    </svg>
-                    Test Live Connection
-                </button>
-                <div style="display: flex; gap: 8px;">
-                    <button type="button" class="btn btn-ghost" onclick="closeSettingsModal()">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            <!-- Update Form -->
+            <form onsubmit="handleProfileUpdateSubmit(event)">
+                <div class="form-group">
+                    <label class="form-label">Display Name</label>
+                    <input type="text" id="profileEditFullName" class="form-input" placeholder="Your name">
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Author Bio</label>
+                    <textarea id="profileEditBio" class="form-textarea" rows="2" placeholder="Brief note about your creative genres or style..."></textarea>
+                </div>
+
+                <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-subtle);">
+                    <div style="font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; color: var(--text-primary);">Change Password (Optional)</div>
+                    <div class="form-group">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" id="profileCurrentPwd" class="form-input" placeholder="Leave blank if not changing">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New Password</label>
+                        <input type="password" id="profileNewPwd" class="form-input" placeholder="Min 6 characters">
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+                    <button type="button" class="btn btn-ghost" onclick="closeProfileModal()">Cancel</button>
+                    <button type="submit" id="btnSaveProfile" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== ADMIN RESET USER PASSWORD MODAL ==================== -->
+    <div id="adminResetPwdModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box" style="max-width: 420px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-size: 1.2rem; font-weight: 800;">Reset Author Password</h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeAdminResetPwdModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
+            <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 16px;">
+                Assign a new password for <strong id="adminResetTargetUser">User</strong>.
+            </p>
+            <form onsubmit="handleAdminResetPasswordSubmit(event)">
+                <input type="hidden" id="adminResetTargetUserId">
+                <div class="form-group">
+                    <label class="form-label">New Temporary Password</label>
+                    <input type="text" id="adminResetNewPwdInput" class="form-input" placeholder="At least 6 characters" required minlength="6">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+                    <button type="button" class="btn btn-ghost" onclick="closeAdminResetPwdModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm Reset</button>
+                </div>
+            </form>
         </div>
     </div>
 

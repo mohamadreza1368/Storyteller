@@ -32,7 +32,7 @@ class StorageManager:
         with open(path, "r", encoding="utf-8") as f:
             return StoryBlueprint.model_validate_json(f.read())
 
-    def list_novels(self) -> List[NovelSummary]:
+    def list_novels(self, user_id: Optional[str] = None) -> List[NovelSummary]:
         summaries = []
         if not os.path.exists(self.base_dir):
             return summaries
@@ -40,6 +40,8 @@ class StorageManager:
             if entry.is_dir():
                 bp = self.get_blueprint(entry.name)
                 if bp:
+                    if user_id and bp.owner_id and bp.owner_id != user_id:
+                        continue
                     episodes = self.list_episodes(entry.name)
                     total_words = sum(ep.word_count for ep in episodes)
                     summaries.append(NovelSummary(
@@ -52,10 +54,42 @@ class StorageManager:
                         written_episodes=len(episodes),
                         total_words=total_words,
                         created_at_utc=bp.created_at_utc,
-                        updated_at_utc=bp.updated_at_utc
+                        updated_at_utc=bp.updated_at_utc,
+                        owner_id=bp.owner_id,
+                        owner_name=bp.owner_name
                     ))
         summaries.sort(key=lambda s: s.updated_at_utc, reverse=True)
         return summaries
+
+    def get_user_novels_count(self, user_id: str) -> int:
+        count = 0
+        if not os.path.exists(self.base_dir):
+            return count
+        for entry in os.scandir(self.base_dir):
+            if entry.is_dir():
+                bp = self.get_blueprint(entry.name)
+                if bp and bp.owner_id == user_id:
+                    count += 1
+        return count
+
+    def get_platform_stats(self) -> dict:
+        total_novels = 0
+        total_episodes = 0
+        total_words = 0
+        if os.path.exists(self.base_dir):
+            for entry in os.scandir(self.base_dir):
+                if entry.is_dir():
+                    bp = self.get_blueprint(entry.name)
+                    if bp:
+                        total_novels += 1
+                        eps = self.list_episodes(entry.name)
+                        total_episodes += len(eps)
+                        total_words += sum(e.word_count for e in eps)
+        return {
+            "total_novels": total_novels,
+            "total_episodes": total_episodes,
+            "total_words": total_words
+        }
 
     def delete_novel(self, novel_id: str) -> bool:
         import shutil

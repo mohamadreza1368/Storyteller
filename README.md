@@ -49,13 +49,35 @@ python run.py
 Open your browser and navigate to:
 👉 **`http://127.0.0.1:8000`**
 
+### Default Administrator Account
+The platform automatically provisions an initial admin account for platform management:
+- **Email**: `admin@storyteller.ai`
+- **Password**: `admin123`
+*(Admins can change this password at any time via Author Profile or Admin Console)*
+
 ---
 
-## ⚙️ AI Models & Custom API Integration
+## 👥 Multi-User Web Architecture & Profile Management
 
-The studio features an **Offline Creative Simulator** by default, allowing you to test, experiment, and generate stories instantly without internet or API keys.
+Storyteller is built as a multi-user web application:
+- **User Authentication**: Secure token-based registration and login with salt-based PBKDF2 password hashing.
+- **Author Profile**: Users can update their display name, bio, credentials, and track their authored stories.
+- **Library Isolation**: Each author manages their own personal story library.
+- **Zero API Friction for Authors**: Regular authors never enter or manage API keys. The entire platform utilizes centralized global AI configurations managed solely by administrators.
 
-To connect external LLM providers, click **"⚙️ Model Settings"** in the top navigation bar:
+---
+
+## 🛡️ Administration Console & Global AI Engine
+
+Administrators have access to a dedicated **Administration Console** (`#viewAdmin`):
+- **Live Platform KPI Analytics**: Real-time tracking of registered authors, total novels created, chapters generated, and cumulative word counts.
+- **Author Oversight with Privacy Protection**: Displays each author's account status and story volume (`novels_count`) while keeping private novel text strictly confidential.
+- **Account Actions**: Suspend or reactivate authors, reset author passwords, or remove accounts.
+- **Centralized Global AI Management**:
+  - Global LLM provider selection (Custom API proxy, Google Gemini, OpenAI, OpenRouter, Ollama, Mock).
+  - Centralized API credentials, proxy base URLs, and model specifications.
+  - Platform chapter illustration engine settings (Flux / DALL-E 3 / Thematic Vector Art).
+  - Built-in live connection tester with latency metrics.
 
 | Provider | Supported Models / Notes | Configuration |
 | :--- | :--- | :--- |
@@ -65,8 +87,6 @@ To connect external LLM providers, click **"⚙️ Model Settings"** in the top 
 | **OpenRouter** | `anthropic/claude-3.5-sonnet`, `deepseek/deepseek-r1`, etc. | Routes via `https://openrouter.ai/api/v1` |
 | **Ollama (Local)** | `llama3`, `qwen2.5`, `mistral` | Local endpoint: `http://localhost:11434/v1` |
 | **Mock Simulator** | High-fidelity offline literary simulator | Zero setup required |
-
-> **Live Test Connection**: The settings modal includes a "Test Connection" button with real-time latency measurement and diagnostic feedback.
 
 ---
 

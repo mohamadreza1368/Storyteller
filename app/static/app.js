@@ -6,6 +6,39 @@ let currentEpisodeData = null;
 let readerFontSize = 1.25;
 let progressPollTimer = null;
 
+// Authentication & Admin State
+let currentUser = null;
+let authToken = localStorage.getItem("st_auth_token") || null;
+let adminUsersCache = [];
+
+// Authenticated Fetch Helper
+async function fetchWithAuth(url, options = {}) {
+    options.headers = options.headers || {};
+    if (!(options.headers instanceof Headers)) {
+        if (!options.headers["Content-Type"] && !(options.body instanceof FormData)) {
+            options.headers["Content-Type"] = "application/json";
+        }
+        if (authToken) {
+            options.headers["Authorization"] = `Bearer ${authToken}`;
+        }
+    } else {
+        if (authToken) {
+            options.headers.set("Authorization", `Bearer ${authToken}`);
+        }
+    }
+    const res = await fetch(url, options);
+    if (res.status === 401 && !url.includes("/api/auth/login") && !url.includes("/api/auth/register")) {
+        if (authToken) {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem("st_auth_token");
+            updateUserNavUI();
+            showToast("Session expired. Please sign in again.", "info");
+        }
+    }
+    return res;
+}
+
 // Modern SVG Icons Dictionary
 const ICONS = {
     book: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>`,
@@ -99,12 +132,22 @@ const ENUMS = {
 // Initialize
 document.addEventListener("DOMContentLoaded", async () => {
     populateEnums();
+    await checkAuthStatus();
     await checkSystemInfo();
     await loadLibrary();
     if (document.querySelectorAll(".char-card").length === 0) {
         addCharacterCard("Julian Vance", "Main", "Male", "Archival Conservator", "Scarred Cynic");
         addCharacterCard("Clara Sterling", "Main", "Female", "Investigative Journalist", "Passionate Idealist");
     }
+
+    // Close user dropdown when clicking outside
+    window.addEventListener("click", (e) => {
+        const userSection = document.getElementById("navUserSection");
+        const dropdown = document.getElementById("userDropdownMenu");
+        if (dropdown && userSection && !userSection.contains(e.target)) {
+            dropdown.classList.remove("show");
+        }
+    });
 });
 
 function populateEnums() {
@@ -124,14 +167,27 @@ function populateEnums() {
 
 // Navigation
 function navigateTo(viewName) {
+    if (viewName === "admin") {
+        if (!currentUser || currentUser.role !== "admin") {
+            showToast("Administrator privileges required.", "error");
+            openAuthModal("login");
+            return;
+        }
+    }
+
     document.getElementById("viewLibrary").style.display = (viewName === "library") ? "block" : "none";
     document.getElementById("viewWizard").style.display = (viewName === "wizard") ? "block" : "none";
     document.getElementById("viewNovel").style.display = (viewName === "novel") ? "block" : "none";
     document.getElementById("viewReader").style.display = (viewName === "reader") ? "block" : "none";
+    const adminEl = document.getElementById("viewAdmin");
+    if (adminEl) adminEl.style.display = (viewName === "admin") ? "block" : "none";
 
     if (viewName === "library") {
         stopProgressPolling();
         loadLibrary();
+    } else if (viewName === "admin") {
+        stopProgressPolling();
+        loadAdminDashboard();
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -174,7 +230,7 @@ async function loadLibrary() {
     grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-tertiary); padding: 50px;">Preparing Author's Desk…</div>`;
     
     try {
-        const res = await fetch("/api/novels");
+        const res = await fetchWithAuth("/api/novels");
         const novels = await res.json();
         
         if (novels.length === 0) {
@@ -199,6 +255,7 @@ async function loadLibrary() {
         grid.innerHTML = novels.map(n => {
             const coverUrl = getCoverForNovel(n.genre);
             const statusClass = n.status === 'Completed' ? 'badge-completed' : (n.status === 'Writing Episode' ? 'badge-writing' : 'badge-ready');
+            const authorTag = n.owner_name ? `<span style="font-size: 0.76rem; font-weight: 600; color: rgba(255,255,255,0.9); background: rgba(0,0,0,0.4); padding: 2px 7px; border-radius: 4px; backdrop-filter: blur(4px);">By ${n.owner_name}</span>` : '';
             return `
             <div class="novel-card" onclick="openNovel('${n.novel_id}')">
                 <div class="novel-card-cover">
@@ -207,7 +264,10 @@ async function loadLibrary() {
                         <span class="badge ${statusClass}">
                             ${n.status}
                         </span>
-                        <span style="font-size: 0.78rem; font-weight: 700; color: #FFFFFF; background: rgba(0,0,0,0.45); padding: 3px 8px; border-radius: 4px; backdrop-filter: blur(4px);">${n.genre}</span>
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                            ${authorTag}
+                            <span style="font-size: 0.78rem; font-weight: 700; color: #FFFFFF; background: rgba(0,0,0,0.45); padding: 3px 8px; border-radius: 4px; backdrop-filter: blur(4px);">${n.genre}</span>
+                        </div>
                     </div>
                 </div>
                 <div class="novel-card-body">
@@ -421,9 +481,8 @@ async function submitCreateNovel() {
     };
 
     try {
-        const res = await fetch("/api/novels", {
+        const res = await fetchWithAuth("/api/novels", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
         const novel = await res.json();
@@ -858,60 +917,515 @@ function renderBehindTheScenes(scenes) {
     `).join("");
 }
 
-// Settings Modal & Custom API Handling
-async function openSettingsModal() {
-    const modal = document.getElementById("settingsModal");
-    const resultBox = document.getElementById("testResultBox");
-    resultBox.style.display = "none";
-    modal.style.display = "flex";
+// ==================== AUTHENTICATION & USER MANAGEMENT ====================
 
+async function checkAuthStatus() {
+    if (!authToken) {
+        currentUser = null;
+        updateUserNavUI();
+        return;
+    }
     try {
-        const res = await fetch("/api/system/info");
-        const info = await res.json();
-        if (info.provider) {
-            document.getElementById("cfgProvider").value = info.provider;
+        const res = await fetchWithAuth("/api/auth/me");
+        if (res.ok) {
+            currentUser = await res.json();
+        } else {
+            currentUser = null;
+            authToken = null;
+            localStorage.removeItem("st_auth_token");
         }
-        if (info.model) {
-            document.getElementById("cfgModel").value = info.model;
-        }
-        if (info.base_url) {
-            document.getElementById("cfgBaseUrl").value = info.base_url;
-        }
-        if (info.image_provider && document.getElementById("cfgImageProvider")) {
-            document.getElementById("cfgImageProvider").value = info.image_provider;
-        }
-        if (info.image_model && document.getElementById("cfgImageModel")) {
-            document.getElementById("cfgImageModel").value = info.image_model;
-        }
-        onProviderChanged();
-        onImageProviderChanged();
     } catch (e) {
-        console.error("Failed to load system info:", e);
+        console.error("Auth check failed:", e);
+    }
+    updateUserNavUI();
+}
+
+function updateUserNavUI() {
+    const guestSection = document.getElementById("navGuestSection");
+    const userSection = document.getElementById("navUserSection");
+    const navLinkAdmin = document.getElementById("navLinkAdmin");
+    const dropdownAdminLink = document.getElementById("dropdownAdminLink");
+    const navUserName = document.getElementById("navUserName");
+    const navUserAvatar = document.getElementById("navUserAvatar");
+    const navUserRoleBadge = document.getElementById("navUserRoleBadge");
+
+    if (currentUser) {
+        if (guestSection) guestSection.style.display = "none";
+        if (userSection) userSection.style.display = "block";
+        const displayName = currentUser.full_name || currentUser.username;
+        if (navUserName) navUserName.innerText = displayName;
+        if (navUserAvatar) navUserAvatar.innerText = displayName.charAt(0).toUpperCase();
+
+        const isAdmin = (currentUser.role === "admin");
+        if (navUserRoleBadge) {
+            navUserRoleBadge.innerText = isAdmin ? "Admin" : "Author";
+            navUserRoleBadge.className = isAdmin ? "badge badge-role-admin" : "badge badge-role-author";
+        }
+        if (navLinkAdmin) navLinkAdmin.style.display = isAdmin ? "inline-flex" : "none";
+        if (dropdownAdminLink) dropdownAdminLink.style.display = isAdmin ? "flex" : "none";
+    } else {
+        if (guestSection) guestSection.style.display = "flex";
+        if (userSection) userSection.style.display = "none";
+        if (navLinkAdmin) navLinkAdmin.style.display = "none";
+        if (dropdownAdminLink) dropdownAdminLink.style.display = "none";
     }
 }
 
-function onImageProviderChanged() {
-    const prov = document.getElementById("cfgImageProvider")?.value || "auto";
-    const isCustom = (prov === "custom");
-    const grp = document.getElementById("grpCustomImageModel");
-    if (grp) grp.style.display = isCustom ? "block" : "none";
+function toggleUserDropdown(event) {
+    if (event) event.stopPropagation();
+    const menu = document.getElementById("userDropdownMenu");
+    if (menu) {
+        menu.classList.toggle("show");
+    }
 }
 
-function closeSettingsModal() {
-    document.getElementById("settingsModal").style.display = "none";
+function openAuthModal(tab = "login") {
+    const modal = document.getElementById("authModal");
+    if (modal) {
+        modal.style.display = "flex";
+        switchAuthTab(tab);
+    }
 }
 
-function onProviderChanged() {
-    const prov = document.getElementById("cfgProvider").value;
+function closeAuthModal() {
+    const modal = document.getElementById("authModal");
+    if (modal) modal.style.display = "none";
+}
+
+function switchAuthTab(tab) {
+    const loginForm = document.getElementById("authLoginForm");
+    const regForm = document.getElementById("authRegisterForm");
+    const tabBtnLogin = document.getElementById("authTabBtnLogin");
+    const tabBtnReg = document.getElementById("authTabBtnRegister");
+    const modalTitle = document.getElementById("authModalTitle");
+
+    if (tab === "login") {
+        if (loginForm) loginForm.style.display = "block";
+        if (regForm) regForm.style.display = "none";
+        if (tabBtnLogin) tabBtnLogin.className = "auth-tab-btn active";
+        if (tabBtnReg) tabBtnReg.className = "auth-tab-btn";
+        if (modalTitle) modalTitle.querySelector("span").innerText = "Sign In to Storyteller";
+    } else {
+        if (loginForm) loginForm.style.display = "none";
+        if (regForm) regForm.style.display = "block";
+        if (tabBtnLogin) tabBtnLogin.className = "auth-tab-btn";
+        if (tabBtnReg) tabBtnReg.className = "auth-tab-btn active";
+        if (modalTitle) modalTitle.querySelector("span").innerText = "Create Author Account";
+    }
+}
+
+function fillDemoAdminLogin() {
+    const idInput = document.getElementById("loginIdentifier");
+    const pwdInput = document.getElementById("loginPassword");
+    if (idInput) idInput.value = "admin@storyteller.ai";
+    if (pwdInput) pwdInput.value = "admin123";
+    switchAuthTab("login");
+}
+
+async function handleLoginSubmit(event) {
+    event.preventDefault();
+    const identifier = document.getElementById("loginIdentifier").value.trim();
+    const password = document.getElementById("loginPassword").value;
+    const btn = document.getElementById("btnLoginSubmit");
+    const oldText = btn.innerHTML;
+    btn.innerHTML = "Signing in...";
+    btn.disabled = true;
+
+    try {
+        const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ identifier, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.detail || "Authentication failed");
+        }
+        authToken = data.token;
+        localStorage.setItem("st_auth_token", authToken);
+        currentUser = data.user;
+        updateUserNavUI();
+        closeAuthModal();
+        showToast(`Welcome back, ${currentUser.full_name || currentUser.username}!`, "success");
+        await loadLibrary();
+    } catch (e) {
+        showToast(e.message, "error");
+    } finally {
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+    }
+}
+
+async function handleRegisterSubmit(event) {
+    event.preventDefault();
+    const fullName = document.getElementById("regFullName").value.trim();
+    const username = document.getElementById("regUsername").value.trim();
+    const email = document.getElementById("regEmail").value.trim();
+    const password = document.getElementById("regPassword").value;
+    const btn = document.getElementById("btnRegisterSubmit");
+    const oldText = btn.innerHTML;
+    btn.innerHTML = "Creating account...";
+    btn.disabled = true;
+
+    try {
+        const res = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username,
+                email,
+                password,
+                full_name: fullName || undefined
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.detail || "Registration failed");
+        }
+        authToken = data.token;
+        localStorage.setItem("st_auth_token", authToken);
+        currentUser = data.user;
+        updateUserNavUI();
+        closeAuthModal();
+        showToast(`Account created! Welcome, ${currentUser.full_name || currentUser.username}!`, "success");
+        await loadLibrary();
+    } catch (e) {
+        showToast(e.message, "error");
+    } finally {
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+    }
+}
+
+async function handleLogout() {
+    const dropdown = document.getElementById("userDropdownMenu");
+    if (dropdown) dropdown.classList.remove("show");
+
+    if (authToken) {
+        try {
+            await fetchWithAuth("/api/auth/logout", { method: "POST" });
+        } catch (e) {
+            console.error("Logout request error:", e);
+        }
+    }
+    authToken = null;
+    currentUser = null;
+    localStorage.removeItem("st_auth_token");
+    updateUserNavUI();
+    showToast("Signed out successfully", "info");
+    navigateTo("library");
+}
+
+// ==================== USER PROFILE MODAL ====================
+
+async function openProfileModal() {
+    const dropdown = document.getElementById("userDropdownMenu");
+    if (dropdown) dropdown.classList.remove("show");
+
+    if (!currentUser) {
+        openAuthModal("login");
+        return;
+    }
+    const modal = document.getElementById("profileModal");
+    modal.style.display = "flex";
+
+    // Refresh profile data
+    try {
+        const res = await fetchWithAuth("/api/auth/me");
+        if (res.ok) {
+            currentUser = await res.json();
+        }
+    } catch (e) {
+        console.error("Profile refresh error:", e);
+    }
+
+    const displayName = currentUser.full_name || currentUser.username;
+    document.getElementById("profileAvatarBig").innerText = displayName.charAt(0).toUpperCase();
+    document.getElementById("profileDisplayName").innerText = displayName;
+    document.getElementById("profileEmail").innerText = currentUser.email;
+    const badge = document.getElementById("profileRoleBadge");
+    if (badge) {
+        badge.innerText = currentUser.role === "admin" ? "Platform Admin" : "Author";
+        badge.className = currentUser.role === "admin" ? "badge badge-role-admin" : "badge badge-role-author";
+    }
+    document.getElementById("profileStoriesCount").innerText = currentUser.novels_count || 0;
+
+    document.getElementById("profileEditFullName").value = currentUser.full_name || "";
+    document.getElementById("profileEditBio").value = currentUser.bio || "";
+    document.getElementById("profileCurrentPwd").value = "";
+    document.getElementById("profileNewPwd").value = "";
+}
+
+function closeProfileModal() {
+    const modal = document.getElementById("profileModal");
+    if (modal) modal.style.display = "none";
+}
+
+async function handleProfileUpdateSubmit(event) {
+    event.preventDefault();
+    const fullName = document.getElementById("profileEditFullName").value.trim();
+    const bio = document.getElementById("profileEditBio").value.trim();
+    const currentPwd = document.getElementById("profileCurrentPwd").value;
+    const newPwd = document.getElementById("profileNewPwd").value;
+    const btn = document.getElementById("btnSaveProfile");
+    const oldText = btn.innerHTML;
+    btn.innerHTML = "Saving...";
+    btn.disabled = true;
+
+    try {
+        const payload = {
+            full_name: fullName,
+            bio: bio
+        };
+        if (newPwd) {
+            if (!currentPwd) {
+                throw new Error("Current password is required to set a new password");
+            }
+            payload.current_password = currentPwd;
+            payload.new_password = newPwd;
+        }
+
+        const res = await fetchWithAuth("/api/auth/profile", {
+            method: "PATCH",
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.detail || "Failed to update profile");
+        }
+        currentUser = data;
+        updateUserNavUI();
+        closeProfileModal();
+        showToast("Profile updated successfully", "success");
+    } catch (e) {
+        showToast(e.message, "error");
+    } finally {
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+    }
+}
+
+// ==================== ADMIN CONSOLE ====================
+
+async function loadAdminDashboard() {
+    try {
+        const dashRes = await fetchWithAuth("/api/admin/dashboard");
+        if (dashRes.ok) {
+            const stats = await dashRes.json();
+            document.getElementById("kpiTotalUsers").innerText = (stats.total_users || 0).toLocaleString();
+            document.getElementById("kpiTotalNovels").innerText = (stats.total_novels || 0).toLocaleString();
+            document.getElementById("kpiTotalEpisodes").innerText = (stats.total_episodes || 0).toLocaleString();
+            document.getElementById("kpiTotalWords").innerText = (stats.total_words || 0).toLocaleString();
+        }
+
+        const usersRes = await fetchWithAuth("/api/admin/users");
+        if (usersRes.ok) {
+            adminUsersCache = await usersRes.json();
+            renderAdminUsersTable(adminUsersCache);
+        }
+    } catch (e) {
+        showToast("Failed to load admin dashboard: " + e.message, "error");
+    }
+}
+
+function switchAdminTab(tab) {
+    const tabUsers = document.getElementById("tabBtnAdminUsers");
+    const tabAI = document.getElementById("tabBtnAdminAI");
+    const contentUsers = document.getElementById("adminTabUsersContent");
+    const contentAI = document.getElementById("adminTabAIContent");
+
+    if (tab === "users") {
+        if (tabUsers) tabUsers.className = "tab-btn active";
+        if (tabAI) tabAI.className = "tab-btn";
+        if (contentUsers) contentUsers.style.display = "block";
+        if (contentAI) contentAI.style.display = "none";
+    } else {
+        if (tabUsers) tabUsers.className = "tab-btn";
+        if (tabAI) tabAI.className = "tab-btn active";
+        if (contentUsers) contentUsers.style.display = "none";
+        if (contentAI) contentAI.style.display = "block";
+        loadAdminAiConfig();
+    }
+}
+
+function renderAdminUsersTable(users) {
+    const tbody = document.getElementById("adminUsersTableBody");
+    if (!tbody) return;
+
+    if (!users || users.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-tertiary); padding: 36px;">No users found matching query.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = users.map(u => {
+        const initials = (u.full_name || u.username).charAt(0).toUpperCase();
+        const roleClass = u.role === "admin" ? "badge badge-role-admin" : "badge badge-role-author";
+        const roleLabel = u.role === "admin" ? "Admin" : "Author";
+        const statusClass = u.status === "active" ? "badge badge-user-active" : "badge badge-user-suspended";
+        const statusLabel = u.status === "active" ? "Active" : "Suspended";
+        const dateStr = u.created_at ? new Date(u.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : "Recently";
+        const isSelf = currentUser && currentUser.id === u.id;
+
+        return `
+            <tr>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="user-nav-avatar" style="width: 36px; height: 36px; font-size: 0.95rem;">${initials}</div>
+                        <div>
+                            <div style="font-weight: 700; color: var(--text-primary);">${u.full_name || u.username} ${isSelf ? '<span style="font-size: 0.72rem; color: var(--accent);">(You)</span>' : ''}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-tertiary);">${u.email} · @${u.username}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="${roleClass}">${roleLabel}</span></td>
+                <td><span class="${statusClass}">${statusLabel}</span></td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--text-primary);">
+                        ${ICONS.book}
+                        <span>${u.novels_count}</span>
+                    </div>
+                </td>
+                <td style="font-size: 0.85rem; color: var(--text-secondary);">${dateStr}</td>
+                <td style="text-align: right;">
+                    <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                        ${!isSelf ? `
+                            <button class="table-action-btn" title="${u.status === 'active' ? 'Suspend Account' : 'Activate Account'}" onclick="toggleAdminUserStatus('${u.id}', '${u.status}')">
+                                ${u.status === 'active' ? ICONS.lock : ICONS.check}
+                            </button>
+                            <button class="table-action-btn" title="Reset Password" onclick="openAdminResetPwdModal('${u.id}', '${u.username}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                            </button>
+                            <button class="table-action-btn danger" title="Delete User" onclick="deleteAdminUser('${u.id}', '${u.username}')">
+                                ${ICONS.trash}
+                            </button>
+                        ` : `
+                            <span style="font-size: 0.8rem; color: var(--text-tertiary); font-style: italic;">Current Session</span>
+                        `}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join("");
+}
+
+function filterAdminUsersTable() {
+    const query = document.getElementById("adminUserSearchInput").value.toLowerCase().trim();
+    if (!query) {
+        renderAdminUsersTable(adminUsersCache);
+        return;
+    }
+    const filtered = adminUsersCache.filter(u => 
+        (u.username && u.username.toLowerCase().includes(query)) ||
+        (u.email && u.email.toLowerCase().includes(query)) ||
+        (u.full_name && u.full_name.toLowerCase().includes(query))
+    );
+    renderAdminUsersTable(filtered);
+}
+
+async function toggleAdminUserStatus(userId, currentStatus) {
+    const newStatus = (currentStatus === "active") ? "suspended" : "active";
+    try {
+        const res = await fetchWithAuth(`/api/admin/users/${userId}/status`, {
+            method: "PATCH",
+            body: JSON.stringify({ status: newStatus })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Status toggle failed");
+        showToast(`User status set to ${newStatus}`, "success");
+        await loadAdminDashboard();
+    } catch (e) {
+        showToast(e.message, "error");
+    }
+}
+
+function openAdminResetPwdModal(userId, username) {
+    document.getElementById("adminResetTargetUserId").value = userId;
+    document.getElementById("adminResetTargetUser").innerText = `@${username}`;
+    document.getElementById("adminResetNewPwdInput").value = "";
+    document.getElementById("adminResetPwdModal").style.display = "flex";
+}
+
+function closeAdminResetPwdModal() {
+    document.getElementById("adminResetPwdModal").style.display = "none";
+}
+
+async function handleAdminResetPasswordSubmit(event) {
+    event.preventDefault();
+    const userId = document.getElementById("adminResetTargetUserId").value;
+    const newPassword = document.getElementById("adminResetNewPwdInput").value;
+    try {
+        const res = await fetchWithAuth(`/api/admin/users/${userId}/reset-password`, {
+            method: "POST",
+            body: JSON.stringify({ new_password: newPassword })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Password reset failed");
+        closeAdminResetPwdModal();
+        showToast("Author password reset successfully", "success");
+    } catch (e) {
+        showToast(e.message, "error");
+    }
+}
+
+async function deleteAdminUser(userId, username) {
+    if (!confirm(`Are you sure you want to delete user @${username}? This action cannot be undone.`)) {
+        return;
+    }
+    try {
+        const res = await fetchWithAuth(`/api/admin/users/${userId}`, {
+            method: "DELETE"
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Failed to delete user");
+        showToast(`User @${username} deleted`, "success");
+        await loadAdminDashboard();
+    } catch (e) {
+        showToast(e.message, "error");
+    }
+}
+
+async function loadAdminAiConfig() {
+    try {
+        const res = await fetchWithAuth("/api/admin/ai-config");
+        if (!res.ok) return;
+        const cfg = await res.json();
+
+        if (cfg.provider) document.getElementById("adminCfgProvider").value = cfg.provider;
+        if (cfg.base_url) document.getElementById("adminCfgBaseUrl").value = cfg.base_url;
+        if (cfg.model) document.getElementById("adminCfgModel").value = cfg.model;
+        if (cfg.image_provider) document.getElementById("adminCfgImageProvider").value = cfg.image_provider;
+        if (cfg.image_model) document.getElementById("adminCfgImageModel").value = cfg.image_model;
+
+        const maskedNotice = document.getElementById("adminApiKeyMaskedNotice");
+        if (cfg.api_key_masked) {
+            maskedNotice.innerText = `Current key: ${cfg.api_key_masked} (leave blank to retain)`;
+        } else {
+            maskedNotice.innerText = "No API key configured currently.";
+        }
+
+        onAdminProviderChanged();
+        onAdminImageProviderChanged();
+    } catch (e) {
+        console.error("Failed to load AI config:", e);
+    }
+}
+
+function onAdminProviderChanged() {
+    const prov = document.getElementById("adminCfgProvider").value;
     const isCustom = (prov === "custom");
     const isOllama = (prov === "ollama");
     const isMock = (prov === "mock");
 
-    document.getElementById("customPresetsRow").style.display = isCustom ? "block" : "none";
-    document.getElementById("grpBaseUrl").style.display = (isCustom || isOllama || prov === "openrouter") ? "block" : "none";
-    document.getElementById("grpApiKey").style.display = (isMock || isOllama) ? "none" : "block";
+    const presetsRow = document.getElementById("adminCustomPresetsRow");
+    if (presetsRow) presetsRow.style.display = isCustom ? "block" : "none";
 
-    const modelInput = document.getElementById("cfgModel");
+    const grpBaseUrl = document.getElementById("adminGrpBaseUrl");
+    if (grpBaseUrl) grpBaseUrl.style.display = (isCustom || isOllama || prov === "openrouter") ? "block" : "none";
+
+    const grpApiKey = document.getElementById("adminGrpApiKey");
+    if (grpApiKey) grpApiKey.style.display = (isMock || isOllama) ? "none" : "block";
+
+    const modelInput = document.getElementById("adminCfgModel");
     if (prov === "gemini") {
         modelInput.placeholder = "gemini-2.5-flash or gemini-1.5-pro";
         if (!modelInput.value || modelInput.value.includes("gpt")) modelInput.value = "gemini-2.5-flash";
@@ -919,16 +1433,22 @@ function onProviderChanged() {
         modelInput.placeholder = "gpt-4o-mini or gpt-4o";
         if (!modelInput.value || modelInput.value.includes("gemini")) modelInput.value = "gpt-4o-mini";
     } else if (prov === "custom") {
-        modelInput.placeholder = "gpt-4o-mini, deepseek-chat, or custom model name";
+        modelInput.placeholder = "gpt-4o-mini, deepseek-chat, or custom model";
     }
 }
 
-function applyCustomApiPreset(preset) {
-    document.getElementById("cfgProvider").value = "custom";
-    onProviderChanged();
+function onAdminImageProviderChanged() {
+    const prov = document.getElementById("adminCfgImageProvider")?.value || "auto";
+    const grp = document.getElementById("adminGrpCustomImageModel");
+    if (grp) grp.style.display = (prov === "custom") ? "block" : "none";
+}
 
-    const baseUrlInput = document.getElementById("cfgBaseUrl");
-    const modelInput = document.getElementById("cfgModel");
+function applyAdminCustomApiPreset(preset) {
+    document.getElementById("adminCfgProvider").value = "custom";
+    onAdminProviderChanged();
+
+    const baseUrlInput = document.getElementById("adminCfgBaseUrl");
+    const modelInput = document.getElementById("adminCfgModel");
 
     if (preset === "avalai") {
         baseUrlInput.value = "https://api.avalai.ir/v1";
@@ -946,23 +1466,22 @@ function applyCustomApiPreset(preset) {
     showToast(`Applied ${preset.toUpperCase()} gateway preset`, "info");
 }
 
-async function testConnection() {
-    const provider = document.getElementById("cfgProvider").value;
-    const apiKey = document.getElementById("cfgApiKey").value;
-    const model = document.getElementById("cfgModel").value;
-    const baseUrl = document.getElementById("cfgBaseUrl").value;
-    const resultBox = document.getElementById("testResultBox");
-    const btn = document.getElementById("btnTestConn");
+async function testAdminAiConnection() {
+    const provider = document.getElementById("adminCfgProvider").value;
+    const apiKey = document.getElementById("adminCfgApiKey").value;
+    const model = document.getElementById("adminCfgModel").value;
+    const baseUrl = document.getElementById("adminCfgBaseUrl").value;
+    const resultBox = document.getElementById("adminTestResultBox");
+    const btn = document.getElementById("btnAdminTestConn");
 
     const oldText = btn.innerHTML;
-    btn.innerHTML = `<span>Testing connection...</span>`;
+    btn.innerHTML = `<span>Testing live connection...</span>`;
     btn.disabled = true;
     resultBox.style.display = "none";
 
     try {
-        const res = await fetch("/api/system/test-connection", {
+        const res = await fetchWithAuth("/api/admin/test-connection", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 provider: provider,
                 api_key: apiKey || undefined,
@@ -1006,18 +1525,17 @@ async function testConnection() {
     }
 }
 
-async function saveSettings() {
-    const provider = document.getElementById("cfgProvider").value;
-    const apiKey = document.getElementById("cfgApiKey").value;
-    const model = document.getElementById("cfgModel").value;
-    const baseUrl = document.getElementById("cfgBaseUrl").value;
-    const imageProvider = document.getElementById("cfgImageProvider")?.value || "auto";
-    const imageModel = document.getElementById("cfgImageModel")?.value || undefined;
+async function saveAdminAiConfig() {
+    const provider = document.getElementById("adminCfgProvider").value;
+    const apiKey = document.getElementById("adminCfgApiKey").value;
+    const model = document.getElementById("adminCfgModel").value;
+    const baseUrl = document.getElementById("adminCfgBaseUrl").value;
+    const imageProvider = document.getElementById("adminCfgImageProvider")?.value || "auto";
+    const imageModel = document.getElementById("adminCfgImageModel")?.value || undefined;
 
     try {
-        const res = await fetch("/api/system/config", {
+        const res = await fetchWithAuth("/api/admin/ai-config", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 provider: provider,
                 api_key: apiKey || undefined,
@@ -1027,11 +1545,12 @@ async function saveSettings() {
                 image_model: imageModel
             })
         });
-        await res.json();
-        closeSettingsModal();
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Failed to save configuration");
         await checkSystemInfo();
-        showToast("Configuration saved successfully", "success");
+        showToast("Global AI configuration saved successfully", "success");
+        await loadAdminAiConfig();
     } catch (e) {
-        showToast("Error saving configuration: " + e.message, "error");
+        showToast("Error saving AI configuration: " + e.message, "error");
     }
 }

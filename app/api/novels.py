@@ -2,8 +2,10 @@ import uuid
 import asyncio
 from datetime import datetime, timezone
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Response
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Response, Depends
 from pydantic import BaseModel
+from app.api.deps import get_current_user_optional
+from app.storage.users import User
 
 from app.models.blueprint import (
     CreateNovelRequest, StoryBlueprint, NovelSummary,
@@ -137,15 +139,19 @@ async def generate_magic_blueprint(req: MagicIdeaRequest):
     )
 
 @router.get("", response_model=List[NovelSummary])
-async def list_novels():
-    """List all created novels in the library."""
+async def list_novels(user: Optional[User] = Depends(get_current_user_optional)):
+    """List novels in the library for the current user (or all if admin)."""
+    if user and user.role != "admin":
+        return store.list_novels(user_id=user.id)
     return store.list_novels()
 
 @router.post("", response_model=StoryBlueprint)
-async def create_novel(req: CreateNovelRequest, background_tasks: BackgroundTasks):
+async def create_novel(req: CreateNovelRequest, background_tasks: BackgroundTasks, user: Optional[User] = Depends(get_current_user_optional)):
     """Creates a new novel and initiates world/matrix building in the background."""
     novel_id = f"novel_{uuid.uuid4().hex[:8]}"
     now = datetime.now(timezone.utc).isoformat()
+    owner_id = user.id if user else req.owner_id
+    owner_name = (user.full_name or user.username) if user else req.owner_name
 
     chars = []
     if req.characters:
@@ -182,6 +188,8 @@ async def create_novel(req: CreateNovelRequest, background_tasks: BackgroundTask
         status=NovelStatus.DRAFT.value,
         created_at_utc=now,
         updated_at_utc=now,
+        owner_id=owner_id,
+        owner_name=owner_name,
         world=WorldSettings(
             era=req.era or "Contemporary",
             country=req.country or "United Kingdom",
