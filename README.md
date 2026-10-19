@@ -74,19 +74,19 @@ Administrators have access to a dedicated **Administration Console** (`#viewAdmi
 - **Author Oversight with Privacy Protection**: Displays each author's account status and story volume (`novels_count`) while keeping private novel text strictly confidential.
 - **Account Actions**: Suspend or reactivate authors, reset author passwords, or remove accounts.
 - **Centralized Global AI Management**:
-  - Global LLM provider selection (Custom API proxy, Google Gemini, OpenAI, OpenRouter, Ollama, Mock).
-  - Centralized API credentials, proxy base URLs, and model specifications.
-  - Platform chapter illustration engine settings (Flux / DALL-E 3 / Thematic Vector Art).
-  - Built-in live connection tester with latency metrics.
+  - Global LLM provider selection (Custom API proxy, Google Gemini, OpenAI, OpenRouter, Ollama, Mock) with custom endpoint URLs and keys.
+  - **Dedicated Chapter Illustration Engine (Image API)**:
+    - Independent provider selection (Custom OpenAI-compatible image endpoint, Official OpenAI DALL-E, Google Gemini Imagen, Smart AI Flux, or Offline Vector Art).
+    - Dedicated Image Server Base URL (e.g. `https://api.avalai.ir/v1` or custom proxy).
+    - Dedicated Image API key (or optionally inherits the global LLM key if identical).
+    - Dedicated image model selection (e.g. `dall-e-3`, `flux-1.1-pro`, `imagen-3.0-generate-002`).
+    - Quick 1-click gateway presets (AvalAI, OpenAI, OpenRouter Flux, Local SD / WebUI).
+    - Dedicated live Image API connectivity test tool with latency and response diagnostics.
 
-| Provider | Supported Models / Notes | Configuration |
+| Engine | Supported Models / Providers | Configuration |
 | :--- | :--- | :--- |
-| **Custom API (OpenAI-compatible)** | Any proxy, AvalAI, Groq, DeepSeek, vLLM, LM Studio, etc. | Set `Base URL`, `API Key`, and `Model Name` |
-| **Google Gemini** | `gemini-2.5-flash`, `gemini-1.5-pro` | Official `google-genai` SDK |
-| **OpenAI** | `gpt-4o`, `gpt-4o-mini`, `o3-mini` | Direct OpenAI API |
-| **OpenRouter** | `anthropic/claude-3.5-sonnet`, `deepseek/deepseek-r1`, etc. | Routes via `https://openrouter.ai/api/v1` |
-| **Ollama (Local)** | `llama3`, `qwen2.5`, `mistral` | Local endpoint: `http://localhost:11434/v1` |
-| **Mock Simulator** | High-fidelity offline literary simulator | Zero setup required |
+| **Story LLM (Narrative)** | Custom API (AvalAI, Groq, DeepSeek, vLLM, LM Studio), Gemini, OpenAI, OpenRouter, Ollama | Set `Base URL`, `API Key`, and `Model Name` |
+| **Chapter Illustration (Image)** | Custom Image API (AvalAI, OpenRouter, Local SD), OpenAI (`dall-e-3`), Gemini (`imagen-3.0`), Smart AI (Flux) | Set dedicated `Image Base URL`, `Image API Key`, and `Image Model` |
 
 ---
 

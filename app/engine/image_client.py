@@ -187,6 +187,108 @@ class ChapterImageClient:
             logger.warning(f"Smart AI image generation note: {e}")
         return None
 
+    async def test_connection(self, provider: str = None, api_key: str = None, model: str = None, base_url: str = None) -> dict:
+        """Tests live connectivity to the Image Generation API endpoint."""
+        import time
+        cfg = store.get_system_settings() or {}
+        prov = (provider or cfg.get("image_provider") or "auto").lower()
+        key = api_key if api_key is not None else (cfg.get("image_api_key") or cfg.get("api_key") or "")
+        mod = model or cfg.get("image_model") or ""
+        url = base_url if base_url is not None else (cfg.get("image_base_url") or cfg.get("base_url") or "")
+
+        if prov == "thematic":
+            return {
+                "success": True,
+                "latency_ms": 5,
+                "message": "Offline Thematic Vector Art Engine active (zero external API or internet required).",
+                "model": "svg-vector-engine"
+            }
+
+        if prov == "auto":
+            start = time.time()
+            test_prompt = "cinematic wide atmospheric library at dusk, warm lighting"
+            ai_res = await self.generate_ai_free(test_prompt)
+            latency = int((time.time() - start) * 1000)
+            if ai_res:
+                return {
+                    "success": True,
+                    "latency_ms": latency,
+                    "message": "Smart AI (Flux / Free Online Concept Art) connected successfully.",
+                    "model": "flux-pollinations"
+                }
+            return {
+                "success": False,
+                "latency_ms": latency,
+                "error": "Smart AI service could not be reached. Local vector art fallback will be used."
+            }
+
+        if prov == "gemini":
+            start = time.time()
+            target_model = mod or "imagen-3.0-generate-002"
+            try:
+                from google import genai
+                client = genai.Client(api_key=key)
+                res = client.models.generate_images(
+                    model=target_model,
+                    prompt="A vintage leather journal on an antique desk, warm lighting, cinematic 16:9",
+                    config=dict(number_of_images=1, aspect_ratio="16:9")
+                )
+                latency = int((time.time() - start) * 1000)
+                if res.generated_images:
+                    return {
+                        "success": True,
+                        "latency_ms": latency,
+                        "message": f"Gemini Imagen connected successfully! Generated sample with {target_model}.",
+                        "model": target_model
+                    }
+                return {
+                    "success": False,
+                    "latency_ms": latency,
+                    "error": "No image returned by Gemini Imagen."
+                }
+            except Exception as e:
+                latency = int((time.time() - start) * 1000)
+                return {
+                    "success": False,
+                    "latency_ms": latency,
+                    "error": str(e)
+                }
+
+        # Custom API or OpenAI
+        start = time.time()
+        target_model = mod or ("dall-e-3" if prov == "openai" else "dall-e-3")
+        target_url = url or ("https://api.openai.com/v1" if prov == "openai" else None)
+        try:
+            from openai import AsyncOpenAI
+            client = AsyncOpenAI(api_key=key or "dummy", base_url=target_url, timeout=30.0)
+            response = await client.images.generate(
+                model=target_model,
+                prompt="A vintage leather-bound book on a wooden desk, warm golden hour light, cinematic illustration",
+                size="1024x1024",
+                quality="standard",
+                n=1
+            )
+            latency = int((time.time() - start) * 1000)
+            if response.data and (getattr(response.data[0], "url", None) or getattr(response.data[0], "b64_json", None)):
+                return {
+                    "success": True,
+                    "latency_ms": latency,
+                    "message": f"Image API connected successfully! Generated image via {target_model}.",
+                    "model": target_model
+                }
+            return {
+                "success": False,
+                "latency_ms": latency,
+                "error": "No image data received in API response."
+            }
+        except Exception as e:
+            latency = int((time.time() - start) * 1000)
+            return {
+                "success": False,
+                "latency_ms": latency,
+                "error": str(e)
+            }
+
     async def generate(self, blueprint: StoryBlueprint, episode: EpisodeResponse) -> Tuple[bytes, str, str]:
         """
         Synthesizes an illustration for the chapter.
@@ -194,48 +296,71 @@ class ChapterImageClient:
         """
         concise_prompt = self.build_concise_prompt(blueprint, episode)
         full_prompt = self.build_chapter_prompt(blueprint, episode)
-        cfg = store.get_system_settings()
-        img_provider = cfg.get("image_provider", "auto")
-        key = cfg.get("api_key", "")
-        base_url = cfg.get("base_url", "")
-        img_model = cfg.get("image_model")
+        cfg = store.get_system_settings() or {}
+        img_provider = (cfg.get("image_provider") or "auto").lower()
+        img_key = cfg.get("image_api_key") or cfg.get("api_key") or ""
+        img_base_url = cfg.get("image_base_url") or cfg.get("base_url") or ""
+        img_model = cfg.get("image_model") or ""
 
-        # 1. Custom / OpenAI: ONLY if explicitly configured by the user for images
-        if (img_provider == "custom" and key) or (img_provider == "auto" and img_model and key):
+        # 1. Custom or OpenAI Dedicated API
+        if (img_provider in ("custom", "openai") and img_key) or (img_provider == "auto" and img_model and img_key):
             target_model = img_model or "dall-e-3"
+            target_base_url = img_base_url or ("https://api.openai.com/v1" if img_provider == "openai" else None)
             try:
                 from openai import AsyncOpenAI
-                client = AsyncOpenAI(api_key=key, base_url=base_url or None, timeout=30.0)
-                logger.info(f"Generating chapter illustration with {target_model}: {concise_prompt[:60]}...")
+                client = AsyncOpenAI(api_key=img_key, base_url=target_base_url, timeout=35.0)
+                logger.info(f"Generating chapter illustration with {target_model} via {target_base_url or 'default endpoint'}...")
                 response = await client.images.generate(
                     model=target_model,
-                    prompt=full_prompt,
+                    prompt=full_prompt[:1000],
                     size="1024x1024",
                     quality="standard",
                     n=1
                 )
-                if response.data and response.data[0].url:
-                    img_url = response.data[0].url
-                    loop = asyncio.get_event_loop()
+                if response.data:
+                    first = response.data[0]
+                    if getattr(first, "b64_json", None):
+                        image_bytes = base64.b64decode(first.b64_json)
+                        return image_bytes, "image/png", full_prompt
+                    elif getattr(first, "url", None):
+                        img_url = first.url
+                        loop = asyncio.get_event_loop()
 
-                    def _fetch():
-                        req = urllib.request.Request(img_url, headers={"User-Agent": "Storyteller/1.0"})
-                        with urllib.request.urlopen(req, timeout=25) as resp:
-                            return resp.read()
+                        def _fetch():
+                            req = urllib.request.Request(img_url, headers={"User-Agent": "Storyteller/1.0"})
+                            with urllib.request.urlopen(req, timeout=25) as resp:
+                                return resp.read()
 
-                    image_bytes = await loop.run_in_executor(None, _fetch)
-                    return image_bytes, "image/jpeg", full_prompt
+                        image_bytes = await loop.run_in_executor(None, _fetch)
+                        return image_bytes, "image/jpeg", full_prompt
             except Exception as e:
-                logger.warning(f"Custom image endpoint ({target_model}) error: {e}. Switching seamlessly to Smart AI illustration engine.")
+                logger.warning(f"Image API error ({img_provider} - {target_model}): {e}. Seamlessly falling back.")
 
-        # 2. Smart AI Generator (Pollinations: Free, fast, realistic AI concept art, 0 keys needed)
+        # 2. Google Gemini Imagen
+        if img_provider == "gemini" and img_key:
+            target_model = img_model or "imagen-3.0-generate-002"
+            try:
+                from google import genai
+                client = genai.Client(api_key=img_key)
+                logger.info(f"Generating chapter illustration with Google Gemini Imagen ({target_model})...")
+                res = client.models.generate_images(
+                    model=target_model,
+                    prompt=concise_prompt,
+                    config=dict(number_of_images=1, aspect_ratio="16:9")
+                )
+                if res.generated_images:
+                    return res.generated_images[0].image.image_bytes, "image/jpeg", concise_prompt
+            except Exception as e:
+                logger.warning(f"Gemini Imagen error ({target_model}): {e}. Seamlessly falling back.")
+
+        # 3. Smart AI Generator (Pollinations: Free, fast, realistic AI concept art, 0 keys needed)
         if img_provider != "thematic":
             ai_res = await self.generate_ai_free(concise_prompt)
             if ai_res:
                 data, mime = ai_res
                 return data, mime, concise_prompt
 
-        # 3. Fallback to local high-fidelity thematic vector artwork
+        # 4. Fallback to local high-fidelity thematic vector artwork
         svg_bytes = self.generate_thematic_svg(blueprint, episode)
         return svg_bytes, "image/svg+xml", concise_prompt
 

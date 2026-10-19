@@ -16,11 +16,15 @@ class ResetPasswordRequest(BaseModel):
     new_password: str
 
 class AdminAIConfigRequest(BaseModel):
+    # Global LLM settings
     provider: Optional[str] = None
     api_key: Optional[str] = None
     model: Optional[str] = None
     base_url: Optional[str] = None
+    # Dedicated Image Generation API settings
     image_provider: Optional[str] = None
+    image_api_key: Optional[str] = None
+    image_base_url: Optional[str] = None
     image_model: Optional[str] = None
 
 class AdminDashboardStats(BaseModel):
@@ -115,6 +119,7 @@ async def delete_user(user_id: str, admin: User = Depends(get_current_admin)):
 async def get_ai_config(admin: User = Depends(get_current_admin)):
     """Retrieve global AI configuration for the platform."""
     saved = store.get_system_settings() or {}
+    img_key = saved.get("image_api_key", "")
     return {
         "provider": llm.provider,
         "model": llm.model,
@@ -122,7 +127,10 @@ async def get_ai_config(admin: User = Depends(get_current_admin)):
         "has_api_key": bool(llm.api_key),
         "api_key_masked": f"••••••••{llm.api_key[-4:]}" if llm.api_key and len(llm.api_key) > 4 else ("••••" if llm.api_key else ""),
         "image_provider": saved.get("image_provider", "auto"),
-        "image_model": saved.get("image_model", "")
+        "image_base_url": saved.get("image_base_url", ""),
+        "image_model": saved.get("image_model", ""),
+        "has_image_api_key": bool(img_key),
+        "image_api_key_masked": f"••••••••{img_key[-4:]}" if img_key and len(img_key) > 4 else ("••••" if img_key else "")
     }
 
 @router.post("/ai-config")
@@ -134,6 +142,8 @@ async def update_ai_config(req: AdminAIConfigRequest, admin: User = Depends(get_
         model=req.model,
         base_url=req.base_url,
         image_provider=req.image_provider,
+        image_api_key=req.image_api_key,
+        image_base_url=req.image_base_url,
         image_model=req.image_model
     )
     return await get_ai_config(admin)
@@ -146,5 +156,17 @@ async def test_admin_api_connection(req: AdminAIConfigRequest, admin: User = Dep
         api_key=req.api_key,
         model=req.model,
         base_url=req.base_url
+    )
+    return result
+
+@router.post("/test-image-connection")
+async def test_admin_image_connection(req: AdminAIConfigRequest, admin: User = Depends(get_current_admin)):
+    """Test live connectivity of global Image Generation API credentials."""
+    from app.engine.image_client import chapter_image_client
+    result = await chapter_image_client.test_connection(
+        provider=req.image_provider,
+        api_key=req.image_api_key,
+        model=req.image_model,
+        base_url=req.image_base_url
     )
     return result

@@ -20,7 +20,8 @@ class LLMClient:
         if not self.api_key and self.provider not in ("mock", "ollama"):
             self.provider = "mock"
 
-    def update_config(self, provider: str = None, api_key: str = None, model: str = None, base_url: str = None, image_provider: str = None, image_model: str = None):
+    def update_config(self, provider: str = None, api_key: str = None, model: str = None, base_url: str = None,
+                      image_provider: str = None, image_api_key: str = None, image_base_url: str = None, image_model: str = None):
         saved = store.get_system_settings() or {}
         if provider:
             self.provider = provider.lower()
@@ -36,6 +37,10 @@ class LLMClient:
             saved["base_url"] = self.base_url
         if image_provider is not None:
             saved["image_provider"] = image_provider
+        if image_api_key is not None:
+            saved["image_api_key"] = image_api_key
+        if image_base_url is not None:
+            saved["image_base_url"] = image_base_url
         if image_model is not None:
             saved["image_model"] = image_model
 

@@ -1390,17 +1390,36 @@ async function loadAdminAiConfig() {
         if (!res.ok) return;
         const cfg = await res.json();
 
+        // 1. Text LLM Config
         if (cfg.provider) document.getElementById("adminCfgProvider").value = cfg.provider;
         if (cfg.base_url) document.getElementById("adminCfgBaseUrl").value = cfg.base_url;
         if (cfg.model) document.getElementById("adminCfgModel").value = cfg.model;
-        if (cfg.image_provider) document.getElementById("adminCfgImageProvider").value = cfg.image_provider;
-        if (cfg.image_model) document.getElementById("adminCfgImageModel").value = cfg.image_model;
 
         const maskedNotice = document.getElementById("adminApiKeyMaskedNotice");
         if (cfg.api_key_masked) {
             maskedNotice.innerText = `Current key: ${cfg.api_key_masked} (leave blank to retain)`;
         } else {
             maskedNotice.innerText = "No API key configured currently.";
+        }
+
+        // 2. Image Generation Config
+        if (cfg.image_provider && document.getElementById("adminCfgImageProvider")) {
+            document.getElementById("adminCfgImageProvider").value = cfg.image_provider;
+        }
+        if (cfg.image_base_url && document.getElementById("adminCfgImageBaseUrl")) {
+            document.getElementById("adminCfgImageBaseUrl").value = cfg.image_base_url;
+        }
+        if (cfg.image_model && document.getElementById("adminCfgImageModel")) {
+            document.getElementById("adminCfgImageModel").value = cfg.image_model;
+        }
+
+        const imgMaskedNotice = document.getElementById("adminImageApiKeyMaskedNotice");
+        if (imgMaskedNotice) {
+            if (cfg.image_api_key_masked) {
+                imgMaskedNotice.innerText = `Current image key: ${cfg.image_api_key_masked} (leave blank to retain)`;
+            } else {
+                imgMaskedNotice.innerText = "Inherits global LLM API key if identical, or enter a dedicated key.";
+            }
         }
 
         onAdminProviderChanged();
@@ -1439,8 +1458,31 @@ function onAdminProviderChanged() {
 
 function onAdminImageProviderChanged() {
     const prov = document.getElementById("adminCfgImageProvider")?.value || "auto";
-    const grp = document.getElementById("adminGrpCustomImageModel");
-    if (grp) grp.style.display = (prov === "custom") ? "block" : "none";
+    const isCustom = (prov === "custom");
+    const isOpenAI = (prov === "openai");
+    const isGemini = (prov === "gemini");
+    const isExternal = (isCustom || isOpenAI || isGemini);
+
+    const presetsRow = document.getElementById("adminImagePresetsRow");
+    if (presetsRow) presetsRow.style.display = isCustom ? "block" : "none";
+
+    const grpBaseUrl = document.getElementById("adminGrpImgBaseUrl");
+    if (grpBaseUrl) grpBaseUrl.style.display = isCustom ? "block" : "none";
+
+    const grpApiKey = document.getElementById("adminGrpImgApiKey");
+    if (grpApiKey) grpApiKey.style.display = isExternal ? "block" : "none";
+
+    const grpModel = document.getElementById("adminGrpImgModel");
+    if (grpModel) grpModel.style.display = isExternal ? "block" : "none";
+
+    const modelInput = document.getElementById("adminCfgImageModel");
+    if (modelInput) {
+        if (prov === "openai" && (!modelInput.value || modelInput.value.includes("flux") || modelInput.value.includes("imagen"))) {
+            modelInput.value = "dall-e-3";
+        } else if (prov === "gemini" && (!modelInput.value || modelInput.value.includes("dall"))) {
+            modelInput.value = "imagen-3.0-generate-002";
+        }
+    }
 }
 
 function applyAdminCustomApiPreset(preset) {
@@ -1463,7 +1505,33 @@ function applyAdminCustomApiPreset(preset) {
         baseUrlInput.value = "http://localhost:1234/v1";
         modelInput.value = "local-model";
     }
-    showToast(`Applied ${preset.toUpperCase()} gateway preset`, "info");
+    showToast(`Applied ${preset.toUpperCase()} narrative preset`, "info");
+}
+
+function applyAdminImagePreset(preset) {
+    const provSelect = document.getElementById("adminCfgImageProvider");
+    const baseUrlInput = document.getElementById("adminCfgImageBaseUrl");
+    const modelInput = document.getElementById("adminCfgImageModel");
+
+    if (preset === "avalai") {
+        provSelect.value = "custom";
+        baseUrlInput.value = "https://api.avalai.ir/v1";
+        modelInput.value = "dall-e-3";
+    } else if (preset === "openai") {
+        provSelect.value = "openai";
+        baseUrlInput.value = "https://api.openai.com/v1";
+        modelInput.value = "dall-e-3";
+    } else if (preset === "openrouter") {
+        provSelect.value = "custom";
+        baseUrlInput.value = "https://openrouter.ai/api/v1";
+        modelInput.value = "black-forest-labs/flux-1-schnell";
+    } else if (preset === "local") {
+        provSelect.value = "custom";
+        baseUrlInput.value = "http://localhost:7860/v1";
+        modelInput.value = "sdxl";
+    }
+    onAdminImageProviderChanged();
+    showToast(`Applied ${preset.toUpperCase()} image gateway preset`, "info");
 }
 
 async function testAdminAiConnection() {
@@ -1475,7 +1543,7 @@ async function testAdminAiConnection() {
     const btn = document.getElementById("btnAdminTestConn");
 
     const oldText = btn.innerHTML;
-    btn.innerHTML = `<span>Testing live connection...</span>`;
+    btn.innerHTML = `<span>Testing live narrative connection...</span>`;
     btn.disabled = true;
     resultBox.style.display = "none";
 
@@ -1498,7 +1566,7 @@ async function testAdminAiConnection() {
             resultBox.style.color = "var(--success)";
             resultBox.innerHTML = `
                 <div style="font-weight: 700; display: flex; align-items: center; gap: 6px;">
-                    ${ICONS.check} Connection Successful (${data.latency_ms} ms)
+                    ${ICONS.check} Story LLM Connected (${data.latency_ms} ms)
                 </div>
                 <div style="margin-top: 6px; font-size: 0.82rem; color: var(--text-primary);">Response: "${data.message}"</div>
             `;
@@ -1508,7 +1576,7 @@ async function testAdminAiConnection() {
             resultBox.style.color = "var(--danger)";
             resultBox.innerHTML = `
                 <div style="font-weight: 700; display: flex; align-items: center; gap: 6px;">
-                    ${ICONS.alert} Connection Failed
+                    ${ICONS.alert} Story LLM Connection Failed
                 </div>
                 <div style="margin-top: 4px; font-size: 0.82rem;">${data.error || 'No response received.'}</div>
             `;
@@ -1525,12 +1593,76 @@ async function testAdminAiConnection() {
     }
 }
 
+async function testAdminImageConnection() {
+    const provider = document.getElementById("adminCfgImageProvider").value;
+    const apiKey = document.getElementById("adminCfgImageApiKey").value;
+    const model = document.getElementById("adminCfgImageModel").value;
+    const baseUrl = document.getElementById("adminCfgImageBaseUrl").value;
+    const resultBox = document.getElementById("adminImageTestResultBox");
+    const btn = document.getElementById("btnAdminTestImageConn");
+
+    const oldText = btn.innerHTML;
+    btn.innerHTML = `<span>Testing live image API...</span>`;
+    btn.disabled = true;
+    resultBox.style.display = "none";
+
+    try {
+        const res = await fetchWithAuth("/api/admin/test-image-connection", {
+            method: "POST",
+            body: JSON.stringify({
+                image_provider: provider,
+                image_api_key: apiKey || undefined,
+                image_model: model || undefined,
+                image_base_url: baseUrl || undefined
+            })
+        });
+        const data = await res.json();
+        resultBox.style.display = "block";
+
+        if (data.success) {
+            resultBox.style.background = "var(--success-subtle)";
+            resultBox.style.border = "1px solid var(--success)";
+            resultBox.style.color = "var(--success)";
+            resultBox.innerHTML = `
+                <div style="font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                    ${ICONS.check} Image API Connected (${data.latency_ms} ms)
+                </div>
+                <div style="margin-top: 6px; font-size: 0.82rem; color: var(--text-primary);">${data.message}</div>
+            `;
+        } else {
+            resultBox.style.background = "var(--danger-subtle)";
+            resultBox.style.border = "1px solid var(--danger)";
+            resultBox.style.color = "var(--danger)";
+            resultBox.innerHTML = `
+                <div style="font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                    ${ICONS.alert} Image API Test Failed
+                </div>
+                <div style="margin-top: 4px; font-size: 0.82rem;">${data.error || 'No image response received.'}</div>
+            `;
+        }
+    } catch (e) {
+        resultBox.style.display = "block";
+        resultBox.style.background = "var(--danger-subtle)";
+        resultBox.style.border = "1px solid var(--danger)";
+        resultBox.style.color = "var(--danger)";
+        resultBox.innerHTML = `<div style="font-weight: 700; display: flex; align-items: center; gap: 6px;">${ICONS.alert} Network Error: ${e.message}</div>`;
+    } finally {
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+    }
+}
+
 async function saveAdminAiConfig() {
+    // 1. Narrative LLM
     const provider = document.getElementById("adminCfgProvider").value;
     const apiKey = document.getElementById("adminCfgApiKey").value;
     const model = document.getElementById("adminCfgModel").value;
     const baseUrl = document.getElementById("adminCfgBaseUrl").value;
+
+    // 2. Image Engine
     const imageProvider = document.getElementById("adminCfgImageProvider")?.value || "auto";
+    const imageApiKey = document.getElementById("adminCfgImageApiKey")?.value || undefined;
+    const imageBaseUrl = document.getElementById("adminCfgImageBaseUrl")?.value || undefined;
     const imageModel = document.getElementById("adminCfgImageModel")?.value || undefined;
 
     try {
@@ -1542,15 +1674,17 @@ async function saveAdminAiConfig() {
                 model: model || undefined,
                 base_url: baseUrl || undefined,
                 image_provider: imageProvider,
+                image_api_key: imageApiKey,
+                image_base_url: imageBaseUrl,
                 image_model: imageModel
             })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Failed to save configuration");
         await checkSystemInfo();
-        showToast("Global AI configuration saved successfully", "success");
+        showToast("Global AI and Image configurations saved successfully!", "success");
         await loadAdminAiConfig();
     } catch (e) {
-        showToast("Error saving AI configuration: " + e.message, "error");
+        showToast("Error saving configuration: " + e.message, "error");
     }
 }
