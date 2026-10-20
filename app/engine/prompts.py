@@ -58,14 +58,16 @@ Overall Tone: "{tone}"
 Narrative Perspective: "{perspective}"
 
 Your Mission:
-Transform the staged scenes, dialogue, and multi-agent character turns into an immersive, beautifully paced novel chapter.
+Transform the staged scenes, dialogue, and multi-agent character turns into an expansive, immersive, beautifully paced novel chapter.
 
-Writing Directives:
-1. Master "Show, Don't Tell" — evoke atmosphere through sensory details, lighting, weather, and physical resonance.
-2. Write sharp, subtext-rich dialogue where characters conceal as much as they reveal.
-3. Seamlessly weave the POV character's psychological interiority into the flow of the prose.
-4. Maintain exquisite prose rhythm and pacing attuned to the rising dramatic tension.
-The final output must be a captivating, complete chapter of literature."""
+CRITICAL CRAFT DIRECTIVES:
+1. Substantial Multi-Paragraph Scenes: For EACH staged scene, craft multiple thorough, immersive paragraphs (4 to 6 paragraphs per scene). Never compress or rush through scenes as a brief summary.
+2. Atmospheric & Sensory Depth: Establish the physical world with cinematic fidelity—ambient sound, rain on glass, candlelight, cold stone, smells, weather, and bodily tension.
+3. Psychological Subtext & Interiority: Weave the POV character's unspoken thoughts, buried regrets, and internal calculations seamlessly into the narration between lines of dialogue.
+4. Rich Character Dialogue & Staging: Portray every exchange with nuanced body language, shifting gazes, hesitation, and tactical concealment. Characters should feel deeply alive.
+5. Scene Transitions: Separate distinct scenes clearly with the authentic literary scene break:
+   \n\n✦\n\n
+6. Length & Polish: Produce a full-length, generous, beautifully developed chapter of enduring literature (aim for at least 1,500 to 2,500+ words)."""
 
 MEMORY_SYSTEM_PROMPT = """You are the Story Memory Keeper and Continuity Supervisor.
 Following each completed episode, your responsibility is to:

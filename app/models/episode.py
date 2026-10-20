@@ -41,6 +41,8 @@ class GenerationProgress(BaseModel):
     percentage: int = 0
     last_error: Optional[str] = None
     is_active: bool = False
+    logs: List[str] = Field(default_factory=list, description="Recent directorial and stage log entries")
+    current_preview: Optional[str] = Field(None, description="Live preview snippet of current prose or thought")
 
 class SetAutoContinueRequest(BaseModel):
     auto_continue: bool

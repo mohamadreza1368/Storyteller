@@ -582,87 +582,392 @@ async function refreshNovelView() {
             </div>
         `;
 
-        // Synopsis Tab
-        const synDiv = document.getElementById("synopsisContent");
-        synDiv.innerHTML = `
-            <div style="line-height: 2; margin-bottom: 24px;">
-                <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 8px;">Full Narrative Synopsis</h4>
-                <p style="color: var(--text-secondary);">${currentNovel.synopsis || 'Structuring narrative overview...'}</p>
-            </div>
-            <div>
-                <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 8px;">Opening Hook</h4>
-                <blockquote style="border-left: 3px solid var(--accent); padding-left: 16px; font-style: italic; color: var(--text-primary); font-size: 1.05rem;">
-                    "${currentNovel.hook || '...'}"
-                </blockquote>
-            </div>
-        `;
+        // Auto-Continue Switcher in Novel Header
+        updateAutoContinueButtonUI(currentNovel.auto_continue);
 
-        await loadEpisodesList();
+        // Update Write Next Button state
+        const episodesRes = await fetch(`/api/novels/${currentNovelId}/episodes`);
+        const episodesList = await episodesRes.json();
+        const writtenCount = episodesList.length;
+        const btnWrite = document.getElementById("btnWriteNext");
+        if (btnWrite) {
+            if (writtenCount >= currentNovel.total_episodes || currentNovel.status === "Completed") {
+                btnWrite.disabled = true;
+                btnWrite.style.opacity = "0.6";
+                btnWrite.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>رمان کامل شد (${writtenCount} قسمت)</span>
+                `;
+            } else {
+                btnWrite.disabled = false;
+                btnWrite.style.opacity = "1";
+                btnWrite.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                    </svg>
+                    <span>نوشتن قسمت ${writtenCount + 1}</span>
+                `;
+            }
+        }
+
+        // Synopsis & Story Matrix Tab
+        let matrixData = null;
+        let memoryData = null;
+        try {
+            const mRes = await fetch(`/api/novels/${currentNovelId}/matrix`);
+            if (mRes.ok) matrixData = await mRes.json();
+        } catch (e) {}
+
+        try {
+            const memRes = await fetch(`/api/novels/${currentNovelId}/memory`);
+            if (memRes.ok) memoryData = await memRes.json();
+        } catch (e) {}
+
+        renderMatrixAndMemoryTab(currentNovel, matrixData, memoryData, episodesList);
+
+        await renderEpisodesList(episodesList);
 
     } catch (e) {
         console.error("Refresh error:", e);
     }
 }
 
-async function loadEpisodesList() {
-    const listDiv = document.getElementById("episodesList");
-    try {
-        const res = await fetch(`/api/novels/${currentNovelId}/episodes`);
-        const episodes = await res.json();
-        
-        if (episodes.length === 0) {
-            listDiv.innerHTML = `
-                <div style="text-align: center; padding: 50px 20px; color: var(--text-secondary);">
-                    <div style="width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 50%; background: var(--accent-subtle); display: flex; align-items: center; justify-content: center; color: var(--accent);">
-                        ${ICONS.quill}
-                    </div>
-                    <div style="font-weight: 800; font-size: 1.15rem; margin-bottom: 6px;">No chapters written yet for this novel.</div>
-                    <p style="font-size: 0.92rem; color: var(--text-tertiary); margin-bottom: 18px;">World and story matrix are ready. You can commence with Chapter 1.</p>
-                    <button class="btn btn-primary" onclick="triggerWriteNext()">
-                        ${ICONS.quill}
-                        Write Chapter 1
-                    </button>
+// Render Character x Episode Matrix and Continuous Memory
+function renderMatrixAndMemoryTab(novel, matrix, memory, episodes) {
+    const synDiv = document.getElementById("synopsisContent");
+    if (!synDiv) return;
+
+    const totalEps = novel.total_episodes || 4;
+    const characters = (novel.cast && novel.cast.characters) ? novel.cast.characters : [];
+    const writtenEpNumbers = new Set((episodes || []).map(e => e.episode_number));
+    const povMap = {};
+    (episodes || []).forEach(e => { povMap[e.episode_number] = e.pov_character; });
+
+    // Build Character x Episode Matrix Table
+    let tableHtml = `
+        <div class="matrix-table-wrapper">
+            <table class="matrix-table">
+                <thead>
+                    <tr>
+                        <th class="matrix-corner">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                </svg>
+                                <span>شخصیت \\ قسمت</span>
+                            </div>
+                        </th>
+    `;
+
+    for (let ep = 1; ep <= totalEps; ep++) {
+        const isWritten = writtenEpNumbers.has(ep);
+        const epObj = (episodes || []).find(e => e.episode_number === ep);
+        const evObj = (matrix && matrix.events) ? matrix.events.find(ev => ev.episode_number === ep) : null;
+        const epTitle = epObj ? epObj.title : (evObj ? evObj.title : `طرح قسمت ${ep}`);
+
+        tableHtml += `
+            <th class="matrix-col-header ${isWritten ? 'col-written' : ''}">
+                <div style="font-weight: 800; font-size: 0.98rem; color: ${isWritten ? 'var(--accent)' : 'var(--text-primary)'};">
+                    قسمت ${ep}
                 </div>
+                <div style="margin-top: 4px;">
+                    ${isWritten 
+                        ? `<span class="badge badge-ready" style="font-size: 0.72rem;">نوشته شد (${epObj ? epObj.word_count : 0} کلمه)</span>` 
+                        : `<span class="badge badge-draft" style="font-size: 0.72rem;">در انتظار نگارش</span>`}
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-tertiary); margin-top: 6px; max-width: 170px; margin-left: auto; margin-right: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${epTitle}">
+                    ${epTitle}
+                </div>
+            </th>
+        `;
+    }
+
+    tableHtml += `
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    // Rows for each character
+    characters.forEach(char => {
+        const charKey = char.key;
+        const charName = char.core.name;
+        const avatarUrl = getCharacterAvatar(charName, char.core.gender, char.core.occupation);
+        const goals = (matrix && matrix.character_episode_grid && (matrix.character_episode_grid[charKey] || matrix.character_episode_grid[charName])) || [];
+
+        tableHtml += `
+            <tr>
+                <td class="matrix-char-cell">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="character-avatar" style="width: 38px; height: 38px;">
+                            <img src="${avatarUrl}" alt="${charName}" loading="lazy">
+                        </div>
+                        <div>
+                            <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary);">${charName}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-tertiary);">
+                                <span class="badge ${char.is_main ? 'badge-ready' : 'badge-draft'}" style="font-size: 0.68rem; padding: 2px 6px;">${char.core.role}</span>
+                                ${char.core.occupation || ''}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+        `;
+
+        for (let ep = 1; ep <= totalEps; ep++) {
+            const isWritten = writtenEpNumbers.has(ep);
+            const povChar = povMap[ep];
+            const isPOV = (povChar && (povChar === charName || povChar === charKey)) || (ep === 1 && char.is_main && !povChar);
+            const goalText = goals[ep - 1] || "حضور و ایفای نقش در صحنه";
+
+            tableHtml += `
+                <td class="matrix-goal-cell ${isPOV ? 'cell-pov' : ''} ${isWritten ? 'cell-written' : ''}">
+                    ${isPOV ? `
+                        <div style="margin-bottom: 6px;">
+                            <span style="background: var(--accent); color: white; padding: 2px 7px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                زاویه دید (POV)
+                            </span>
+                        </div>
+                    ` : ''}
+                    <div>${goalText}</div>
+                </td>
             `;
-            return;
         }
 
-        listDiv.innerHTML = episodes.map(ep => `
-            <div class="chapter-list-item" onclick="openReader(${ep.episode_number})">
-                <div style="display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0;">
-                    <div class="chapter-thumb-container">
-                        <img src="/api/novels/${currentNovelId}/episodes/${ep.episode_number}/image" 
-                             alt="Chapter ${ep.episode_number} Art" 
-                             class="chapter-thumb-img" 
-                             loading="lazy"
-                             onerror="this.parentElement.style.display='none'">
-                    </div>
-                    <div style="min-width: 0; flex: 1;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
-                            <span class="badge badge-ready">Chapter ${ep.episode_number}</span>
-                            <strong style="font-size: 1.15rem; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${ep.title}</strong>
-                        </div>
-                        <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${ep.summary || ''}</div>
-                    </div>
+        tableHtml += `</tr>`;
+    });
+
+    tableHtml += `
+            </tbody>
+        </table>
+    </div>
+    `;
+
+    // Memory & Plotlines
+    const runningSummary = (memory && memory.running_summary) ? memory.running_summary : (novel.synopsis || "خلاصه هنوز تدوین نشده است.");
+    const worldFacts = (memory && memory.world_facts && memory.world_facts.length > 0) ? memory.world_facts : (novel.world && novel.world.world_rules ? novel.world.world_rules : []);
+    const openThreads = (memory && memory.open_threads && memory.open_threads.length > 0) ? memory.open_threads : [novel.hook ? `نقطهٔ آغاز: ${novel.hook}` : "گره‌های روایی در حال شکل‌گیری است."];
+    const plotLines = (novel.plot && novel.plot.plot_lines) ? novel.plot.plot_lines : [];
+
+    synDiv.innerHTML = `
+        <!-- Matrix Section -->
+        <div style="margin-bottom: 32px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3 style="font-size: 1.4rem; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="9" y1="21" x2="9" y2="9"></line>
+                        </svg>
+                        ماتریس شخصیت × قسمت (Story Matrix)
+                    </h3>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">نقشهٔ کامل داستان؛ رویدادهای قسمت‌های آینده هم این‌جا پیداست.</p>
                 </div>
-                <div style="display: flex; align-items: center; gap: 14px; flex-shrink: 0;">
-                    <span style="font-size: 0.85rem; color: var(--text-tertiary); font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                        ${ICONS.clock} ${Math.ceil(ep.word_count / 220)} min read
-                    </span>
-                    <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openReader(${ep.episode_number})">
-                        ${ICONS.book}
-                        Read Chapter
-                    </button>
+                <div style="font-size: 0.82rem; color: var(--text-tertiary); background: var(--bg-surface-subtle); padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                    ستون‌های پررنگ نوشته شده‌اند. خانهٔ قاب‌دار یعنی قسمت از نگاه همان شخصیت روایت می‌شود.
                 </div>
             </div>
-        `).join("");
+            ${tableHtml}
+        </div>
 
+        <!-- Story Memory Section -->
+        <div style="border-top: 1px solid var(--border-subtle); padding-top: 28px;">
+            <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-primary); margin-bottom: 18px; display: flex; align-items: center; gap: 10px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                    <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                    <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                </svg>
+                حافظهٔ داستان (Story Memory)
+            </h3>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                <!-- Running Summary -->
+                <div class="card" style="margin: 0; background: var(--bg-surface-subtle); padding: 18px;">
+                    <h4 style="font-weight: 800; font-size: 1rem; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        خلاصهٔ کل (Running Summary)
+                    </h4>
+                    <p style="color: var(--text-secondary); line-height: 1.8; font-size: 0.92rem;">${runningSummary}</p>
+                </div>
+
+                <!-- World Facts -->
+                <div class="card" style="margin: 0; background: var(--bg-surface-subtle); padding: 18px;">
+                    <h4 style="font-weight: 800; font-size: 1rem; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 14 14"></polyline>
+                        </svg>
+                        واقعیت‌های تثبیت‌شده (Canonical Facts)
+                    </h4>
+                    <ul style="padding-left: 18px; line-height: 1.8; color: var(--text-secondary); font-size: 0.9rem;">
+                        ${worldFacts.map(f => `<li>${f}</li>`).join("") || '<li>قاعدهٔ اولیه‌ای ثبت نشده است.</li>'}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Open Threads -->
+            <div class="card" style="margin: 0 0 24px 0; background: var(--bg-surface-subtle); padding: 18px;">
+                <h4 style="font-weight: 800; font-size: 1rem; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    گره‌های داستانی باز (Open Threads & Active Mysteries)
+                </h4>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    ${openThreads.map(t => `
+                        <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">
+                            <span style="color: #f59e0b; margin-top: 2px;">✦</span>
+                            <span>${t}</span>
+                        </div>
+                    `).join("")}
+                </div>
+            </div>
+
+            <!-- Plotlines & Beats -->
+            ${plotLines.length > 0 ? `
+                <div class="card" style="margin: 0; background: var(--bg-surface-subtle); padding: 18px;">
+                    <h4 style="font-weight: 800; font-size: 1rem; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                        خطوط داستانی (Plotlines & Beats)
+                    </h4>
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
+                        ${plotLines.map(pl => `
+                            <div style="border-left: 3px solid var(--accent); padding-left: 14px;">
+                                <strong style="font-size: 0.95rem; color: var(--text-primary);">${pl.title}</strong>
+                                <p style="font-size: 0.88rem; color: var(--text-secondary); margin-top: 4px;">${pl.synopsis}</p>
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                                    ${(pl.beats || []).map(b => `
+                                        <span class="badge badge-draft" style="font-size: 0.78rem;">${b.beat} (${b.milestone || ''})</span>
+                                    `).join("")}
+                                </div>
+                            </div>
+                        `).join("")}
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+// Toggle Novel Auto-Continue Mode
+async function toggleNovelAutoContinue() {
+    if (!currentNovelId || !currentNovel) return;
+    const newStatus = !currentNovel.auto_continue;
+    try {
+        const res = await fetch(`/api/novels/${currentNovelId}/auto-continue`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ auto_continue: newStatus })
+        });
+        const data = await res.json();
+        currentNovel.auto_continue = data.auto_continue;
+        updateAutoContinueButtonUI(data.auto_continue);
+
+        if (data.auto_continue) {
+            showToast("نوشتن خودکار فعال شد. نگارش تا پایان رمان ادامه می‌یابد.", "success");
+            startProgressPolling();
+        } else {
+            showToast("نوشتن خودکار متوقف شد (توقف پس از این قسمت).", "info");
+        }
     } catch (e) {
-        console.error("Episodes list error:", e);
+        showToast("خطا در تغییر وضعیت نوشتن خودکار: " + e.message, "error");
     }
 }
 
-// Progress Polling with 6-stage highlights
+// Update Auto-Continue Button Visual UI
+function updateAutoContinueButtonUI(isActive) {
+    const dot = document.getElementById("autoContinueDot");
+    const label = document.getElementById("autoContinueLabel");
+    const btn = document.getElementById("btnAutoContinueToggle");
+    if (!dot || !label || !btn) return;
+
+    if (isActive) {
+        dot.style.background = "#10b981";
+        dot.style.boxShadow = "0 0 10px #10b981";
+        label.innerText = "نوشتن خودکار: روشن (تا پایان)";
+        btn.style.borderColor = "#10b981";
+        btn.style.color = "#10b981";
+    } else {
+        dot.style.background = "#64748b";
+        dot.style.boxShadow = "none";
+        label.innerText = "نوشتن خودکار: متوقف (دستی)";
+        btn.style.borderColor = "var(--border-subtle)";
+        btn.style.color = "var(--text-secondary)";
+    }
+}
+
+// Render Episodes List
+async function renderEpisodesList(episodes) {
+    const listDiv = document.getElementById("episodesList");
+    if (!listDiv) return;
+
+    if (!episodes || episodes.length === 0) {
+        listDiv.innerHTML = `
+            <div style="text-align: center; padding: 50px 20px; color: var(--text-secondary);">
+                <div style="width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 50%; background: var(--accent-subtle); display: flex; align-items: center; justify-content: center; color: var(--accent);">
+                    ${ICONS.quill}
+                </div>
+                <div style="font-weight: 800; font-size: 1.15rem; margin-bottom: 6px;">هنوز قسمتی نوشته نشده است.</div>
+                <p style="font-size: 0.92rem; color: var(--text-tertiary); margin-bottom: 18px;">دنیا و ماتریس داستان آماده است. با کلیک بر روی نوشتن، کارگردان صحنه‌ها را می‌چیند و راوی آغاز می‌کند.</p>
+                <button class="btn btn-primary" onclick="triggerWriteNext()">
+                    ${ICONS.quill}
+                    نوشتن قسمت اول
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    listDiv.innerHTML = episodes.map(ep => `
+        <div class="chapter-list-item" onclick="openReader(${ep.episode_number})">
+            <div style="display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0;">
+                <div class="chapter-thumb-container">
+                    <img src="/api/novels/${currentNovelId}/episodes/${ep.episode_number}/image" 
+                         alt="Chapter ${ep.episode_number} Art" 
+                         class="chapter-thumb-img" 
+                         loading="lazy"
+                         onerror="this.parentElement.style.display='none'">
+                </div>
+                <div style="min-width: 0; flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
+                        <span class="badge badge-ready">قسمت ${ep.episode_number}</span>
+                        <strong style="font-size: 1.15rem; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${ep.title}</strong>
+                        ${ep.pov_character ? `<span class="badge badge-draft" style="font-size: 0.72rem;">· از نگاه ${ep.pov_character}</span>` : ''}
+                    </div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${ep.summary || ''}</div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 14px; flex-shrink: 0;">
+                <span style="font-size: 0.85rem; color: var(--text-tertiary); font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                    ${ICONS.clock} ${ep.word_count || 0} کلمه (${Math.ceil((ep.word_count || 1200) / 220)} دقیقه مطالعه)
+                </span>
+                <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openReader(${ep.episode_number})">
+                    ${ICONS.book}
+                    خواندن داستان
+                </button>
+            </div>
+        </div>
+    `).join("");
+}
+
+// Progress Polling with Live Production Terminal & Auto-Stop
 function startProgressPolling() {
     stopProgressPolling();
     progressPollTimer = setInterval(async () => {
@@ -673,11 +978,19 @@ function startProgressPolling() {
             const card = document.getElementById("novelProgressCard");
             
             if (p.is_active || (p.percentage > 0 && p.percentage < 100)) {
-                card.style.display = "block";
-                document.getElementById("progressStepTitle").innerText = p.current_step;
-                document.getElementById("progressPercentage").innerText = p.percentage + "%";
-                document.getElementById("progressFill").style.width = p.percentage + "%";
-                document.getElementById("progressDetail").innerText = `Stage ${p.step_number} of ${p.total_steps} (Chapter ${p.current_episode} of ${p.total_episodes})`;
+                if (card) card.style.display = "block";
+                
+                const titleEl = document.getElementById("progressStepTitle");
+                if (titleEl) titleEl.innerText = p.current_step;
+
+                const percEl = document.getElementById("progressPercentage");
+                if (percEl) percEl.innerText = p.percentage + "%";
+
+                const fillEl = document.getElementById("progressFill");
+                if (fillEl) fillEl.style.width = p.percentage + "%";
+
+                const detailEl = document.getElementById("progressDetail");
+                if (detailEl) detailEl.innerText = `مرحلهٔ ${p.step_number} از ${p.total_steps} (قسمت ${p.current_episode} از ${p.total_episodes})`;
 
                 for (let i = 1; i <= 6; i++) {
                     const el = document.getElementById(`stage${i}Ind`);
@@ -687,14 +1000,42 @@ function startProgressPolling() {
                         else el.className = "stage-step";
                     }
                 }
-            } else {
-                card.style.display = "none";
-                if (p.last_error) {
-                    showToast("Generation Error: " + p.last_error, "error");
+
+                // Update Live Generation Log Terminal
+                const terminalDiv = document.getElementById("generationLogTerminal");
+                if (terminalDiv && p.logs && p.logs.length > 0) {
+                    terminalDiv.innerHTML = p.logs.map(line => `<div>${line}</div>`).join("");
+                    terminalDiv.scrollTop = terminalDiv.scrollHeight;
                 }
+
+                // Update Live Prose Preview
+                const previewBox = document.getElementById("terminalProsePreview");
+                const previewText = document.getElementById("terminalProseText");
+                if (previewBox && previewText) {
+                    if (p.current_preview) {
+                        previewBox.style.display = "block";
+                        previewText.innerText = p.current_preview;
+                    } else {
+                        previewBox.style.display = "none";
+                    }
+                }
+
+            } else {
+                // STOP POLLING to prevent infinite loop!
+                stopProgressPolling();
+                if (card) card.style.display = "none";
+                
+                if (p.last_error) {
+                    showToast("خطای نگارش: " + p.last_error, "error");
+                } else if (p.percentage === 100 && p.current_episode >= p.total_episodes) {
+                    showToast("🎉 تمام قسمت‌های رمان با موفقیت کامل شد!", "success");
+                }
+                
                 await refreshNovelView();
             }
-        } catch (e) {}
+        } catch (e) {
+            console.error("Progress poll error:", e);
+        }
     }, 1500);
 }
 
@@ -711,10 +1052,10 @@ async function triggerWriteNext() {
         const res = await fetch(`/api/novels/${currentNovelId}/write-next`, { method: "POST" });
         if (!res.ok) {
             const err = await res.json();
-            showToast(err.detail || "Error initiating generation", "error");
+            showToast(err.detail || "خطا در آغاز نگارش", "error");
             return;
         }
-        showToast("Generating next chapter...", "info");
+        showToast("نگارش قسمت بعدی آغاز شد...", "info");
         startProgressPolling();
     } catch (e) {
         showToast("Error: " + e.message, "error");

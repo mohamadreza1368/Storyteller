@@ -1202,4 +1202,97 @@ h1, h2, h3, h4, h5 {
     box-shadow: var(--shadow-sm);
 }
 
+/* Live Generation Terminal */
+.live-dot {
+    animation: livePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+    0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 6px #10b981; }
+    50% { opacity: 0.4; transform: scale(0.85); box-shadow: 0 0 0 transparent; }
+}
+
+/* Character x Episode Matrix Grid */
+.matrix-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+    margin-bottom: 28px;
+    box-shadow: var(--shadow-sm);
+}
+
+.matrix-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 700px;
+}
+
+.matrix-table th,
+.matrix-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    border-right: 1px solid var(--border-subtle);
+    vertical-align: top;
+}
+
+.matrix-table th:last-child,
+.matrix-table td:last-child {
+    border-right: none;
+}
+
+.matrix-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.matrix-corner {
+    background: var(--bg-surface-subtle);
+    color: var(--text-primary);
+    font-weight: 800;
+    font-size: 0.95rem;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    min-width: 190px;
+}
+
+.matrix-col-header {
+    background: var(--bg-surface-subtle);
+    text-align: center;
+    min-width: 220px;
+    transition: background 0.2s ease;
+}
+
+.matrix-col-header.col-written {
+    background: rgba(99, 102, 241, 0.12);
+    border-bottom: 3px solid var(--accent);
+}
+
+.matrix-char-cell {
+    background: var(--bg-surface);
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    font-weight: 700;
+}
+
+.matrix-goal-cell {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.matrix-goal-cell.cell-pov {
+    background: rgba(99, 102, 241, 0.08);
+    border: 2px solid var(--accent) !important;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+}
+
+.matrix-goal-cell.cell-written {
+    color: var(--text-primary);
+}
+
 

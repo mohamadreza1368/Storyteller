@@ -16,7 +16,7 @@ from app.models.character import Character, PersonaCore, CharacterSeed
 from app.models.episode import EpisodeResponse, EpisodeSummary, GenerationProgress, SetAutoContinueRequest
 from app.models.enums import NovelStatus, Genre, ProseStyle, Theme, Tone, Perspective, EndingType
 from app.storage.store import store
-from app.engine.pipeline import initialize_novel, generate_single_episode, run_novel_episodes
+from app.engine.pipeline import initialize_novel, generate_single_episode, run_novel_episodes, track_task
 from app.engine.image_client import chapter_image_client
 
 router = APIRouter(prefix="/api/novels", tags=["Novels"])
@@ -216,7 +216,8 @@ async def create_novel(req: CreateNovelRequest, background_tasks: BackgroundTask
     store.save_blueprint(blueprint)
 
     if req.start_now:
-        background_tasks.add_task(initialize_novel, blueprint)
+        task = asyncio.create_task(initialize_novel(blueprint))
+        track_task(task)
 
     return blueprint
 
@@ -227,6 +228,22 @@ async def get_novel(novel_id: str):
     if not bp:
         raise HTTPException(status_code=404, detail="Novel not found")
     return bp
+
+@router.get("/{novel_id}/matrix")
+async def get_novel_matrix(novel_id: str):
+    """Retrieve the Character x Episode Story Matrix."""
+    m = store.get_matrix(novel_id)
+    if not m:
+        raise HTTPException(status_code=404, detail="Story matrix not found for this novel")
+    return m
+
+@router.get("/{novel_id}/memory")
+async def get_novel_memory(novel_id: str):
+    """Retrieve the continuous Story Memory."""
+    mem = store.get_memory(novel_id)
+    if not mem:
+        raise HTTPException(status_code=404, detail="Story memory not found for this novel")
+    return mem
 
 @router.delete("/{novel_id}")
 async def delete_novel(novel_id: str):
@@ -250,7 +267,7 @@ async def get_progress(novel_id: str):
     return store.get_progress(novel_id)
 
 @router.post("/{novel_id}/auto-continue")
-async def toggle_auto_continue(novel_id: str, req: SetAutoContinueRequest, background_tasks: BackgroundTasks):
+async def toggle_auto_continue(novel_id: str, req: SetAutoContinueRequest):
     """Toggle auto-continue mode."""
     bp = store.get_blueprint(novel_id)
     if not bp:
@@ -259,12 +276,13 @@ async def toggle_auto_continue(novel_id: str, req: SetAutoContinueRequest, backg
     store.save_blueprint(bp)
 
     if bp.auto_continue:
-        background_tasks.add_task(run_novel_episodes, novel_id)
+        task = asyncio.create_task(run_novel_episodes(novel_id))
+        track_task(task)
 
     return {"auto_continue": bp.auto_continue}
 
 @router.post("/{novel_id}/write-next")
-async def write_next_episode(novel_id: str, background_tasks: BackgroundTasks):
+async def write_next_episode(novel_id: str):
     """Manually trigger generation of the next episode."""
     bp = store.get_blueprint(novel_id)
     if not bp:
@@ -275,7 +293,8 @@ async def write_next_episode(novel_id: str, background_tasks: BackgroundTasks):
     if next_ep > bp.total_episodes:
         raise HTTPException(status_code=400, detail="All episodes for this novel have already been generated")
 
-    background_tasks.add_task(generate_single_episode, novel_id, next_ep)
+    task = asyncio.create_task(generate_single_episode(novel_id, next_ep))
+    track_task(task)
     return {"message": f"Writing of Chapter {next_ep} initiated in background"}
 
 @router.get("/{novel_id}/episodes", response_model=List[EpisodeSummary])

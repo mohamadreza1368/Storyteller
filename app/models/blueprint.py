@@ -102,7 +102,7 @@ class CreateNovelRequest(BaseModel):
     characters: Optional[List[CharacterSeed]] = None
     relationships: Optional[List[RelationshipSeed]] = None
     total_episodes: Optional[int] = 4
-    words_per_episode: Optional[int] = 1200
+    words_per_episode: Optional[int] = 2000
     perspective: Optional[str] = Perspective.THIRD_PERSON_LIMITED.value
     ending: Optional[str] = EndingType.SURPRISING.value
     auto_continue: Optional[bool] = False
