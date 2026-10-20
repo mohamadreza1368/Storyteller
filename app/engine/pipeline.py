@@ -141,6 +141,8 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
         return None
 
     memory = store.get_memory(novel_id) or StoryMemory(novel_id=novel_id)
+    matrix = store.get_matrix(novel_id)
+    prior_episodes = store.list_episodes(novel_id)
 
     try:
         blueprint.status = NovelStatus.WRITING.value
@@ -152,7 +154,7 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
             is_active=True,
             log_line=f"🎬 مرحلهٔ ۳ (کارگردان صحنه): تفکیک پلات و تنظیم ضرب‌آهنگ دراماتیک قسمت {ep_num}..."
         )
-        scenes = await execute_stage3(blueprint, ep_num, memory)
+        scenes = await execute_stage3(blueprint, ep_num, memory, matrix=matrix, prior_episodes=prior_episodes)
         locs_summary = ", ".join([s.location_key for s in scenes[:2]])
         await update_progress(
             novel_id, f"Scenes mapped ({len(scenes)} scenes)", 3, 6, 35, ep_num, blueprint.total_episodes,
@@ -191,7 +193,7 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
             is_active=True,
             log_line=f"✍️ مرحلهٔ ۵ (راوی و رمان‌نویس): نگارش نثر غنی و فضاسازی ادبی بر اساس بازی صحنه‌ها..."
         )
-        title, summary, content = await execute_stage5(blueprint, ep_num, scenes, memory)
+        title, summary, content = await execute_stage5(blueprint, ep_num, scenes, memory, prior_episodes=prior_episodes)
         word_count = len(content.split())
 
         preview_excerpt = content[:220].strip() + "..."

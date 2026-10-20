@@ -67,28 +67,28 @@ Return strictly a JSON object matching this schema:
 }}
 """
 
-                async def fallback_turn(c=char, r=round_idx):
+                async def fallback_turn(c=char, r=round_idx, sc=scene):
                     if r == 0:
                         return {
-                            "action": f"{c.core.name} leaned his hand against the mahogany frame, keeping his eyes fixed on the rain-streaked pane.",
-                            "dialogue": "I assumed matters had settled between us, but this silence is making things considerably more dangerous.",
-                            "thought": "She must not detect the hesitation in my tone. If she realizes where the ledger was moved, everything unravels.",
-                            "emotion": "Guarded and apprehensive",
-                            "knowledge_gain": None
+                            "action": f"{c.core.name} paused beside the table at {sc.location_key}, assessing the rising tension caused by {sc.conflict.lower()}.",
+                            "dialogue": f"We cannot afford missteps now. Look at what is happening with {sc.goal.lower()}.",
+                            "thought": f"I must protect my aim ({c.motivation.want or 'the truth'}) before this situation slips entirely beyond my control.",
+                            "emotion": "Tense and observant",
+                            "knowledge_gain": f"Recognized the immediate danger posed by {sc.conflict}."
                         }
                     else:
                         return {
-                            "action": f"{c.core.name} took a deliberate step forward, his jaw tight with quiet resolve.",
-                            "dialogue": "There is no retreating for either of us now. We see this through tonight, or not at all.",
-                            "thought": "Perhaps it is time to accept that she is just as entrapped by these circumstances as I am.",
-                            "emotion": "Determined yet cautious",
-                            "knowledge_gain": "Realization that the opposing party is operating under immense external pressure."
+                            "action": f"{c.core.name} took a decisive step forward in {sc.location_key}, voice dropping to an urgent whisper.",
+                            "dialogue": f"Whatever happens next, we have crossed the threshold. We see this through to {sc.resolution.lower()}.",
+                            "thought": f"Even if my secret ({c.motivation.secret or 'motives'}) is tested, retreat is no longer an option.",
+                            "emotion": "Resolute and determined",
+                            "knowledge_gain": f"Committed to seeing through {sc.resolution}."
                         }
 
                 turn_data = await llm.generate_json(
                     sys_prompt,
                     user_prompt,
-                    fallback_generator=lambda c=char, r=round_idx: fallback_turn(c, r)
+                    fallback_generator=lambda c=char, r=round_idx, sc=scene: fallback_turn(c, r, sc)
                 )
 
                 turn = CharacterTurn(

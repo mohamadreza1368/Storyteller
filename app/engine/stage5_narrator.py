@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Any
 from app.models.blueprint import StoryBlueprint
 from app.models.simulation import SceneRecord, StoryMemory
 from app.engine.llm_client import llm
@@ -8,12 +8,13 @@ async def execute_stage5(
     blueprint: StoryBlueprint,
     episode_number: int,
     scenes: List[SceneRecord],
-    memory: StoryMemory
+    memory: StoryMemory,
+    prior_episodes: Optional[List[Any]] = None
 ) -> Tuple[str, str, str]:
     """
-    Stage 5: Master Narrator / Novelist Prose Synthesis in English.
-    Converts simulated scenes and multi-agent character turns into refined literary fiction.
-    Returns: (title, summary, full_content)
+    Stage 5: Master Narrator / Novelist Prose Synthesis.
+    Converts simulated scenes and multi-agent character turns into expansive literary fiction.
+    Guarantees progressive, non-repeating chapters across the novel arc.
     """
 
     pov_char = scenes[0].pov_character_key if scenes else "Narrator"
@@ -28,12 +29,25 @@ async def execute_stage5(
             f"### Scene {sc.scene_number}: {sc.title}\n"
             f"Setting: {sc.location_key} | Time: {sc.time_marker}\n"
             f"POV: {sc.pov_character_key}\n"
-            f"Goal & Conflict: {sc.goal} | Obstacle: {sc.conflict}\n"
-            f"Actors & Staged Turns:\n{turns_text}\n"
+            f"Goal: {sc.goal}\n"
+            f"Conflict & Obstacle: {sc.conflict}\n"
+            f"Staged Actor Turns:\n{turns_text}\n"
             f"Resolution: {sc.resolution}\n"
         )
 
     full_scenes_prompt = "\n\n".join(scenes_description)
+
+    # Prior episodes continuity
+    prior_summary_lines = []
+    if prior_episodes:
+        for ep in sorted(prior_episodes, key=lambda x: getattr(x, "episode_number", 0)):
+            ep_n = getattr(ep, "episode_number", 0)
+            if ep_n < episode_number:
+                t = getattr(ep, "title", f"Chapter {ep_n}")
+                s = getattr(ep, "summary", "")
+                prior_summary_lines.append(f"- Chapter {ep_n} ('{t}'): {s}")
+
+    prior_text = "\n".join(prior_summary_lines) if prior_summary_lines else "None (Opening Chapter of the Novel)."
 
     sys_prompt = NARRATOR_SYSTEM_PROMPT.format(
         prose_style=blueprint.style.prose_style,
@@ -44,51 +58,108 @@ async def execute_stage5(
     target_words = max(blueprint.words_per_episode or 1800, 1800)
     user_prompt = f"""
 Novel: "{blueprint.title}"
-Episode: {episode_number} of {blueprint.total_episodes}
+Episode to Write: Chapter {episode_number} of {blueprint.total_episodes}
 Primary POV Character: {pov_char}
-Target Word Count: around {target_words} words of literary fiction
+Target Word Count: around {target_words} words of literary prose
 
-STAGED SCENES, DRAMATIC CONFLICTS, AND MULTI-AGENT CHARACTER TURNS:
+WHAT TRANSPIRED IN PRIOR CHAPTERS:
+{prior_text}
+
+CRITICAL CONTINUITY DIRECTIVE:
+- Do NOT rewrite or restart the beginning of the book. The previous chapters have already taken place.
+- Pick up the story directly from the staged scenes for Chapter {episode_number}.
+- Fully dramatize EVERY scene below. Do not summarize or rush interactions.
+- Separate distinct scenes using the authentic scene divider:
+  ✦
+
+STAGED SCENES AND ACTOR TURNS FOR CHAPTER {episode_number}:
 {full_scenes_prompt}
 
-INSTRUCTIONS FOR WRITING:
-1. Write a complete, richly detailed, unhurried chapter in English (around {target_words} words).
-2. Fully flesh out EVERY staged scene with sensory ambiance, psychological interiority, dialogue, and body language. Do NOT summarize or skip scenes.
-3. Separate distinct scenes using the authentic scene divider:
-   ✦
-4. Format the final output strictly as:
-[TITLE]: Evocative Chapter Title
+Format the final output strictly as:
+[TITLE]: Chapter Title
 [SUMMARY]: Two-sentence summary of the chapter's key events
 [TEXT]:
-(Full prose of the chapter begins here)
+(Complete chapter prose begins here)
 """
 
     async def fallback():
-        c_title = f"Chapter {episode_number}: Shadows Along the Water"
-        c_summary = f"A tense confrontation in the rain-drenched archives uncovers the first anomalous clue, forcing ancient loyalties into question as old wounds resurface."
-        
-        # Scene 1: Arrival & Setting the Atmosphere
-        s1_p1 = f"A heavy, damp mist crept off the river and settled over the limestone facades of {blueprint.world.city}. Street lamps flickered like tired sentinels through the gloom, amber halos bleeding into the rain that drummed an uneven rhythm against the leaded panes. The air carried the familiar scent of coal soot, wet cobbles, and decaying autumn leaves—the very perfume of a past {pov_char} had spent a decade attempting to outrun. Every breath tasted faintly of iron and damp wool."
-        s1_p2 = f"Inside the archives, the silence possessed weight. It was not merely the absence of sound, but an accumulated gravity forged by centuries of parchment, bindings, and official silences. Every oak plank beneath his boots groaned with age, as though thirty years of whispered betrayals remained trapped between the lime-washed walls. He paused before the tall card catalogue, his hand hovering over the brass drawer pulls. The chill of the metal seeped into his fingertips before he had even made contact."
-        s1_p3 = f"{pov_char} ran his fingertips across the velvet rim of the desk chair, steadying himself against a sudden wave of vertigo. The texture was rough, worn thin by hands long buried in the municipal cemetery. For twenty years, the official narrative had stood uncontested: a simple clerical error, an archive ledger misfiled during the restructuring. But as he pulled the dossier from beneath the false bottom of the cedar crate, the ink told a vastly different story."
-        s1_p4 = f"The documents were bound with crimson ribbon that had faded to the shade of dried brick. On the cover sheet, a signature appeared in bold, angular strokes—a signature he would have recognized anywhere, even in the dim light filtering through the fanlight above. His pulse thudded in his ears, rhythmic and unrelenting. 'So it was never lost,' he murmured to the empty room. 'It was buried.'"
-        scene1 = f"{s1_p1}\n\n{s1_p2}\n\n{s1_p3}\n\n{s1_p4}"
+        # Dynamically synthesize unique, non-repeating prose from the actual staged scenes
+        c_title = f"Chapter {episode_number}: {scenes[0].title if scenes else 'The Turning Tide'}"
+        c_summary = (
+            f"In Chapter {episode_number}, events escalate as {pov_char} navigates tensions at "
+            f"{scenes[0].location_key if scenes else blueprint.world.city}. "
+            f"The encounter deepens existing fractures and propels the narrative toward irreversible change."
+        )
 
-        # Scene 2: The Confrontation
-        s2_p1 = f"The sound of the outer door latch clicking into place cut through the quiet like a blade through silk. Footsteps approached along the tiled corridor—deliberate, measured, without the hurried haste of an intruder. Whoever had entered knew the building's geometry as intimately as he did. {pov_char} did not turn immediately; instead, he carefully closed the ledger, his thumb lingering on the embossed leather binding."
-        s2_p2 = f"When their gazes collided across the half-shadowed reading room, words ceased to function as mere conversation. Every syllable uttered was calculated, not to vindicate the truth, but to buy precious seconds against an inevitable storm. In the tightening knot of mutual suspicion, even breathing felt like a negotiated surrender. Shadows stretched between them across the long oak conference table, dividing the lamplight into hostile territories."
-        s2_p3 = f"'You shouldn't have returned to {blueprint.world.city},' the other said quietly, removing leather gloves finger by finger with excruciating patience. 'Some archives are kept closed not out of malice, but out of mercy. You think you're unearthing justice, but you are merely disturbing ghosts that have made peace with their graves.' The voice was steady, carrying the practiced calm of someone accustomed to administering difficult decrees."
-        s2_p4 = f"{pov_char} felt the cold sting of betrayal settle into his chest, sharp and familiar. 'Mercy is a luxury reserved for the architects of the silence,' he countered, his voice barely above a whisper yet cutting through the gloom. 'My family didn't receive mercy when the ledger vanished. They received disgrace and exile. If the ghosts are disturbed tonight, they have you to hold accountable.'"
-        scene2 = f"{s2_p1}\n\n{s2_p2}\n\n{s2_p3}\n\n{s2_p4}"
+        rendered_scenes = []
+        for s_idx, sc in enumerate(scenes):
+            scene_paragraphs = []
+            
+            # Atmospheric opening paragraph tailored to this scene
+            if episode_number == 1 and s_idx == 0:
+                p_intro = (
+                    f"A damp, persistent chill clung to the stone facades of {blueprint.world.city}. "
+                    f"At {sc.location_key}, beneath the heavy shadows of {sc.time_marker.lower()}, "
+                    f"{sc.pov_character_key} stood motionless for a lingering heartbeat, taking measure of the silence. "
+                    f"The air smelled of wet asphalt, extinguished coal, and aged lime—the distinct scent of secrets "
+                    f"that had spent years waiting to be unearthed. Every instinct urged caution, yet the objective "
+                    f"({sc.goal.lower()}) left no room for hesitation."
+                )
+            elif episode_number == 2 and s_idx == 0:
+                p_intro = (
+                    f"By the time the events of yesterday had settled into the collective memory of the district, "
+                    f"the quiet at {sc.location_key} had taken on a razor-sharp edge. The sky was an unforgiving slate grey, "
+                    f"and {sc.time_marker.lower()} brought with it a sudden gust that rattled the high clerestory panes. "
+                    f"{sc.pov_character_key} surveyed the room with narrowed eyes, acutely aware that the trail was growing colder. "
+                    f"The immediate challenge—{sc.conflict.lower()}—loomed larger with every passing second."
+                )
+            elif episode_number == 3 and s_idx == 0:
+                p_intro = (
+                    f"The fragile pretense of neutrality had completely unraveled. In the grim expanse of {sc.location_key}, "
+                    f"amidst the biting cold of {sc.time_marker.lower()}, the stakes were no longer speculative. "
+                    f"{sc.pov_character_key} could feel the tightening net of scrutiny closing in from every avenue of {blueprint.world.city}. "
+                    f"There was a palpable weight in the room, born of the mounting friction: {sc.conflict.lower()}."
+                )
+            else:
+                p_intro = (
+                    f"The atmosphere at {sc.location_key} carried the unmistakable stillness that precedes a reckoning. "
+                    f"As {sc.time_marker.lower()} approached, shadows lengthened across the scarred woodwork and weathered stone. "
+                    f"{sc.pov_character_key} took a slow breath, steadying a heartbeat that had raced through hours of pursuit. "
+                    f"Every thread of the investigation had led inexorably to this location, where {sc.goal.lower()} would finally be tested."
+                )
+            scene_paragraphs.append(p_intro)
 
-        # Scene 3: Aftermath & Cliffhanger
-        s3_p1 = f"Outside, the rain intensified, lashing against the high clerestory windows with renewed ferocity. The brass mantle clock behind the librarian's desk began its slow, deliberate chime, striking the midnight hour. Each toll reverberated through the iron rafters, measuring the collapse of whatever fragile peace had remained between them."
-        s3_p2 = f"Neither of them moved toward the doorway. The ledger lay between them on the scarred varnish, a wedge driven deep into the heart of the district's foundational order. What had begun as a solitary search for personal vindication had expanded into something far more dangerous: a crack in the veneer of an entire institution."
-        s3_p3 = f"As the final chime faded into the drumming downpour, the illusion of neutrality was irrevocably shattered. The city outside lay quiet under the black sky, its gas lamps flickering against the river fog, unaware that the first stone in the wall of silence had just been dislodged."
-        scene3 = f"{s3_p1}\n\n{s3_p2}\n\n{s3_p3}"
+            # Dramatize the conflict and staged turns
+            if sc.turns:
+                for t in sc.turns:
+                    p_turn = (
+                        f"{t.action} "
+                        f"When words finally came, they carried the quiet force of an indictment: \"{t.dialogue}\" "
+                        f"Beneath the surface, however, thoughts remained tightly guarded. "
+                        f"{t.character_key} turned the matter over in secret, reflecting that {t.thought.lower()} "
+                        f"The emotional current in the room shifted to {t.emotion.lower()}, charging the silence between them with unspoken peril."
+                    )
+                    scene_paragraphs.append(p_turn)
+            else:
+                p_solo = (
+                    f"{sc.pov_character_key} moved with deliberate care across {sc.location_key}, conscious of every creaking board and sudden whisper. "
+                    f"The obstacle was immediate and relentless: {sc.conflict}. Every passing minute without progress risked exposing the entire undertaking "
+                    f"to those who guarded the status quo with unyielding vigilance."
+                )
+                scene_paragraphs.append(p_solo)
 
-        full = f"{scene1}\n\n✦\n\n{scene2}\n\n✦\n\n{scene3}"
-        return f"[TITLE]: {c_title}\n[SUMMARY]: {c_summary}\n[TEXT]:\n{full}"
+            # Scene resolution paragraph
+            p_res = (
+                f"As the tension reached its zenith, the immediate outcome shifted decisively. {sc.resolution} "
+                f"Looking back across the space of {sc.location_key}, it was clear that the balance of power had irrevocably altered. "
+                f"Neither of them would face the coming hours unchanged by what had just transpired."
+            )
+            scene_paragraphs.append(p_res)
+
+            rendered_scenes.append("\n\n".join(scene_paragraphs))
+
+        full_prose = "\n\n✦\n\n".join(rendered_scenes)
+        return f"[TITLE]: {c_title}\n[SUMMARY]: {c_summary}\n[TEXT]:\n{full_prose}"
 
     raw_output = await llm.generate_text(sys_prompt, user_prompt, fallback_generator=fallback)
 
