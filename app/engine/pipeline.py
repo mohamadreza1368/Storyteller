@@ -77,7 +77,7 @@ async def initialize_novel(blueprint: StoryBlueprint):
         # Step 1: World & Characters
         await update_progress(
             novel_id, "Constructing world & cast", 1, 2, 25, 0, blueprint.total_episodes,
-            log_line=f"🌍 مرحلهٔ ۱: ساخت دنیا، قوانین اقلیمی و شناسنامهٔ روانشناختی شخصیت‌ها ({blueprint.world.city})..."
+            log_line=f"🌍 Stage 1: Constructing world rules, locations, and psychological dossiers ({blueprint.world.city})..."
         )
         blueprint = await execute_stage1(blueprint)
         store.save_blueprint(blueprint)
@@ -85,13 +85,13 @@ async def initialize_novel(blueprint: StoryBlueprint):
         cast_names = ", ".join([c.core.name for c in blueprint.cast.characters[:4]])
         await update_progress(
             novel_id, "Cast dossiers forged", 1, 2, 50, 0, blueprint.total_episodes,
-            log_line=f"🎭 پروندهٔ شخصیت‌ها تکمیل شد: {cast_names}"
+            log_line=f"🎭 Character dossiers completed: {cast_names}"
         )
 
         # Step 2: Story Matrix
         await update_progress(
             novel_id, "Weaving narrative matrix", 2, 2, 75, 0, blueprint.total_episodes,
-            log_line=f"📐 مرحلهٔ ۲: بافتن ماتریس دوبُعدی شخصیت × قسمت برای {blueprint.total_episodes} قسمت..."
+            log_line=f"📐 Stage 2: Weaving Character x Episode Matrix for {blueprint.total_episodes} episodes..."
         )
         blueprint, matrix = await execute_stage2(blueprint)
         store.save_blueprint(blueprint)
@@ -113,7 +113,7 @@ async def initialize_novel(blueprint: StoryBlueprint):
             await update_progress(
                 novel_id, "World ready. Starting Chapter 1...", 2, 2, 100, 0, blueprint.total_episodes,
                 is_active=True,
-                log_line="🚀 ماتریس آماده است. نوشتن خودکار فعال است — آغاز فصل اول..."
+                log_line="🚀 Matrix ready. Auto-continue enabled — initiating Chapter 1..."
             )
             task = asyncio.create_task(run_novel_episodes(novel_id))
             track_task(task)
@@ -121,7 +121,7 @@ async def initialize_novel(blueprint: StoryBlueprint):
             await update_progress(
                 novel_id, "World & story matrix ready", 2, 2, 100, 0, blueprint.total_episodes,
                 is_active=False,
-                log_line="✨ دنیا و ماتریس رمان با موفقیت طراحی شد. آماده برای نگارش قسمت اول."
+                log_line="✨ World and story matrix initialized successfully. Ready to write Chapter 1."
             )
 
     except Exception as e:
@@ -131,7 +131,7 @@ async def initialize_novel(blueprint: StoryBlueprint):
         await update_progress(
             novel_id, "Failed during world design", 1, 2, 0, 0, blueprint.total_episodes,
             is_active=False, err=str(e),
-            log_line=f"❌ خطا در طراحی دنیا: {str(e)}"
+            log_line=f"❌ Error during world design: {str(e)}"
         )
 
 async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[EpisodeResponse]:
@@ -152,21 +152,21 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
         await update_progress(
             novel_id, f"Directing scenes for Chapter {ep_num}", 3, 6, 20, ep_num, blueprint.total_episodes,
             is_active=True,
-            log_line=f"🎬 مرحلهٔ ۳ (کارگردان صحنه): تفکیک پلات و تنظیم ضرب‌آهنگ دراماتیک قسمت {ep_num}..."
+            log_line=f"🎬 Stage 3 (Scene Director): Deconstructing plot and blocking dramatic beats for Chapter {ep_num}..."
         )
         scenes = await execute_stage3(blueprint, ep_num, memory, matrix=matrix, prior_episodes=prior_episodes)
         locs_summary = ", ".join([s.location_key for s in scenes[:2]])
         await update_progress(
             novel_id, f"Scenes mapped ({len(scenes)} scenes)", 3, 6, 35, ep_num, blueprint.total_episodes,
             is_active=True,
-            log_line=f"📍 {len(scenes)} صحنه تنظیم شد. مکان‌ها: {locs_summary} (زاویه دید: {scenes[0].pov_character_key if scenes else 'راوی'})"
+            log_line=f"📍 {len(scenes)} scenes blocked at: {locs_summary} (POV: {scenes[0].pov_character_key if scenes else 'Narrator'})"
         )
 
         # Stage 4: Character Simulation (Multi-agent actor turns)
         await update_progress(
             novel_id, f"Multi-agent roleplay in Chapter {ep_num}", 4, 6, 50, ep_num, blueprint.total_episodes,
             is_active=True,
-            log_line=f"🎭 مرحلهٔ ۴ (ایفای نقش روش‌مند): بازیگران وارد صحنه شدند؛ دیالوگ‌ها و افکار پنهان در حال پردازش..."
+            log_line=f"🎭 Stage 4 (Actor Simulation): Characters entered the scene; dialogue and internal thoughts simulating..."
         )
         scenes = await execute_stage4(blueprint, scenes, memory)
 
@@ -175,7 +175,7 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
         for sc in scenes:
             for t in sc.turns:
                 if t.thought and len(t.thought) > 10:
-                    sample_thought = f"{t.character_key} [در دل]: {t.thought}"
+                    sample_thought = f"{t.character_key} [Secret Thought]: {t.thought}"
                     break
             if sample_thought:
                 break
@@ -183,7 +183,7 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
         await update_progress(
             novel_id, f"Character roleplay completed", 4, 6, 65, ep_num, blueprint.total_episodes,
             is_active=True,
-            log_line=f"💭 بازی شخصیت‌ها ضبط شد. لایه‌های پنهان روان‌شناختی ثبت گردید.",
+            log_line=f"💭 Character turns recorded. Subtext and psychological layers registered.",
             preview_text=sample_thought
         )
 
@@ -191,7 +191,7 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
         await update_progress(
             novel_id, f"Writing prose for Chapter {ep_num}", 5, 6, 80, ep_num, blueprint.total_episodes,
             is_active=True,
-            log_line=f"✍️ مرحلهٔ ۵ (راوی و رمان‌نویس): نگارش نثر غنی و فضاسازی ادبی بر اساس بازی صحنه‌ها..."
+            log_line=f"✍️ Stage 5 (Master Novelist): Synthesizing expansive literary prose from staged scenes..."
         )
         title, summary, content = await execute_stage5(blueprint, ep_num, scenes, memory, prior_episodes=prior_episodes)
         word_count = len(content.split())
@@ -200,7 +200,7 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
         await update_progress(
             novel_id, f"Prose synthesized ({word_count} words)", 5, 6, 90, ep_num, blueprint.total_episodes,
             is_active=True,
-            log_line=f"📖 متن کامل قسمت {ep_num} نوشته شد ({word_count} کلمه). عنوان: «{title}»",
+            log_line=f"📖 Complete text of Chapter {ep_num} synthesized ({word_count} words). Title: '{title}'",
             preview_text=preview_excerpt
         )
 
@@ -208,7 +208,7 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
         await update_progress(
             novel_id, "Registering story memory", 6, 6, 94, ep_num, blueprint.total_episodes,
             is_active=True,
-            log_line=f"🧠 مرحلهٔ ۶ (حافظهٔ داستان): به‌روزرسانی زنجیرهٔ رخدادها و واقعیت‌های جهان داستان..."
+            log_line=f"🧠 Stage 6 (Story Memory): Updating narrative event chain and canonical world facts..."
         )
         memory = await execute_stage6(blueprint, ep_num, summary, scenes, memory)
         store.save_memory(novel_id, memory)
@@ -231,7 +231,7 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
             await update_progress(
                 novel_id, f"Illustrating scene for Chapter {ep_num}", 6, 6, 98, ep_num, blueprint.total_episodes,
                 is_active=True,
-                log_line=f"🎨 تصویرسازی هوش مصنوعی برای صحنهٔ کلیدی قسمت {ep_num}..."
+                log_line=f"🎨 AI Artwork: Synthesizing illustration for key scene in Chapter {ep_num}..."
             )
             img_data, mime_type, prompt_used = await chapter_image_client.generate(blueprint, ep_response)
             store.save_episode_image(novel_id, ep_num, img_data, mime_type)
@@ -240,14 +240,14 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
             await update_progress(
                 novel_id, f"Illustration ready", 6, 6, 99, ep_num, blueprint.total_episodes,
                 is_active=True,
-                log_line=f"🖼️ تابلوی تصویرسازی قسمت {ep_num} ذخیره شد."
+                log_line=f"🖼️ Chapter {ep_num} artwork generated and saved."
             )
         except Exception as img_err:
             logger.warning(f"Failed to generate chapter artwork for Chapter {ep_num}: {img_err}")
             await update_progress(
                 novel_id, f"Artwork fallback ready", 6, 6, 99, ep_num, blueprint.total_episodes,
                 is_active=True,
-                log_line=f"ℹ️ تصویرسازی با کاور تماتیک جایگزین شد."
+                log_line=f"ℹ️ Artwork replaced with thematic genre cover."
             )
 
         store.save_episode(ep_response)
@@ -260,7 +260,7 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
             await update_progress(
                 novel_id, "Novel completed successfully", 6, 6, 100, ep_num, blueprint.total_episodes,
                 is_active=False,
-                log_line=f"🎉 تمام قسمت‌های رمان ({blueprint.total_episodes} قسمت) با موفقیت به پایان رسید!"
+                log_line=f"🎉 All {blueprint.total_episodes} chapters completed successfully!"
             )
         else:
             blueprint.status = NovelStatus.READY.value
@@ -273,7 +273,7 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
                 f"Chapter {ep_num} completed",
                 6, 6, 100, ep_num, blueprint.total_episodes,
                 is_active=keep_active,
-                log_line=f"✅ قسمت {ep_num} با موفقیت به پایان رسید." + (f" ادامهٔ خودکار به قسمت {ep_num + 1}..." if keep_active else "")
+                log_line=f"✅ Chapter {ep_num} completed successfully." + (f" Auto-continuing to Chapter {ep_num + 1}..." if keep_active else "")
             )
 
         return ep_response
@@ -285,7 +285,7 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
         await update_progress(
             novel_id, f"Error generating Chapter {ep_num}", 5, 6, 0, ep_num, blueprint.total_episodes,
             is_active=False, err=str(e),
-            log_line=f"❌ خطا در نگارش قسمت {ep_num}: {str(e)}"
+            log_line=f"❌ Error generating Chapter {ep_num}: {str(e)}"
         )
         return None
 
@@ -311,7 +311,7 @@ async def run_novel_episodes(novel_id: str):
                 await update_progress(
                     novel_id, "Novel completed successfully", 6, 6, 100, blueprint.total_episodes, blueprint.total_episodes,
                     is_active=False,
-                    log_line=f"🎉 تمام {blueprint.total_episodes} قسمت رمان به پایان رسید."
+                    log_line=f"🎉 All {blueprint.total_episodes} chapters of the novel have been completed."
                 )
                 break
 
@@ -319,7 +319,7 @@ async def run_novel_episodes(novel_id: str):
             await update_progress(
                 novel_id, f"Starting Chapter {next_ep} of {blueprint.total_episodes}", 1, 6, 5, next_ep, blueprint.total_episodes,
                 is_active=True,
-                log_line=f"⏳ شروع فرایند نگارش قسمت {next_ep} از {blueprint.total_episodes}..."
+                log_line=f"⏳ Initiating generation pipeline for Chapter {next_ep} of {blueprint.total_episodes}..."
             )
 
             # Generate episode with retry

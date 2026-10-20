@@ -598,7 +598,7 @@ async function refreshNovelView() {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    <span>رمان کامل شد (${writtenCount} قسمت)</span>
+                    <span>Novel Completed (${writtenCount} Chapters)</span>
                 `;
             } else {
                 btnWrite.disabled = false;
@@ -608,7 +608,7 @@ async function refreshNovelView() {
                         <path d="M12 20h9"></path>
                         <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                     </svg>
-                    <span>نوشتن قسمت ${writtenCount + 1}</span>
+                    <span>Write Chapter ${writtenCount + 1}</span>
                 `;
             }
         }
@@ -658,7 +658,7 @@ function renderMatrixAndMemoryTab(novel, matrix, memory, episodes) {
                                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                                     <circle cx="9" cy="7" r="4"></circle>
                                 </svg>
-                                <span>شخصیت \\ قسمت</span>
+                                <span>Character \\ Chapter</span>
                             </div>
                         </th>
     `;
@@ -667,17 +667,17 @@ function renderMatrixAndMemoryTab(novel, matrix, memory, episodes) {
         const isWritten = writtenEpNumbers.has(ep);
         const epObj = (episodes || []).find(e => e.episode_number === ep);
         const evObj = (matrix && matrix.events) ? matrix.events.find(ev => ev.episode_number === ep) : null;
-        const epTitle = epObj ? epObj.title : (evObj ? evObj.title : `طرح قسمت ${ep}`);
+        const epTitle = epObj ? epObj.title : (evObj ? evObj.title : `Chapter ${ep} Plan`);
 
         tableHtml += `
             <th class="matrix-col-header ${isWritten ? 'col-written' : ''}">
                 <div style="font-weight: 800; font-size: 0.98rem; color: ${isWritten ? 'var(--accent)' : 'var(--text-primary)'};">
-                    قسمت ${ep}
+                    Chapter ${ep}
                 </div>
                 <div style="margin-top: 4px;">
                     ${isWritten 
-                        ? `<span class="badge badge-ready" style="font-size: 0.72rem;">نوشته شد (${epObj ? epObj.word_count : 0} کلمه)</span>` 
-                        : `<span class="badge badge-draft" style="font-size: 0.72rem;">در انتظار نگارش</span>`}
+                        ? `<span class="badge badge-ready" style="font-size: 0.72rem;">Written (${epObj ? epObj.word_count : 0} words)</span>` 
+                        : `<span class="badge badge-draft" style="font-size: 0.72rem;">Pending</span>`}
                 </div>
                 <div style="font-size: 0.78rem; color: var(--text-tertiary); margin-top: 6px; max-width: 170px; margin-left: auto; margin-right: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${epTitle}">
                     ${epTitle}
@@ -721,7 +721,7 @@ function renderMatrixAndMemoryTab(novel, matrix, memory, episodes) {
             const isWritten = writtenEpNumbers.has(ep);
             const povChar = povMap[ep];
             const isPOV = (povChar && (povChar === charName || povChar === charKey)) || (ep === 1 && char.is_main && !povChar);
-            const goalText = goals[ep - 1] || "حضور و ایفای نقش در صحنه";
+            const goalText = goals[ep - 1] || "Active role & scene objective";
 
             tableHtml += `
                 <td class="matrix-goal-cell ${isPOV ? 'cell-pov' : ''} ${isWritten ? 'cell-written' : ''}">
@@ -732,7 +732,7 @@ function renderMatrixAndMemoryTab(novel, matrix, memory, episodes) {
                                     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
                                     <circle cx="12" cy="12" r="3"></circle>
                                 </svg>
-                                زاویه دید (POV)
+                                POV Character
                             </span>
                         </div>
                     ` : ''}
@@ -751,9 +751,9 @@ function renderMatrixAndMemoryTab(novel, matrix, memory, episodes) {
     `;
 
     // Memory & Plotlines
-    const runningSummary = (memory && memory.running_summary) ? memory.running_summary : (novel.synopsis || "خلاصه هنوز تدوین نشده است.");
+    const runningSummary = (memory && memory.running_summary) ? memory.running_summary : (novel.synopsis || "Synopsis in formulation.");
     const worldFacts = (memory && memory.world_facts && memory.world_facts.length > 0) ? memory.world_facts : (novel.world && novel.world.world_rules ? novel.world.world_rules : []);
-    const openThreads = (memory && memory.open_threads && memory.open_threads.length > 0) ? memory.open_threads : [novel.hook ? `نقطهٔ آغاز: ${novel.hook}` : "گره‌های روایی در حال شکل‌گیری است."];
+    const openThreads = (memory && memory.open_threads && memory.open_threads.length > 0) ? memory.open_threads : [novel.hook ? `Opening Hook: ${novel.hook}` : "Narrative threads in development."];
     const plotLines = (novel.plot && novel.plot.plot_lines) ? novel.plot.plot_lines : [];
 
     synDiv.innerHTML = `
@@ -767,12 +767,12 @@ function renderMatrixAndMemoryTab(novel, matrix, memory, episodes) {
                             <line x1="3" y1="9" x2="21" y2="9"></line>
                             <line x1="9" y1="21" x2="9" y2="9"></line>
                         </svg>
-                        ماتریس شخصیت × قسمت (Story Matrix)
+                        Character × Episode Matrix
                     </h3>
-                    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">نقشهٔ کامل داستان؛ رویدادهای قسمت‌های آینده هم این‌جا پیداست.</p>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px;">Complete narrative blueprint; upcoming chapter trajectories are visible below.</p>
                 </div>
                 <div style="font-size: 0.82rem; color: var(--text-tertiary); background: var(--bg-surface-subtle); padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
-                    ستون‌های پررنگ نوشته شده‌اند. خانهٔ قاب‌دار یعنی قسمت از نگاه همان شخصیت روایت می‌شود.
+                    Bold columns indicate completed chapters. Framed cells highlight the primary POV character.
                 </div>
             </div>
             ${tableHtml}
@@ -787,7 +787,7 @@ function renderMatrixAndMemoryTab(novel, matrix, memory, episodes) {
                     <line x1="6" y1="6" x2="6.01" y2="6"></line>
                     <line x1="6" y1="18" x2="6.01" y2="18"></line>
                 </svg>
-                حافظهٔ داستان (Story Memory)
+                Story Memory & Continuity
             </h3>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
@@ -798,7 +798,7 @@ function renderMatrixAndMemoryTab(novel, matrix, memory, episodes) {
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                         </svg>
-                        خلاصهٔ کل (Running Summary)
+                        Running Summary
                     </h4>
                     <p style="color: var(--text-secondary); line-height: 1.8; font-size: 0.92rem;">${runningSummary}</p>
                 </div>
@@ -810,10 +810,10 @@ function renderMatrixAndMemoryTab(novel, matrix, memory, episodes) {
                             <circle cx="12" cy="12" r="10"></circle>
                             <polyline points="12 6 12 12 14 14"></polyline>
                         </svg>
-                        واقعیت‌های تثبیت‌شده (Canonical Facts)
+                        Canonical Facts
                     </h4>
                     <ul style="padding-left: 18px; line-height: 1.8; color: var(--text-secondary); font-size: 0.9rem;">
-                        ${worldFacts.map(f => `<li>${f}</li>`).join("") || '<li>قاعدهٔ اولیه‌ای ثبت نشده است.</li>'}
+                        ${worldFacts.map(f => `<li>${f}</li>`).join("") || '<li>No initial rules recorded yet.</li>'}
                     </ul>
                 </div>
             </div>
@@ -826,7 +826,7 @@ function renderMatrixAndMemoryTab(novel, matrix, memory, episodes) {
                         <line x1="12" y1="8" x2="12" y2="12"></line>
                         <line x1="12" y1="16" x2="12.01" y2="16"></line>
                     </svg>
-                    گره‌های داستانی باز (Open Threads & Active Mysteries)
+                    Open Threads & Active Mysteries
                 </h4>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                     ${openThreads.map(t => `
@@ -845,7 +845,7 @@ function renderMatrixAndMemoryTab(novel, matrix, memory, episodes) {
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
                             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                         </svg>
-                        خطوط داستانی (Plotlines & Beats)
+                        Plotlines & Dramatic Beats
                     </h4>
                     <div style="display: flex; flex-direction: column; gap: 14px;">
                         ${plotLines.map(pl => `
@@ -881,13 +881,13 @@ async function toggleNovelAutoContinue() {
         updateAutoContinueButtonUI(data.auto_continue);
 
         if (data.auto_continue) {
-            showToast("نوشتن خودکار فعال شد. نگارش تا پایان رمان ادامه می‌یابد.", "success");
+            showToast("Auto-continue enabled. Chapters will write continuously until completion.", "success");
             startProgressPolling();
         } else {
-            showToast("نوشتن خودکار متوقف شد (توقف پس از این قسمت).", "info");
+            showToast("Auto-continue stopped (will stop after current chapter).", "info");
         }
     } catch (e) {
-        showToast("خطا در تغییر وضعیت نوشتن خودکار: " + e.message, "error");
+        showToast("Error updating auto-continue status: " + e.message, "error");
     }
 }
 
@@ -901,13 +901,13 @@ function updateAutoContinueButtonUI(isActive) {
     if (isActive) {
         dot.style.background = "#10b981";
         dot.style.boxShadow = "0 0 10px #10b981";
-        label.innerText = "نوشتن خودکار: روشن (تا پایان)";
+        label.innerText = "Auto-Continue: Active (Until End)";
         btn.style.borderColor = "#10b981";
         btn.style.color = "#10b981";
     } else {
         dot.style.background = "#64748b";
         dot.style.boxShadow = "none";
-        label.innerText = "نوشتن خودکار: متوقف (دستی)";
+        label.innerText = "Auto-Continue: Stopped (Manual)";
         btn.style.borderColor = "var(--border-subtle)";
         btn.style.color = "var(--text-secondary)";
     }
@@ -924,11 +924,11 @@ async function renderEpisodesList(episodes) {
                 <div style="width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 50%; background: var(--accent-subtle); display: flex; align-items: center; justify-content: center; color: var(--accent);">
                     ${ICONS.quill}
                 </div>
-                <div style="font-weight: 800; font-size: 1.15rem; margin-bottom: 6px;">هنوز قسمتی نوشته نشده است.</div>
-                <p style="font-size: 0.92rem; color: var(--text-tertiary); margin-bottom: 18px;">دنیا و ماتریس داستان آماده است. با کلیک بر روی نوشتن، کارگردان صحنه‌ها را می‌چیند و راوی آغاز می‌کند.</p>
+                <div style="font-weight: 800; font-size: 1.15rem; margin-bottom: 6px;">No chapters written yet.</div>
+                <p style="font-size: 0.92rem; color: var(--text-tertiary); margin-bottom: 18px;">World and story matrix are ready. Direct scenes and commence writing.</p>
                 <button class="btn btn-primary" onclick="triggerWriteNext()">
                     ${ICONS.quill}
-                    نوشتن قسمت اول
+                    Write Chapter 1
                 </button>
             </div>
         `;
@@ -947,20 +947,20 @@ async function renderEpisodesList(episodes) {
                 </div>
                 <div style="min-width: 0; flex: 1;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
-                        <span class="badge badge-ready">قسمت ${ep.episode_number}</span>
+                        <span class="badge badge-ready">Chapter ${ep.episode_number}</span>
                         <strong style="font-size: 1.15rem; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${ep.title}</strong>
-                        ${ep.pov_character ? `<span class="badge badge-draft" style="font-size: 0.72rem;">· از نگاه ${ep.pov_character}</span>` : ''}
+                        ${ep.pov_character ? `<span class="badge badge-draft" style="font-size: 0.72rem;">· POV: ${ep.pov_character}</span>` : ''}
                     </div>
                     <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${ep.summary || ''}</div>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 14px; flex-shrink: 0;">
                 <span style="font-size: 0.85rem; color: var(--text-tertiary); font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                    ${ICONS.clock} ${ep.word_count || 0} کلمه (${Math.ceil((ep.word_count || 1200) / 220)} دقیقه مطالعه)
+                    ${ICONS.clock} ${ep.word_count || 0} words (${Math.ceil((ep.word_count || 1200) / 220)} min read)
                 </span>
                 <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openReader(${ep.episode_number})">
                     ${ICONS.book}
-                    خواندن داستان
+                    Read Chapter
                 </button>
             </div>
         </div>
@@ -990,7 +990,7 @@ function startProgressPolling() {
                 if (fillEl) fillEl.style.width = p.percentage + "%";
 
                 const detailEl = document.getElementById("progressDetail");
-                if (detailEl) detailEl.innerText = `مرحلهٔ ${p.step_number} از ${p.total_steps} (قسمت ${p.current_episode} از ${p.total_episodes})`;
+                if (detailEl) detailEl.innerText = `Stage ${p.step_number} of ${p.total_steps} (Chapter ${p.current_episode} of ${p.total_episodes})`;
 
                 for (let i = 1; i <= 6; i++) {
                     const el = document.getElementById(`stage${i}Ind`);
@@ -1026,9 +1026,9 @@ function startProgressPolling() {
                 if (card) card.style.display = "none";
                 
                 if (p.last_error) {
-                    showToast("خطای نگارش: " + p.last_error, "error");
+                    showToast("Generation error: " + p.last_error, "error");
                 } else if (p.percentage === 100 && p.current_episode >= p.total_episodes) {
-                    showToast("🎉 تمام قسمت‌های رمان با موفقیت کامل شد!", "success");
+                    showToast("🎉 All novel chapters completed successfully!", "success");
                 }
                 
                 await refreshNovelView();
@@ -1052,10 +1052,10 @@ async function triggerWriteNext() {
         const res = await fetch(`/api/novels/${currentNovelId}/write-next`, { method: "POST" });
         if (!res.ok) {
             const err = await res.json();
-            showToast(err.detail || "خطا در آغاز نگارش", "error");
+            showToast(err.detail || "Error starting chapter generation", "error");
             return;
         }
-        showToast("نگارش قسمت بعدی آغاز شد...", "info");
+        showToast("Writing next chapter...", "info");
         startProgressPolling();
     } catch (e) {
         showToast("Error: " + e.message, "error");
