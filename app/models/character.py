@@ -53,6 +53,7 @@ class Character(BaseModel):
     arc: CharacterArc = Field(default_factory=CharacterArc)
     state: CharacterState = Field(default_factory=CharacterState)
     relationships: List[Relationship] = Field(default_factory=list)
+    system_prompt: Optional[str] = Field(None, description="Dedicated LLM System Prompt for this character agent")
     notes: Optional[str] = Field(None, description="Author specific notes")
 
 class CharacterSeed(BaseModel):

@@ -72,7 +72,7 @@ class StoryBlueprint(BaseModel):
     hook: str = Field("", description="Dramatic opening hook or question")
     
     total_episodes: int = Field(5, ge=1, le=50, description="Total planned episodes / chapters")
-    words_per_episode: int = Field(1500, ge=500, le=5000, description="Target word count per episode")
+    words_per_episode: int = Field(1800, ge=500, le=3000, description="Target word count per episode (max 3000 words)")
     auto_continue: bool = Field(False, description="Whether to generate subsequent episodes automatically")
     
     world: WorldSettings = Field(default_factory=WorldSettings)
@@ -102,7 +102,7 @@ class CreateNovelRequest(BaseModel):
     characters: Optional[List[CharacterSeed]] = None
     relationships: Optional[List[RelationshipSeed]] = None
     total_episodes: Optional[int] = 4
-    words_per_episode: Optional[int] = 2000
+    words_per_episode: Optional[int] = Field(1800, ge=500, le=3000)
     perspective: Optional[str] = Perspective.THIRD_PERSON_LIMITED.value
     ending: Optional[str] = EndingType.SURPRISING.value
     auto_continue: Optional[bool] = False

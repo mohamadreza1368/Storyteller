@@ -12,13 +12,20 @@ async def execute_stage2(blueprint: StoryBlueprint) -> Tuple[StoryBlueprint, Sto
 Novel: "{blueprint.title}"
 Logline: {blueprint.logline}
 Synopsis: {blueprint.synopsis}
+Setting & World: {blueprint.world.city}, {blueprint.world.country} ({blueprint.world.era})
 Characters: {char_names}
-Total Episodes: {blueprint.total_episodes}
+Total Chapters Planned: {blueprint.total_episodes} (Short Story / Novella Arc)
 Plot Structure: {blueprint.plot.structure}
 Ending Style: {blueprint.plot.resolution}
 
-Construct the comprehensive narrative matrix episode by episode:
-For each episode:
+STRICT NARRATIVE PACING DIRECTIVES:
+This story MUST be tightly constructed to conclude within exactly {blueprint.total_episodes} chapters.
+- Chapter 1: Inciting Incident, entry into the scenario, introduction of characters and initial clash of objectives.
+{'- Chapters 2 to ' + str(blueprint.total_episodes - 1) + ': Escalation of conflict, revelations, shifting alliances, and high-tension confrontations.' if blueprint.total_episodes > 2 else ''}
+- Chapter {blueprint.total_episodes} (FINAL CHAPTER): The dramatic climax, resolution of the central conflict/premise, and definitive conclusion. Every open question reaches closure.
+
+Construct the comprehensive narrative matrix chapter by chapter:
+For each chapter:
 1. Core pivotal dramatic event.
 2. For each character: their objective and arc development in this chapter.
 3. Primary POV character.

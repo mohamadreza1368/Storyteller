@@ -53,6 +53,13 @@ async def execute_stage3(
 
     prior_summary_block = "\n".join(prior_summary_lines) if prior_summary_lines else "None (This is Chapter 1 - Opening of the Novel)."
 
+    is_final_chapter = (episode_number >= blueprint.total_episodes)
+    final_mandate = (
+        f"\n- FINAL CHAPTER MANDATE: This is Chapter {episode_number} of {blueprint.total_episodes} (THE FINAL CHAPTER). "
+        "The story MUST conclude in this chapter! Block scenes that drive the ultimate confrontation, "
+        "deliver the climax, and bring the narrative to a complete, definitive resolution."
+    ) if is_final_chapter else ""
+
     user_prompt = f"""
 Novel: "{blueprint.title}"
 Current Chapter to Direct: Episode {episode_number} of {blueprint.total_episodes}
@@ -70,7 +77,7 @@ Current Story Memory & Open Threads:
 CRITICAL DIRECTORIAL MANDATE:
 - You are directing CHAPTER {episode_number}. The events of preceding chapters have ALREADY OCCURRED.
 - DO NOT REPEAT, restart, or rehash earlier scenes. The characters must be in new locations, facing escalating complications and new dilemmas.
-- Block 2 to 3 dynamic, distinct scenes that push the story forward from the end of Chapter {episode_number - 1} into Chapter {episode_number}.
+- Block 2 to 3 dynamic, distinct scenes that push the story forward from the end of Chapter {episode_number - 1} into Chapter {episode_number}.{final_mandate}
 
 Available Cast: {char_names}
 Available Locations: {locs}

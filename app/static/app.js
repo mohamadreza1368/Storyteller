@@ -548,6 +548,14 @@ async function refreshNovelView() {
                         <span class="trait-label" style="color: var(--danger); display: flex; align-items: center; gap: 4px;">${ICONS.lock} Secret</span>
                         <span style="color: var(--text-primary); font-size: 0.88rem;">${c.motivation.secret || 'Guarded'}</span>
                     </div>
+                    ${c.system_prompt ? `
+                    <details style="margin-top: 10px; font-size: 0.78rem; background: var(--bg-surface); padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                        <summary style="cursor: pointer; font-weight: 700; color: var(--accent); user-select: none;">
+                            Dedicated LLM System Prompt
+                        </summary>
+                        <pre style="white-space: pre-wrap; word-break: break-word; font-family: monospace; font-size: 0.74rem; color: var(--text-secondary); margin-top: 6px; line-height: 1.45;">${c.system_prompt.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
+                    </details>
+                    ` : ''}
                 </div>
             </div>
             `;

@@ -366,7 +366,7 @@
                             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                         </svg>
                         <div>
-                            <strong>Multi-Agent Cast:</strong> Each character acts with distinct psychological goals, fatal flaws, and strictly isolated personal knowledge.
+                            <strong>Multi-Agent Character Roleplay:</strong> Each character runs as an independent LLM agent with their own System Prompt, hidden objectives, flaws, and isolated knowledge. During scene simulation, they engage in real-time dialogue with one another.
                         </div>
                     </div>
 
@@ -405,14 +405,14 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                         <div class="form-group">
                             <label class="form-label">Total Planned Chapters</label>
-                            <input type="number" id="wizEpisodesCount" class="form-input" value="4" min="1" max="20">
+                            <input type="number" id="wizEpisodesCount" class="form-input" value="4" min="1" max="15">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Target Words Per Chapter</label>
+                            <label class="form-label">Target Words Per Chapter (Max 3,000)</label>
                             <select id="wizWordsPerEpisode" class="form-select">
-                                <option value="1500">Standard (~1,500 words)</option>
-                                <option value="2200" selected>Detailed Literary (~2,200 words - Recommended)</option>
-                                <option value="3200">Epic Multi-Scene (~3,200 words)</option>
+                                <option value="1200">Concise (~1,200 words)</option>
+                                <option value="1800" selected>Standard (~1,800 words - Recommended)</option>
+                                <option value="2500">Expansive (~2,500 words - Capped at 3,000)</option>
                             </select>
                         </div>
                     </div>

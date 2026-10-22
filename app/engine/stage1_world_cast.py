@@ -8,6 +8,36 @@ from app.models.character import (
 from app.engine.llm_client import llm
 from app.engine.prompts import WORLD_CAST_SYSTEM_PROMPT
 
+def build_character_system_prompt(char: Character, world: WorldSettings) -> str:
+    """Builds a comprehensive, isolated LLM System Prompt for an autonomous character agent."""
+    rules_text = "; ".join(world.world_rules) if world.world_rules else "Grounded physical reality."
+    values_text = ", ".join(char.core.values) if char.core.values else "Truth and self-preservation"
+    mannerisms = ", ".join(char.core.quirks + char.core.habits) if (char.core.quirks or char.core.habits) else "Cautious and observant"
+    
+    return f"""You are {char.core.name}, an autonomous agent roleplaying in a literary fiction narrative.
+Setting: {world.city}, {world.country} ({world.era})
+World Context & Rules: {rules_text}
+
+CHARACTER DOSSIER & PSYCHOLOGY:
+- Role & Occupation: {char.core.role} - {char.core.occupation or 'Resident'} (Age: {char.core.age or 30})
+- Temperament Archetype: {char.core.temperament or 'Complex & Guarded'}
+- Core Values: {values_text}
+- Mannerisms & Habits: {mannerisms}
+
+MOTIVATION ENGINE:
+- External Want (Tangible Objective): {char.motivation.want}
+- Internal Need (Emotional Void): {char.motivation.need}
+- Fatal Flaw & Blindspot: {char.motivation.flaw}
+- Buried Secret (Must Guard at all costs): {char.motivation.secret}
+
+VOICE & BEHAVIOR:
+- Speaking Style & Cadence: {char.behavior.voice or 'Distinct, measured, and authentic'}
+- Behavior Under Pressure: {char.behavior.action_tendency or 'Careful, observing every movement'}
+
+MULTI-AGENT INTERACTIVE ROLEPLAY DIRECTIVE:
+You act, think, and speak STRICTLY from {char.core.name}'s isolated perspective. You have ZERO omniscient or telepathic knowledge of other characters' private thoughts or hidden secrets unless explicitly revealed in spoken dialogue or observable action.
+When another character addresses you in a scene, respond directly to them in dialogue and physical reaction. Pursue your external want while guarding your secret with believable subtlety."""
+
 async def execute_stage1(blueprint: StoryBlueprint) -> StoryBlueprint:
     """Stage 1: Expands world rules, locations, characters, motivations, and relationships in English."""
     
@@ -197,6 +227,7 @@ Return ONLY a valid JSON object matching this schema:
                 situation="On the precipice of discovery"
             )
         )
+        char.system_prompt = build_character_system_prompt(char, blueprint.world)
         new_characters.append(char)
 
     if new_characters:

@@ -162,13 +162,21 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
             log_line=f"📍 {len(scenes)} scenes blocked at: {locs_summary} (POV: {scenes[0].pov_character_key if scenes else 'Narrator'})"
         )
 
-        # Stage 4: Character Simulation (Multi-agent actor turns)
+        # Stage 4: Character Simulation (Multi-agent actor turns & live dialogue)
         await update_progress(
             novel_id, f"Multi-agent roleplay in Chapter {ep_num}", 4, 6, 50, ep_num, blueprint.total_episodes,
             is_active=True,
             log_line=f"🎭 Stage 4 (Actor Simulation): Characters entered the scene; dialogue and internal thoughts simulating..."
         )
-        scenes = await execute_stage4(blueprint, scenes, memory)
+
+        async def log_dialogue_turn(diag_log: str):
+            await update_progress(
+                novel_id, f"Multi-agent roleplay in Chapter {ep_num}", 4, 6, 55, ep_num, blueprint.total_episodes,
+                is_active=True,
+                log_line=diag_log
+            )
+
+        scenes = await execute_stage4(blueprint, scenes, memory, log_callback=log_dialogue_turn)
 
         # Extract a sample secret thought for live monitor
         sample_thought = None

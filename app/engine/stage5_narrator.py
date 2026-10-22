@@ -55,12 +55,21 @@ async def execute_stage5(
         perspective=blueprint.style.perspective
     )
 
-    target_words = max(blueprint.words_per_episode or 1800, 1800)
+    target_words = min(max(blueprint.words_per_episode or 1800, 1200), 2800)
+    is_final_chapter = (episode_number >= blueprint.total_episodes)
+    final_closure_directive = (
+        f"\nCRITICAL FINAL CHAPTER DIRECTIVE:\n"
+        f"- This is Chapter {episode_number} of {blueprint.total_episodes} (THE FINAL CHAPTER of the novel).\n"
+        f"- Bring the central premise and overarching conflict to a definitive climax and resolution.\n"
+        f"- Tie up open mysteries and provide deep, memorable closure for the characters.\n"
+        f"- End the book conclusively with a powerful, resonant final passage.\n"
+    ) if is_final_chapter else ""
+
     user_prompt = f"""
 Novel: "{blueprint.title}"
 Episode to Write: Chapter {episode_number} of {blueprint.total_episodes}
 Primary POV Character: {pov_char}
-Target Word Count: around {target_words} words of literary prose
+Target Word Count: around {target_words} words of literary prose (STRICT MAX: 3,000 words)
 
 WHAT TRANSPIRED IN PRIOR CHAPTERS:
 {prior_text}
@@ -68,10 +77,11 @@ WHAT TRANSPIRED IN PRIOR CHAPTERS:
 CRITICAL CONTINUITY DIRECTIVE:
 - Do NOT rewrite or restart the beginning of the book. The previous chapters have already taken place.
 - Pick up the story directly from the staged scenes for Chapter {episode_number}.
-- Fully dramatize EVERY scene below. Do not summarize or rush interactions.
+- Fully dramatize EVERY scene below, weaving in the multi-agent spoken dialogue and physical staging.
+- STRICT LENGTH DIRECTIVE: Keep the chapter focused and impactful (around {target_words} words). Under no circumstances exceed 3,000 words.
 - Separate distinct scenes using the authentic scene divider:
   ✦
-
+{final_closure_directive}
 STAGED SCENES AND ACTOR TURNS FOR CHAPTER {episode_number}:
 {full_scenes_prompt}
 
