@@ -1,9 +1,10 @@
 import os
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_name: str = "Storyteller AI"
     data_dir: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "novels")
+    db_path: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "storyteller.db")
     
     # LLM Settings
     # provider can be: "mock", "gemini", "openai", "ollama", "openrouter"
@@ -12,8 +13,6 @@ class Settings(BaseSettings):
     llm_model: str = os.getenv("LLM_MODEL", "gemini-2.5-flash")
     llm_base_url: str = os.getenv("LLM_BASE_URL", "")
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()
