@@ -8,6 +8,66 @@ from app.storage.store import store
 
 logger = logging.getLogger(__name__)
 
+def clean_and_parse_json(raw_text: str) -> Dict[str, Any]:
+    """Robustly extracts and parses JSON from LLM output, handling markdown fences and formatting anomalies."""
+    text = raw_text.strip()
+    if text.startswith("```json"):
+        text = text[7:]
+    elif text.startswith("```"):
+        text = text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
+    text = text.strip()
+
+    # Locate outermost JSON object if surrounded by preamble/postscript
+    first_brace = text.find("{")
+    last_brace = text.rfind("}")
+    if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+        text = text[first_brace:last_brace + 1]
+
+    # Clean trailing commas before closing braces/brackets
+    import re
+    cleaned = re.sub(r",\s*([\]\}])", r"\1", text)
+
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        # Try raw text
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            # Fallback: attempt simple repair of unclosed JSON structures
+            stack = []
+            in_string = False
+            escape = False
+            for ch in text:
+                if escape:
+                    escape = False
+                    continue
+                if ch == "\\":
+                    escape = True
+                    continue
+                if ch == '"':
+                    in_string = not in_string
+                    continue
+                if not in_string:
+                    if ch in ("{", "["):
+                        stack.append(ch)
+                    elif ch == "}" and stack and stack[-1] == "{":
+                        stack.pop()
+                    elif ch == "]" and stack and stack[-1] == "[":
+                        stack.pop()
+
+            repaired = text
+            if in_string:
+                repaired += '"'
+            while stack:
+                opener = stack.pop()
+                repaired += "}" if opener == "{" else "]"
+
+            repaired = re.sub(r",\s*([\]\}])", r"\1", repaired)
+            return json.loads(repaired)
+
 class LLMClient:
     def __init__(self):
         # Load saved settings if any
@@ -140,14 +200,7 @@ class LLMClient:
                     model=self.model or "gemini-2.5-flash",
                     contents=f"{system_prompt}\n\n{prompt_with_format}"
                 )
-                text = response.text.strip()
-                if text.startswith("```json"):
-                    text = text[7:]
-                if text.startswith("```"):
-                    text = text[3:]
-                if text.endswith("```"):
-                    text = text[:-3]
-                return json.loads(text.strip())
+                return clean_and_parse_json(response.text)
 
             elif self.provider in ("custom", "openai", "openrouter", "ollama"):
                 from openai import AsyncOpenAI
@@ -159,7 +212,7 @@ class LLMClient:
                 client = AsyncOpenAI(
                     api_key=self.api_key or "dummy",
                     base_url=target_base_url,
-                    timeout=30.0
+                    timeout=120.0
                 )
                 res = await client.chat.completions.create(
                     model=self.model or "gpt-4o-mini",
@@ -167,16 +220,11 @@ class LLMClient:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": prompt_with_format}
                     ],
+                    max_tokens=4096,
                     response_format={"type": "json_object"} if self.provider not in ("ollama", "custom") else None
                 )
-                content = res.choices[0].message.content.strip()
-                if content.startswith("```json"):
-                    content = content[7:]
-                if content.startswith("```"):
-                    content = content[3:]
-                if content.endswith("```"):
-                    content = content[:-3]
-                return json.loads(content.strip())
+                content = res.choices[0].message.content or ""
+                return clean_and_parse_json(content)
 
         except Exception as e:
             logger.error(f"LLM Error ({self.provider}): {e}")
@@ -211,14 +259,15 @@ class LLMClient:
                 client = AsyncOpenAI(
                     api_key=self.api_key or "dummy",
                     base_url=target_base_url,
-                    timeout=30.0
+                    timeout=120.0
                 )
                 res = await client.chat.completions.create(
                     model=self.model or "gpt-4o-mini",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
-                    ]
+                    ],
+                    max_tokens=4096
                 )
                 return res.choices[0].message.content.strip()
 

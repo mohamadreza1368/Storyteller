@@ -61,33 +61,47 @@ Return strictly a JSON object matching this schema:
         grid = {}
         for c in char_names:
             grid[c] = [
-                f"Initial encounter with the mystery and resistance to danger",
-                f"Discovery of the first anomalous clue and rising interpersonal friction",
-                f"The crucible of crisis and moral dilemma",
-                f"Decisive revelation and emerging transformed"
+                f"Enter the scenario in {blueprint.world.city} and confront the initial complication",
+                f"Investigate shifting alliances and navigate escalating danger",
+                f"Face the crucible of moral choices as secrets surface",
+                f"Achieve resolution and personal transformation in the final reckoning"
             ]
         
         episodes_plan = []
         for i in range(1, blueprint.total_episodes + 1):
-            pov = char_names[(i - 1) % len(char_names)] if char_names else "Julian"
+            pov = char_names[(i - 1) % len(char_names)] if char_names else "Protagonist"
+            if i == 1:
+                ev_title = f"Chapter 1: The Threshold in {blueprint.world.city}"
+                ev_desc = f"Initial disruption occurs in {blueprint.world.city} ({blueprint.world.era}), forcing the protagonists to take their first irrevocable step."
+            elif i == blueprint.total_episodes:
+                ev_title = f"Chapter {i}: The Final Reckoning"
+                ev_desc = f"The core conflict reaches its dramatic climax in {blueprint.world.city}; secrets are laid bare and the narrative reaches definitive closure."
+            else:
+                ev_title = f"Chapter {i}: Rising Currents"
+                ev_desc = f"Escalating tensions and competing objectives force unexpected confrontations across {blueprint.world.city}."
+
             episodes_plan.append({
                 "episode_number": i,
-                "event_title": f"Chapter {i}: Shadows and Crossroads",
-                "description": f"Pivotal developments in Chapter {i} converge the fates of the protagonists.",
+                "event_title": ev_title,
+                "description": ev_desc,
                 "pov_character": pov,
-                "character_goals": {c: f"Overcome the immediate obstacle of Chapter {i}" for c in char_names}
+                "character_goals": {c: f"Pursue active objective in Chapter {i}" for c in char_names}
             })
+
+        main_thread_title = f"Primary Thread: {blueprint.title}"
+        main_synopsis = blueprint.synopsis or f"The unfolding events across {blueprint.world.city} ({blueprint.world.era}) driving the protagonists toward a climactic choice."
 
         return {
             "timeline": [f"Phase {i}" for i in range(1, blueprint.total_episodes + 1)],
             "plot_lines": [
                 {
-                    "title": "Primary Thread: The Secret of the Blackwood Ledger",
+                    "title": main_thread_title,
                     "is_main": True,
-                    "synopsis": "A race to unearth forgotten documents before institutional silence seals the truth forever.",
+                    "synopsis": main_synopsis,
                     "beats": [
-                        {"beat": "Inciting Incident", "consequence": "Shattered assumptions", "milestone": "Call to Adventure"},
-                        {"beat": "Point of No Return", "consequence": "Entering hostile territory", "milestone": "Crossing the Threshold"}
+                        {"beat": "Inciting Incident", "consequence": "Initial disruption", "milestone": "Call to Adventure"},
+                        {"beat": "Point of No Return", "consequence": "Irrevocable commitment", "milestone": "Crossing the Threshold"},
+                        {"beat": "Climax and Resolution", "consequence": "Final settlement of conflict", "milestone": "Resolution"}
                     ]
                 }
             ],
