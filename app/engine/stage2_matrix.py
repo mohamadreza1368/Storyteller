@@ -3,6 +3,7 @@ from app.models.blueprint import StoryBlueprint, PlotLine, ArcBeat
 from app.models.simulation import StoryMatrix, MatrixEvent
 from app.engine.llm_client import llm
 from app.engine.prompts import MATRIX_SYSTEM_PROMPT
+from app.engine.writing_craft import AVOID_AI_VOCABULARY_DIRECTIVES
 
 async def execute_stage2(blueprint: StoryBlueprint) -> Tuple[StoryBlueprint, StoryMatrix]:
     """Stage 2: Weaves the Story Matrix (Character x Episode grid, plotlines, beats) in English."""
@@ -29,6 +30,9 @@ For each chapter:
 1. Core pivotal dramatic event.
 2. For each character: their objective and arc development in this chapter.
 3. Primary POV character.
+
+{AVOID_AI_VOCABULARY_DIRECTIVES}
+No "Not X, but Y" conflict summaries or melodramatic tropes. Root conflicts in physical reality.
 
 Return strictly a JSON object matching this schema:
 {{

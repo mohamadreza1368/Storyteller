@@ -7,6 +7,10 @@ from app.models.character import (
 )
 from app.engine.llm_client import llm
 from app.engine.prompts import WORLD_CAST_SYSTEM_PROMPT
+from app.engine.writing_craft import (
+    CHARACTER_HUMAN_DIALOGUE_DIRECTIVES,
+    AVOID_AI_VOCABULARY_DIRECTIVES
+)
 
 def build_character_system_prompt(char: Character, world: WorldSettings) -> str:
     """Builds a comprehensive, isolated LLM System Prompt for an autonomous character agent."""
@@ -36,7 +40,10 @@ VOICE & BEHAVIOR:
 
 MULTI-AGENT INTERACTIVE ROLEPLAY DIRECTIVE:
 You act, think, and speak STRICTLY from {char.core.name}'s isolated perspective. You have ZERO omniscient or telepathic knowledge of other characters' private thoughts or hidden secrets unless explicitly revealed in spoken dialogue or observable action.
-When another character addresses you in a scene, respond directly to them in dialogue and physical reaction. Pursue your external want while guarding your secret with believable subtlety."""
+When another character addresses you in a scene, respond directly to them in dialogue and physical reaction. Pursue your external want while guarding your secret with believable subtlety.
+
+{CHARACTER_HUMAN_DIALOGUE_DIRECTIVES}
+{AVOID_AI_VOCABULARY_DIRECTIVES}"""
 
 async def execute_stage1(blueprint: StoryBlueprint) -> StoryBlueprint:
     """

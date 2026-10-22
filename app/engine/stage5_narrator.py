@@ -1,8 +1,12 @@
 from typing import List, Tuple, Optional, Any
+import logging
 from app.models.blueprint import StoryBlueprint
 from app.models.simulation import SceneRecord, StoryMemory
 from app.engine.llm_client import llm
 from app.engine.prompts import NARRATOR_SYSTEM_PROMPT
+from app.engine.writing_craft import audit_and_clean_prose
+
+logger = logging.getLogger(__name__)
 
 async def execute_stage5(
     blueprint: StoryBlueprint,
@@ -74,11 +78,12 @@ Target Word Count: around {target_words} words of literary prose (STRICT MAX: 3,
 WHAT TRANSPIRED IN PRIOR CHAPTERS:
 {prior_text}
 
-CRITICAL CONTINUITY DIRECTIVE:
+CRITICAL CONTINUITY & CRAFT DIRECTIVES:
 - Do NOT rewrite or restart the beginning of the book. The previous chapters have already taken place.
 - Pick up the story directly from the staged scenes for Chapter {episode_number}.
 - Fully dramatize EVERY scene below, weaving in the multi-agent spoken dialogue and physical staging.
 - STRICT LENGTH DIRECTIVE: Keep the chapter focused and impactful (around {target_words} words). Under no circumstances exceed 3,000 words.
+- STRICT ANTI-AI MANDATE: Zero tolerance for AI clichés (banned: delve, tapestry, testament, beacon, palpable, labyrinthine, dance of shadows). No "Not X, but Y" formulas, no dramatic one-line closers, no forced triads.
 - Separate distinct scenes using the authentic scene divider:
   ✦
 {final_closure_directive}
@@ -93,49 +98,46 @@ Format the final output strictly as:
 """
 
     async def fallback():
-        # Dynamically synthesize unique, non-repeating prose from the actual staged scenes
+        # Dynamically synthesize unique, non-repeating prose adhering strictly to human author craft
         c_title = f"Chapter {episode_number}: {scenes[0].title if scenes else 'The Turning Tide'}"
         c_summary = (
             f"In Chapter {episode_number}, events escalate as {pov_char} navigates tensions at "
             f"{scenes[0].location_key if scenes else blueprint.world.city}. "
-            f"The encounter deepens existing fractures and propels the narrative toward irreversible change."
+            f"The encounter forces hidden calculations into the open and narrows their remaining choices."
         )
 
         rendered_scenes = []
         for s_idx, sc in enumerate(scenes):
             scene_paragraphs = []
             
-            # Atmospheric opening paragraph tailored to this scene
+            # Grounded, tactile opening paragraph tailored to this scene
             if episode_number == 1 and s_idx == 0:
                 p_intro = (
-                    f"A damp, persistent chill clung to the stone facades of {blueprint.world.city}. "
-                    f"At {sc.location_key}, beneath the heavy shadows of {sc.time_marker.lower()}, "
-                    f"{sc.pov_character_key} stood motionless for a lingering heartbeat, taking measure of the silence. "
-                    f"The air smelled of wet asphalt, extinguished coal, and aged lime—the distinct scent of secrets "
-                    f"that had spent years waiting to be unearthed. Every instinct urged caution, yet the objective "
-                    f"({sc.goal.lower()}) left no room for hesitation."
+                    f"A damp chill clung to the lime mortar and wet flagstones of {blueprint.world.city}. "
+                    f"At {sc.location_key}, under the grey light of {sc.time_marker.lower()}, "
+                    f"{sc.pov_character_key} stood beside the entryway, listening to the drip of condensation from an iron gutter. "
+                    f"The air smelled of wet slate, soot, and damp wool. Every instinct counseled caution, "
+                    f"yet the demand of the hour—{sc.goal.lower()}—allowed no retreat."
                 )
             elif episode_number == 2 and s_idx == 0:
                 p_intro = (
-                    f"By the time the events of yesterday had settled into the collective memory of the district, "
-                    f"the quiet at {sc.location_key} had taken on a razor-sharp edge. The sky was an unforgiving slate grey, "
-                    f"and {sc.time_marker.lower()} brought with it a sudden gust that rattled the high clerestory panes. "
-                    f"{sc.pov_character_key} surveyed the room with narrowed eyes, acutely aware that the trail was growing colder. "
-                    f"The immediate challenge—{sc.conflict.lower()}—loomed larger with every passing second."
+                    f"By the following morning, the repercussions of yesterday had reached the back streets of the quarter. "
+                    f"Inside {sc.location_key}, the cold had settled into the woodwork, and the silence carried a sharp, brittle edge. "
+                    f"{sc.pov_character_key} checked the latch and turned to face the room. "
+                    f"The immediate obstacle—{sc.conflict.lower()}—demanded an answer before noon."
                 )
             elif episode_number == 3 and s_idx == 0:
                 p_intro = (
-                    f"The fragile pretense of neutrality had completely unraveled. In the grim expanse of {sc.location_key}, "
-                    f"amidst the biting cold of {sc.time_marker.lower()}, the stakes were no longer speculative. "
-                    f"{sc.pov_character_key} could feel the tightening net of scrutiny closing in from every avenue of {blueprint.world.city}. "
-                    f"There was a palpable weight in the room, born of the mounting friction: {sc.conflict.lower()}."
+                    f"The pretense of negotiation was gone. In the bare courtyard of {sc.location_key}, "
+                    f"under the biting wind of {sc.time_marker.lower()}, every movement felt observed. "
+                    f"{sc.pov_character_key} kept both hands visible, watching the shadows across the opposite doorway. "
+                    f"The rift had deepened around a single point: {sc.conflict.lower()}."
                 )
             else:
                 p_intro = (
-                    f"The atmosphere at {sc.location_key} carried the unmistakable stillness that precedes a reckoning. "
-                    f"As {sc.time_marker.lower()} approached, shadows lengthened across the scarred woodwork and weathered stone. "
-                    f"{sc.pov_character_key} took a slow breath, steadying a heartbeat that had raced through hours of pursuit. "
-                    f"Every thread of the investigation had led inexorably to this location, where {sc.goal.lower()} would finally be tested."
+                    f"The afternoon dragged on at {sc.location_key}, bringing a heavy gloom that softened the sharp edges of the room. "
+                    f"As {sc.time_marker.lower()} approached, {sc.pov_character_key} rested a palm against the worn desk, steadying a shallow breath. "
+                    f"Days of quiet maneuver had narrowed to this single room, where {sc.goal.lower()} would either succeed or end in ruin."
                 )
             scene_paragraphs.append(p_intro)
 
@@ -144,25 +146,22 @@ Format the final output strictly as:
                 for t in sc.turns:
                     p_turn = (
                         f"{t.action} "
-                        f"When words finally came, they carried the quiet force of an indictment: \"{t.dialogue}\" "
-                        f"Beneath the surface, however, thoughts remained tightly guarded. "
-                        f"{t.character_key} turned the matter over in secret, reflecting that {t.thought.lower()} "
-                        f"The emotional current in the room shifted to {t.emotion.lower()}, charging the silence between them with unspoken peril."
+                        f"When words came, they cut straight through the pause: \"{t.dialogue}\" "
+                        f"{t.character_key} studied the reaction closely, keeping the real concern hidden: {t.thought.lower()} "
+                        f"The mood settled into {t.emotion.lower()}, leaving little room for polite evasion."
                     )
                     scene_paragraphs.append(p_turn)
             else:
                 p_solo = (
-                    f"{sc.pov_character_key} moved with deliberate care across {sc.location_key}, conscious of every creaking board and sudden whisper. "
-                    f"The obstacle was immediate and relentless: {sc.conflict}. Every passing minute without progress risked exposing the entire undertaking "
-                    f"to those who guarded the status quo with unyielding vigilance."
+                    f"{sc.pov_character_key} moved across {sc.location_key}, checking the locks and the floorboards beneath the rug. "
+                    f"The obstacle was immediate: {sc.conflict}. Waiting would only give the others time to consolidate their hold."
                 )
                 scene_paragraphs.append(p_solo)
 
-            # Scene resolution paragraph
+            # Scene resolution paragraph without melodramatic clichés
             p_res = (
-                f"As the tension reached its zenith, the immediate outcome shifted decisively. {sc.resolution} "
-                f"Looking back across the space of {sc.location_key}, it was clear that the balance of power had irrevocably altered. "
-                f"Neither of them would face the coming hours unchanged by what had just transpired."
+                f"With the first confrontation spent, the immediate focus shifted. {sc.resolution} "
+                f"{sc.pov_character_key} turned back toward the window, recognizing that the terms of the encounter had changed for good."
             )
             scene_paragraphs.append(p_res)
 
@@ -188,5 +187,11 @@ Format the final output strictly as:
                 title = line.replace("[TITLE]:", "").strip()
             elif line.startswith("[SUMMARY]:"):
                 summary = line.replace("[SUMMARY]:", "").strip()
+
+    # Pass through Writing Craft & Humanizer Enforcement Gate
+    sanitized_content, flags = audit_and_clean_prose(content)
+    if flags:
+        logger.info(f"Humanizer cleaned {len(flags)} tells in Chapter {episode_number}: {flags[:5]}")
+    content = sanitized_content
 
     return title, summary, content

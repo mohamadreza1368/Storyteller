@@ -3,6 +3,7 @@ from app.models.blueprint import StoryBlueprint
 from app.models.simulation import SceneRecord, StoryMemory, StoryMatrix
 from app.engine.llm_client import llm
 from app.engine.prompts import SCENE_DIRECTOR_SYSTEM_PROMPT
+from app.engine.writing_craft import AVOID_AI_VOCABULARY_DIRECTIVES
 
 async def execute_stage3(
     blueprint: StoryBlueprint,
@@ -78,6 +79,9 @@ CRITICAL DIRECTORIAL MANDATE:
 - You are directing CHAPTER {episode_number}. The events of preceding chapters have ALREADY OCCURRED.
 - DO NOT REPEAT, restart, or rehash earlier scenes. The characters must be in new locations, facing escalating complications and new dilemmas.
 - Block 2 to 3 dynamic, distinct scenes that push the story forward from the end of Chapter {episode_number - 1} into Chapter {episode_number}.{final_mandate}
+- Apply Master Author Scene Craft: ground each scene in physical, tactile reality (weather, sound, objects).
+- Avoid generic AI obstacles or philosophical summaries. Ensure conflict is immediate and personal.
+{AVOID_AI_VOCABULARY_DIRECTIVES}
 
 Available Cast: {char_names}
 Available Locations: {locs}

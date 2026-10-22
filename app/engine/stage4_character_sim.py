@@ -4,6 +4,11 @@ from app.models.character import Character
 from app.models.simulation import SceneRecord, CharacterTurn, StoryMemory
 from app.engine.llm_client import llm
 from app.engine.prompts import CHARACTER_ACTOR_SYSTEM_PROMPT
+from app.engine.writing_craft import (
+    CHARACTER_HUMAN_DIALOGUE_DIRECTIVES,
+    AVOID_AI_VOCABULARY_DIRECTIVES,
+    audit_and_clean_prose
+)
 
 async def execute_stage4(
     blueprint: StoryBlueprint,
@@ -73,6 +78,10 @@ Dialogue & Action History So Far:
 {history_str}
 {last_exchange_directive}
 It is your turn, {char.core.name}. Express your physical action, spoken words, and secret internal thought.
+MANDATORY HUMAN SPEECH RULES:
+- Speak concisely and directly. No speeches, no artificial triads, no philosophical lectures.
+- Never use "Not X, but Y" constructions or fake-deep aphorisms.
+{AVOID_AI_VOCABULARY_DIRECTIVES}
 Return strictly a JSON object matching this schema:
 {{
   "action": "Physical movement, posture, or tactical body language",
@@ -88,19 +97,19 @@ Return strictly a JSON object matching this schema:
                     target_name = other_name[0] if other_name else "the room"
                     if r == 0:
                         return {
-                            "action": f"{c.core.name} paused beside the table at {sc.location_key}, assessing the rising tension caused by {sc.conflict.lower()}.",
-                            "dialogue": f"We cannot afford missteps now, {target_name}. Look at what is happening with {sc.goal.lower()}.",
-                            "thought": f"I must protect my aim ({c.motivation.want or 'the truth'}) before this situation slips entirely beyond my control.",
-                            "emotion": "Tense and observant",
-                            "knowledge_gain": f"Recognized the immediate danger posed by {sc.conflict}."
+                            "action": f"{c.core.name} set a hand against the doorframe at {sc.location_key}, watching {target_name} closely.",
+                            "dialogue": f"Keep your voice down, {target_name}. If they find out what happened with {sc.goal.lower()}, we will not get another chance.",
+                            "thought": f"I need to secure {c.motivation.want or 'my objective'} before anyone realizes what is missing.",
+                            "emotion": "Guarded and alert",
+                            "knowledge_gain": f"Identified immediate risk from {sc.conflict}."
                         }
                     else:
                         return {
-                            "action": f"{c.core.name} took a decisive step forward in {sc.location_key}, voice dropping to an urgent whisper.",
-                            "dialogue": f"Whatever happens next, {target_name}, we have crossed the threshold. We see this through to {sc.resolution.lower()}.",
-                            "thought": f"Even if my secret ({c.motivation.secret or 'motives'}) is tested, retreat is no longer an option.",
-                            "emotion": "Resolute and determined",
-                            "knowledge_gain": f"Committed to seeing through {sc.resolution}."
+                            "action": f"{c.core.name} closed the distance, eyes fixed on {target_name}.",
+                            "dialogue": f"There is no turning back now. We finish this at {sc.location_key}.",
+                            "thought": f"If my secret ({c.motivation.secret or 'intentions'}) comes to light, everything collapses.",
+                            "emotion": "Resolute",
+                            "knowledge_gain": f"Committed to resolving {sc.resolution}."
                         }
 
                 turn_data = await llm.generate_json(
@@ -109,11 +118,19 @@ Return strictly a JSON object matching this schema:
                     fallback_generator=lambda c=char, r=round_idx, sc=scene, h=scene_history: fallback_turn(c, r, sc, h)
                 )
 
+                raw_action = turn_data.get("action", "")
+                raw_dialogue = turn_data.get("dialogue", "")
+                raw_thought = turn_data.get("thought", "")
+
+                clean_action, _ = audit_and_clean_prose(raw_action)
+                clean_dialogue, _ = audit_and_clean_prose(raw_dialogue)
+                clean_thought, _ = audit_and_clean_prose(raw_thought)
+
                 turn = CharacterTurn(
                     character_key=char.core.name,
-                    action=turn_data.get("action", ""),
-                    dialogue=turn_data.get("dialogue", ""),
-                    thought=turn_data.get("thought", ""),
+                    action=clean_action,
+                    dialogue=clean_dialogue,
+                    thought=clean_thought,
                     emotion=turn_data.get("emotion", "Engaged"),
                     knowledge_gain=turn_data.get("knowledge_gain")
                 )
