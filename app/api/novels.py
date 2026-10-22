@@ -234,7 +234,7 @@ async def get_novel_matrix(novel_id: str):
     """Retrieve the Character x Episode Story Matrix."""
     m = store.get_matrix(novel_id)
     if not m:
-        raise HTTPException(status_code=404, detail="Story matrix not found for this novel")
+        return Response(content="{}", media_type="application/json")
     return m
 
 @router.get("/{novel_id}/memory")
@@ -242,7 +242,7 @@ async def get_novel_memory(novel_id: str):
     """Retrieve the continuous Story Memory."""
     mem = store.get_memory(novel_id)
     if not mem:
-        raise HTTPException(status_code=404, detail="Story memory not found for this novel")
+        return Response(content="{}", media_type="application/json")
     return mem
 
 @router.delete("/{novel_id}")
