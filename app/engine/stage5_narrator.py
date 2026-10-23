@@ -84,6 +84,7 @@ CRITICAL CONTINUITY & CRAFT DIRECTIVES:
 - Fully dramatize EVERY scene below, weaving in the multi-agent spoken dialogue and physical staging.
 - STRICT LENGTH DIRECTIVE: Keep the chapter focused and impactful (around {target_words} words). Under no circumstances exceed 3,000 words.
 - STRICT ANTI-AI MANDATE: Zero tolerance for AI clichés (banned: delve, tapestry, testament, beacon, palpable, labyrinthine, dance of shadows). No "Not X, but Y" formulas, no dramatic one-line closers, no forced triads.
+- STRICT PUNCTUATION HYGIENE: Never output stacked or consecutive punctuation marks (e.g. absolutely never write '.;', ';.', ';;', ',;', or '..'). Never abuse semicolons. Separate complete thoughts with clean periods. A sentence ends with a single period, question mark, or exclamation point.
 - Separate distinct scenes using the authentic scene divider:
   ✦
 {final_closure_directive}

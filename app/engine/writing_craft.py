@@ -114,8 +114,10 @@ MASTER FICTION AUTHOR CRAFT & STYLE DIRECTIVES (Mandatory):
    - Weave internal calculations and unspoken thoughts seamlessly into narrative prose without italics or quotation tags.
    - Dynamic Sentence Rhythm: Alternate deliberately between short, punchy sentences for immediate action or tension, and measured, sensory-rich sentences for reflection.
 3. Punctuation & Mechanics:
+   - Strict Punctuation Hygiene: Never output stacked or consecutive punctuation marks (e.g. absolutely never write '.;', ';.', ';;', ',;', or '..'). Every sentence must terminate with exactly one period, question mark, or exclamation point.
+   - Semicolons: Semicolons must be used with extreme restraint (maximum 0 to 1 per chapter). Never chain clauses with semicolons as a substitute for periods. Split independent thoughts into distinct, confident sentences.
+   - Never place semicolons immediately before or after commas, periods, or dashes.
    - Em Dashes (—): Use sparingly (maximum 1 or 2 in an entire scene) strictly for abrupt dialogue interruption or sharp dramatic pivots. Never pepper every sentence with em dashes.
-   - Semicolons: Avoid using semicolons as a literary crutch; split independent thoughts into clean sentences.
    - Formatting: Never use bold markdown labels or bullet points within narrative prose.
 """
 
@@ -155,6 +157,77 @@ AUTHENTIC HUMAN DIALOGUE RULES:
    - When speaking, anchor actions in the immediate physical environment (handling an object, looking away, pausing by the door) rather than melodramatic gestures.
 """
 
+def sanitize_punctuation(text: str) -> Tuple[str, List[str]]:
+    """
+    Rigorously cleans up erratic, stacked, or malformed punctuation in narrative prose.
+    Eliminates stacked marks like '.;', ';.', ';;', ',;', removes orphan semicolons,
+    normalizes spacing, and restores proper sentence capitalization.
+    """
+    cleaned = text
+    flags: List[str] = []
+
+    # 1. Clean start/end line stray semicolons and punctuation
+    cleaned = re.sub(r'(?m)^\s*[,;:]+\s*', '', cleaned)
+    cleaned = re.sub(r'(?m)\s*;\s*$', '.', cleaned)
+
+    # 2. Stacked / Mixed Punctuation Fixes
+    if re.search(r'\.\s*;+|;+\s*\.', cleaned):
+        flags.append("Sanitized period-semicolon combo ('.;' or ';.')")
+        cleaned = re.sub(r'\.\s*;+', '.', cleaned)
+        cleaned = re.sub(r';+\s*\.', '.', cleaned)
+
+    if re.search(r';{2,}', cleaned):
+        flags.append("Sanitized consecutive semicolons (';;')")
+        cleaned = re.sub(r';{2,}', ';', cleaned)
+
+    if re.search(r',\s*;+|;+\s*,', cleaned):
+        flags.append("Sanitized comma-semicolon combo (',;' or ';,')")
+        cleaned = re.sub(r',\s*;+|;+\s*,', ',', cleaned)
+
+    if re.search(r',{2,}', cleaned):
+        flags.append("Sanitized multiple commas (',,')")
+        cleaned = re.sub(r',{2,}', ',', cleaned)
+
+    if re.search(r':\s*;+|;\s*:+', cleaned):
+        flags.append("Sanitized colon-semicolon combo (':;' or ';:')")
+        cleaned = re.sub(r':\s*;+|;\s*:+', ':', cleaned)
+
+    if re.search(r'(?<!\.)\.\.(?!\.)', cleaned):
+        flags.append("Sanitized double periods ('..')")
+        cleaned = re.sub(r'(?<!\.)\.\.(?!\.)', '.', cleaned)
+
+    cleaned = re.sub(r'\.{4,}', '...', cleaned)
+    cleaned = re.sub(r'\.\s*,|,\s*\.', '.', cleaned)
+
+    # Dash + punctuation hygiene
+    cleaned = re.sub(r'—\s*[,;:]+|[,;:]+\s*—', ' — ', cleaned)
+    cleaned = re.sub(r'--\s*[,;:]+|[,;:]+\s*--', ' — ', cleaned)
+
+    # Semicolon before closing quotes -> period before quote
+    cleaned = re.sub(r';\s*([\"\'\”\’])', r'.\1', cleaned)
+
+    # 3. Semicolon before Capitalized Word or Conjunction
+    if re.search(r';\s+[A-Z]', cleaned):
+        flags.append("Split semicolon before capitalized word into clean sentence")
+        cleaned = re.sub(r';\s+([A-Z])', r'. \1', cleaned)
+
+    cleaned = re.sub(r';\s+(and|but|or|nor|yet|so)\b', r', \1', cleaned, flags=re.IGNORECASE)
+
+    # 4. Spaces before and after punctuation
+    cleaned = re.sub(r'\s+([,.;:!?])', r'\1', cleaned)
+    cleaned = re.sub(r'([,;:])([A-Za-z])', r'\1 \2', cleaned)
+    cleaned = re.sub(r'([.!?])([A-Za-z])', r'\1 \2', cleaned)
+
+    # 5. Fix capitalization after sentence endings
+    cleaned = re.sub(r'([.!?]\s+)([a-z])', lambda m: m.group(1) + m.group(2).upper(), cleaned)
+
+    # 6. Normalize double spaces
+    cleaned = re.sub(r'[ \t]+', ' ', cleaned)
+    cleaned = re.sub(r' +([,.;:!?])', r'\1', cleaned)
+
+    return cleaned.strip(), flags
+
+
 def audit_and_clean_prose(text: str) -> Tuple[str, List[str]]:
     """
     Audits narrative prose for AI tells, banned clichés, and robotic formatting.
@@ -162,6 +235,10 @@ def audit_and_clean_prose(text: str) -> Tuple[str, List[str]]:
     """
     cleaned = text
     flagged: List[str] = []
+
+    # Pre-clean punctuation
+    cleaned, punc_flags = sanitize_punctuation(cleaned)
+    flagged.extend(punc_flags)
 
     # 1. Clean bold labels within prose (e.g., "**Scene 1:**" or "**Note:**")
     bold_pattern = re.compile(r'\*\*([^*]+)\*\*')
@@ -221,9 +298,10 @@ def audit_and_clean_prose(text: str) -> Tuple[str, List[str]]:
             flagged.append("Detected dramatic trailing closer cliché")
             cleaned = pattern.sub(replacement, cleaned)
 
-    # Normalize double spaces or awkward leftover punctuation
-    cleaned = re.sub(r' +', ' ', cleaned)
-    cleaned = re.sub(r'\s+([,.;])', r'\1', cleaned)
-    cleaned = re.sub(r'([,;])\s*([.!?])', r'\2', cleaned)
+    # Final post-cleanup pass for punctuation hygiene after phrase substitutions
+    cleaned, post_punc_flags = sanitize_punctuation(cleaned)
+    for pf in post_punc_flags:
+        if pf not in flagged:
+            flagged.append(pf)
 
     return cleaned.strip(), flagged
