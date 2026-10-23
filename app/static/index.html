@@ -4,7 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Storyteller AI · Autonomous Multi-Agent Novel Studio</title>
-    <link rel="stylesheet" href="/static/app.css">
+    <link rel="stylesheet" href="/static/app.css?v=2.2">
+    <script>
+        // Early router fallback so navigation clicks never fail even before full script load
+        window.navigateTo = window.navigateTo || function(viewName) {
+            window.location.hash = '#' + viewName;
+            const targetId = 'view' + viewName.charAt(0).toUpperCase() + viewName.slice(1);
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                document.querySelectorAll('main > section').forEach(function(s) { s.style.display = 'none'; });
+                targetEl.style.display = 'block';
+            }
+        };
+    </script>
 </head>
 <body>
 
@@ -31,20 +43,20 @@
 
             <!-- Navigation Links -->
             <div style="display: flex; align-items: center; gap: 8px;">
-                <button class="btn btn-ghost btn-sm" onclick="navigateTo('library')" id="navLinkLibrary">
+                <button class="btn btn-ghost btn-sm nav-link-btn nav-active" onclick="navigateTo('library')" id="navLinkLibrary">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
                     </svg>
                     Author's Desk
                 </button>
-                <button class="btn btn-ghost btn-sm" onclick="startNewNovel()" id="navLinkNewNovel">
+                <button class="btn btn-ghost btn-sm nav-link-btn" onclick="startNewNovel()" id="navLinkNewNovel">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                     New Novel
                 </button>
-                <button class="btn btn-ghost btn-sm" onclick="navigateTo('guide')" id="navLinkGuide">
+                <button class="btn btn-ghost btn-sm nav-link-btn" onclick="navigateTo('guide')" id="navLinkGuide">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
@@ -52,7 +64,7 @@
                     </svg>
                     Help & Guide
                 </button>
-                <button class="btn btn-ghost btn-sm" onclick="navigateTo('admin')" id="navLinkAdmin" style="display: none; color: #8B5CF6; border: 1px solid rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08);">
+                <button class="btn btn-ghost btn-sm nav-link-btn" onclick="navigateTo('admin')" id="navLinkAdmin" style="display: none; color: #8B5CF6; border: 1px solid rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08);">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7"></rect>
                         <rect x="14" y="3" width="7" height="7"></rect>
@@ -155,6 +167,198 @@
             <!-- Novel Cards Grid -->
             <div id="novelsGrid" class="novel-grid">
                 <!-- Dynamically loaded with rich visual cards -->
+            </div>
+        </section>
+
+        <!-- ==================== 6. VIEW: DEDICATED USER GUIDE & HELP CENTER ==================== -->
+        <section id="viewGuide" style="display: none;">
+            <!-- Top Hero Header -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <button class="btn btn-ghost btn-sm" onclick="navigateTo('library')" style="margin-bottom: 10px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        Back to Author's Desk
+                    </button>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <h1 style="font-size: 2.2rem; font-weight: 800;">Welcome to Storyteller</h1>
+                        <span class="badge badge-ready" style="font-size: 0.78rem; padding: 3px 10px;">Quick & Simple Guide</span>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 1.05rem; margin-top: 6px; max-width: 820px;">
+                        Here is everything you need to know to create, listen to, and enjoy great stories in 4 simple steps. No technical knowledge required!
+                    </p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="navigateTo('library')">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                        </svg>
+                        Author's Desk
+                    </button>
+                    <button class="btn btn-primary" onclick="startNewNovel()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Create Story Now
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4 Simple Steps Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-bottom: 32px;">
+                <!-- Step 1 -->
+                <div class="card" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid var(--accent);">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-size: 0.75rem; font-weight: 800; background: var(--accent-subtle); color: var(--accent); padding: 3px 10px; border-radius: 9999px;">Step 1</span>
+                            <span style="font-size: 0.8rem; color: var(--text-tertiary);">The Setting</span>
+                        </div>
+                        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; color: var(--text-primary);">1. Choose an Idea</h3>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 12px;">
+                            Pick where and when your story takes place. A mystery in foggy 1920s Edinburgh, a romance in Paris, or a sci-fi adventure in 2045. Choose a 1-click preset or type one sentence!
+                        </p>
+                    </div>
+                    <div style="font-size: 0.78rem; font-weight: 600; color: var(--accent);">
+                        ✨ Ready-made visual presets available
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="card" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid var(--success);">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-size: 0.75rem; font-weight: 800; background: var(--success-subtle); color: var(--success); padding: 3px 10px; border-radius: 9999px;">Step 2</span>
+                            <span style="font-size: 0.8rem; color: var(--text-tertiary);">The People</span>
+                        </div>
+                        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; color: var(--text-primary);">2. Meet Your Characters</h3>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 12px;">
+                            Add 2 or 3 characters to your story. Give each person a name, what they want, and a hidden secret. Because they keep secrets from each other, they will talk and interact naturally!
+                        </p>
+                    </div>
+                    <div style="font-size: 0.78rem; font-weight: 600; color: var(--success);">
+                        🎭 Characters talk & act independently
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="card" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid var(--gold);">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-size: 0.75rem; font-weight: 800; background: var(--gold-subtle); color: var(--gold); padding: 3px 10px; border-radius: 9999px;">Step 3</span>
+                            <span style="font-size: 0.8rem; color: var(--text-tertiary);">The Action</span>
+                        </div>
+                        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; color: var(--text-primary);">3. Watch the Story Unfold</h3>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 12px;">
+                            The AI places your characters into scenes together. They speak in real dialogue, react to each other, and face unexpected twists. You can even peek behind the scenes to see what they are secretly planning!
+                        </p>
+                    </div>
+                    <div style="font-size: 0.78rem; font-weight: 600; color: var(--gold);">
+                        🎬 Live scene dialogue & secret thoughts
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="card" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid #ec4899;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-size: 0.75rem; font-weight: 800; background: rgba(236, 72, 153, 0.12); color: #ec4899; padding: 3px 10px; border-radius: 9999px;">Step 4</span>
+                            <span style="font-size: 0.8rem; color: var(--text-tertiary);">The Book</span>
+                        </div>
+                        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; color: var(--text-primary);">4. Read, Listen & Enjoy</h3>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 12px;">
+                            Your story is written into beautiful book chapters that read like a published novel. Read with comfortable paper themes, listen with realistic voice audio, or download the full book!
+                        </p>
+                    </div>
+                    <div style="font-size: 0.78rem; font-weight: 600; color: #ec4899;">
+                        📖 Audio playback & cover artwork
+                    </div>
+                </div>
+            </div>
+
+            <!-- Helpful Tips for Storytellers -->
+            <div class="card" style="padding: 28px; margin-bottom: 28px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    <h3 style="font-size: 1.25rem; font-weight: 800; margin: 0;">3 Simple Tips for Great Stories</h3>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                    <div style="background: var(--bg-surface-subtle); padding: 16px 20px; border-radius: var(--radius-sm);">
+                        <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 4px;">1. Keep it short (3 to 5 chapters)</strong>
+                        <p style="font-size: 0.86rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                            Stories with 3 to 5 chapters are the most exciting to read! They move quickly, have lots of action, and finish with a satisfying ending.
+                        </p>
+                    </div>
+
+                    <div style="background: var(--bg-surface-subtle); padding: 16px 20px; border-radius: var(--radius-sm);">
+                        <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 4px;">2. Give each character a secret</strong>
+                        <p style="font-size: 0.86rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                            When characters have secrets, their conversations become dramatic and unpredictable. One wants to find the truth, while the other tries to hide it!
+                        </p>
+                    </div>
+
+                    <div style="background: var(--bg-surface-subtle); padding: 16px 20px; border-radius: var(--radius-sm);">
+                        <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 4px;">3. Pick a specific year and place</strong>
+                        <p style="font-size: 0.86rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                            A story set in "Victorian London, 1894" feels much more colorful and realistic than just "a city". Specific places give the story rich atmosphere!
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Frequently Asked Questions -->
+            <div class="card" style="padding: 28px; margin-bottom: 28px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 18px;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <h3 style="font-size: 1.25rem; font-weight: 800; margin: 0;">Frequently Asked Questions</h3>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+                    <div style="background: var(--bg-surface-subtle); padding: 16px 18px; border-radius: var(--radius-sm);">
+                        <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 4px;">Can I listen to my story like an audiobook?</strong>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                            Yes! Just open any chapter in the Reader view and click the <strong>"Listen"</strong> button at the top. The built-in audio player will read the chapter aloud to you with realistic voice narration.
+                        </p>
+                    </div>
+
+                    <div style="background: var(--bg-surface-subtle); padding: 16px 18px; border-radius: var(--radius-sm);">
+                        <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 4px;">What does the "Auto-Continue" switch do?</strong>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                            If you leave Auto-Continue ON, Storyteller will write the whole book from chapter 1 to the final chapter automatically. If you want to pause, review each chapter, or change characters between chapters, you can turn Auto-Continue OFF anytime.
+                        </p>
+                    </div>
+
+                    <div style="background: var(--bg-surface-subtle); padding: 16px 18px; border-radius: var(--radius-sm);">
+                        <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 4px;">Where can I see what my characters are thinking?</strong>
+                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                            On any chapter card in the Novel view, click the <strong>"Behind the Scenes"</strong> button. A drawer will slide open showing the exact words they spoke, their body language, and their secret thoughts during that scene!
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Call to Action Card -->
+            <div class="card" style="padding: 36px 24px; text-align: center; background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.12) 0%, transparent 75%); border: 1px solid var(--border-accent);">
+                <h3 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 8px;">Ready to create your story?</h3>
+                <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 22px; max-width: 550px; margin-left: auto; margin-right: auto;">
+                    Pick an idea, introduce your characters, and let the storytelling begin.
+                </p>
+                <button class="btn btn-primary btn-lg" onclick="startNewNovel()" style="display: inline-flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Create My Story</span>
+                </button>
             </div>
         </section>
 
@@ -1017,198 +1221,6 @@
                 </div>
             </div>
         </section>
-
-        <!-- ==================== 6. VIEW: DEDICATED USER GUIDE & HELP CENTER ==================== -->
-        <section id="viewGuide" style="display: none;">
-            <!-- Top Hero Header -->
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; flex-wrap: wrap; gap: 16px;">
-                <div>
-                    <button class="btn btn-ghost btn-sm" onclick="navigateTo('library')" style="margin-bottom: 10px;">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="19" y1="12" x2="5" y2="12"></line>
-                            <polyline points="12 19 5 12 12 5"></polyline>
-                        </svg>
-                        Back to Author's Desk
-                    </button>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <h1 style="font-size: 2.2rem; font-weight: 800;">Welcome to Storyteller</h1>
-                        <span class="badge badge-ready" style="font-size: 0.78rem; padding: 3px 10px;">Quick & Simple Guide</span>
-                    </div>
-                    <p style="color: var(--text-secondary); font-size: 1.05rem; margin-top: 6px; max-width: 820px;">
-                        Here is everything you need to know to create, listen to, and enjoy great stories in 4 simple steps. No technical knowledge required!
-                    </p>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-secondary" onclick="navigateTo('library')">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-                        </svg>
-                        Author's Desk
-                    </button>
-                    <button class="btn btn-primary" onclick="startNewNovel()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        Create Story Now
-                    </button>
-                </div>
-            </div>
-
-            <!-- 4 Simple Steps Grid -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-bottom: 32px;">
-                <!-- Step 1 -->
-                <div class="card" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid var(--accent);">
-                    <div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <span style="font-size: 0.75rem; font-weight: 800; background: var(--accent-subtle); color: var(--accent); padding: 3px 10px; border-radius: 9999px;">Step 1</span>
-                            <span style="font-size: 0.8rem; color: var(--text-tertiary);">The Setting</span>
-                        </div>
-                        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; color: var(--text-primary);">1. Choose an Idea</h3>
-                        <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 12px;">
-                            Pick where and when your story takes place. A mystery in foggy 1920s Edinburgh, a romance in Paris, or a sci-fi adventure in 2045. Choose a 1-click preset or type one sentence!
-                        </p>
-                    </div>
-                    <div style="font-size: 0.78rem; font-weight: 600; color: var(--accent);">
-                        ✨ Ready-made visual presets available
-                    </div>
-                </div>
-
-                <!-- Step 2 -->
-                <div class="card" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid var(--success);">
-                    <div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <span style="font-size: 0.75rem; font-weight: 800; background: var(--success-subtle); color: var(--success); padding: 3px 10px; border-radius: 9999px;">Step 2</span>
-                            <span style="font-size: 0.8rem; color: var(--text-tertiary);">The People</span>
-                        </div>
-                        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; color: var(--text-primary);">2. Meet Your Characters</h3>
-                        <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 12px;">
-                            Add 2 or 3 characters to your story. Give each person a name, what they want, and a hidden secret. Because they keep secrets from each other, they will talk and interact naturally!
-                        </p>
-                    </div>
-                    <div style="font-size: 0.78rem; font-weight: 600; color: var(--success);">
-                        🎭 Characters talk & act independently
-                    </div>
-                </div>
-
-                <!-- Step 3 -->
-                <div class="card" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid var(--gold);">
-                    <div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <span style="font-size: 0.75rem; font-weight: 800; background: var(--gold-subtle); color: var(--gold); padding: 3px 10px; border-radius: 9999px;">Step 3</span>
-                            <span style="font-size: 0.8rem; color: var(--text-tertiary);">The Action</span>
-                        </div>
-                        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; color: var(--text-primary);">3. Watch the Story Unfold</h3>
-                        <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 12px;">
-                            The AI places your characters into scenes together. They speak in real dialogue, react to each other, and face unexpected twists. You can even peek behind the scenes to see what they are secretly planning!
-                        </p>
-                    </div>
-                    <div style="font-size: 0.78rem; font-weight: 600; color: var(--gold);">
-                        🎬 Live scene dialogue & secret thoughts
-                    </div>
-                </div>
-
-                <!-- Step 4 -->
-                <div class="card" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid #ec4899;">
-                    <div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <span style="font-size: 0.75rem; font-weight: 800; background: rgba(236, 72, 153, 0.12); color: #ec4899; padding: 3px 10px; border-radius: 9999px;">Step 4</span>
-                            <span style="font-size: 0.8rem; color: var(--text-tertiary);">The Book</span>
-                        </div>
-                        <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; color: var(--text-primary);">4. Read, Listen & Enjoy</h3>
-                        <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 12px;">
-                            Your story is written into beautiful book chapters that read like a published novel. Read with comfortable paper themes, listen with realistic voice audio, or download the full book!
-                        </p>
-                    </div>
-                    <div style="font-size: 0.78rem; font-weight: 600; color: #ec4899;">
-                        📖 Audio playback & cover artwork
-                    </div>
-                </div>
-            </div>
-
-            <!-- Helpful Tips for Storytellers -->
-            <div class="card" style="padding: 28px; margin-bottom: 28px;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                    </svg>
-                    <h3 style="font-size: 1.25rem; font-weight: 800; margin: 0;">3 Simple Tips for Great Stories</h3>
-                </div>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
-                    <div style="background: var(--bg-surface-subtle); padding: 16px 20px; border-radius: var(--radius-sm);">
-                        <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 4px;">1. Keep it short (3 to 5 chapters)</strong>
-                        <p style="font-size: 0.86rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
-                            Stories with 3 to 5 chapters are the most exciting to read! They move quickly, have lots of action, and finish with a satisfying ending.
-                        </p>
-                    </div>
-
-                    <div style="background: var(--bg-surface-subtle); padding: 16px 20px; border-radius: var(--radius-sm);">
-                        <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 4px;">2. Give each character a secret</strong>
-                        <p style="font-size: 0.86rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
-                            When characters have secrets, their conversations become dramatic and unpredictable. One wants to find the truth, while the other tries to hide it!
-                        </p>
-                    </div>
-
-                    <div style="background: var(--bg-surface-subtle); padding: 16px 20px; border-radius: var(--radius-sm);">
-                        <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 4px;">3. Pick a specific year and place</strong>
-                        <p style="font-size: 0.86rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
-                            A story set in "Victorian London, 1894" feels much more colorful and realistic than just "a city". Specific places give the story rich atmosphere!
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Frequently Asked Questions -->
-            <div class="card" style="padding: 28px; margin-bottom: 28px;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 18px;">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                    </svg>
-                    <h3 style="font-size: 1.25rem; font-weight: 800; margin: 0;">Frequently Asked Questions</h3>
-                </div>
-
-                <div style="display: flex; flex-direction: column; gap: 14px;">
-                    <div style="background: var(--bg-surface-subtle); padding: 16px 18px; border-radius: var(--radius-sm);">
-                        <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 4px;">Can I listen to my story like an audiobook?</strong>
-                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
-                            Yes! Just open any chapter in the Reader view and click the <strong>"Listen"</strong> button at the top. The built-in audio player will read the chapter aloud to you with realistic voice narration.
-                        </p>
-                    </div>
-
-                    <div style="background: var(--bg-surface-subtle); padding: 16px 18px; border-radius: var(--radius-sm);">
-                        <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 4px;">What does the "Auto-Continue" switch do?</strong>
-                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
-                            If you leave Auto-Continue ON, Storyteller will write the whole book from chapter 1 to the final chapter automatically. If you want to pause, review each chapter, or change characters between chapters, you can turn Auto-Continue OFF anytime.
-                        </p>
-                    </div>
-
-                    <div style="background: var(--bg-surface-subtle); padding: 16px 18px; border-radius: var(--radius-sm);">
-                        <strong style="color: var(--text-primary); font-size: 0.95rem; display: block; margin-bottom: 4px;">Where can I see what my characters are thinking?</strong>
-                        <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
-                            On any chapter card in the Novel view, click the <strong>"Behind the Scenes"</strong> button. A drawer will slide open showing the exact words they spoke, their body language, and their secret thoughts during that scene!
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Call to Action Card -->
-            <div class="card" style="padding: 36px 24px; text-align: center; background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.12) 0%, transparent 75%); border: 1px solid var(--border-accent);">
-                <h3 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 8px;">Ready to create your story?</h3>
-                <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 22px; max-width: 550px; margin-left: auto; margin-right: auto;">
-                    Pick an idea, introduce your characters, and let the storytelling begin.
-                </p>
-                <button class="btn btn-primary btn-lg" onclick="startNewNovel()" style="display: inline-flex; align-items: center; gap: 8px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    <span>Create My Story</span>
-                </button>
-            </div>
-        </section>
     </main>
 
     <!-- ==================== BEHIND THE SCENES DRAWER ==================== -->
@@ -1427,6 +1439,6 @@
         <span>Help & Guide</span>
     </button>
 
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=2.2"></script>
 </body>
 </html>

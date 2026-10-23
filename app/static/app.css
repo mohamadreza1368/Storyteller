@@ -259,6 +259,19 @@ h1, h2, h3, h4, h5 {
     color: var(--text-primary);
 }
 
+.nav-link-btn {
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.nav-link-btn.nav-active {
+    background: var(--accent-subtle) !important;
+    color: var(--accent) !important;
+    border: 1px solid var(--border-accent) !important;
+    font-weight: 700 !important;
+    box-shadow: 0 0 14px rgba(99, 102, 241, 0.2);
+}
+
 .btn-sm {
     padding: 7px 12px;
     font-size: 0.84rem;

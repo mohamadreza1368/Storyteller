@@ -180,7 +180,7 @@ function populateEnums() {
 }
 
 // Navigation
-function navigateTo(viewName) {
+window.navigateTo = function navigateTo(viewName) {
     if (viewName === "admin") {
         if (!currentUser || currentUser.role !== "admin") {
             showToast("Administrator privileges required.", "error");
@@ -198,6 +198,12 @@ function navigateTo(viewName) {
         guide: document.getElementById("viewGuide")
     };
 
+    // Safety fallback: if target view doesn't exist, never leave screen blank
+    if (!views[viewName]) {
+        console.warn(`View "${viewName}" not found in DOM. Falling back to library.`);
+        viewName = "library";
+    }
+
     for (const [name, el] of Object.entries(views)) {
         if (el) el.style.display = (name === viewName) ? "block" : "none";
     }
@@ -208,10 +214,10 @@ function navigateTo(viewName) {
     const navGde = document.getElementById("navLinkGuide");
     const navAdm = document.getElementById("navLinkAdmin");
 
-    if (navLib) navLib.classList.toggle("btn-secondary", viewName === "library");
-    if (navWiz) navWiz.classList.toggle("btn-secondary", viewName === "wizard");
-    if (navGde) navGde.classList.toggle("btn-secondary", viewName === "guide");
-    if (navAdm) navAdm.classList.toggle("btn-secondary", viewName === "admin");
+    if (navLib) navLib.classList.toggle("nav-active", viewName === "library");
+    if (navWiz) navWiz.classList.toggle("nav-active", viewName === "wizard");
+    if (navGde) navGde.classList.toggle("nav-active", viewName === "guide");
+    if (navAdm) navAdm.classList.toggle("nav-active", viewName === "admin");
 
     if (viewName === "library") {
         stopProgressPolling();
@@ -236,11 +242,14 @@ async function checkSystemInfo() {
         const res = await fetch("/api/system/info");
         const data = await res.json();
         const banner = document.getElementById("demoBanner");
-        if (data.demo_mode) {
-            banner.style.display = "flex";
-            document.getElementById("demoMessage").innerText = data.demo_message;
-        } else {
-            banner.style.display = "none";
+        if (banner) {
+            if (data.demo_mode) {
+                banner.style.display = "flex";
+                const msg = document.getElementById("demoMessage");
+                if (msg) msg.innerText = data.demo_message;
+            } else {
+                banner.style.display = "none";
+            }
         }
     } catch (e) {
         console.error("System info error:", e);
