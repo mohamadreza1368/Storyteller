@@ -2037,3 +2037,84 @@ async function saveAdminAiConfig() {
         showToast("Error saving configuration: " + e.message, "error");
     }
 }
+
+// ==================== WORKFLOW GUIDE & HELP CONTROLLER ====================
+let activeGuideStep = 1;
+
+function selectGuideStep(stepNum) {
+    activeGuideStep = stepNum;
+    for (let i = 1; i <= 4; i++) {
+        const tab = document.getElementById(`guideStepTab${i}`);
+        const pane = document.getElementById(`guideStepPane${i}`);
+        if (tab) {
+            tab.classList.toggle('active', i === stepNum);
+        }
+        if (pane) {
+            pane.style.display = (i === stepNum) ? 'block' : 'none';
+        }
+    }
+}
+
+function toggleGuideBanner(forceState = null) {
+    const banner = document.getElementById('authorGuideBannerBody');
+    const toggleIcon = document.getElementById('guideToggleIcon');
+    const toggleText = document.getElementById('guideToggleText');
+    if (!banner) return;
+    const isHidden = (forceState !== null) ? !forceState : (banner.style.display === 'none');
+    banner.style.display = isHidden ? 'block' : 'none';
+    if (toggleText) {
+        toggleText.textContent = isHidden ? 'Collapse' : 'Expand';
+    }
+    if (toggleIcon) {
+        toggleIcon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+    localStorage.setItem('st_guide_banner_visible', isHidden ? 'true' : 'false');
+}
+
+function openUserGuideModal() {
+    const modal = document.getElementById('guideModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        switchGuideModalTab('guideModalTabOverview');
+    }
+}
+
+function closeUserGuideModal() {
+    const modal = document.getElementById('guideModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function switchGuideModalTab(tabId) {
+    const tabs = ['guideModalTabOverview', 'guideModalTabCharacters', 'guideModalTabCraft', 'guideModalTabPacing'];
+    tabs.forEach(t => {
+        const btn = document.getElementById(`btn_${t}`);
+        const content = document.getElementById(t);
+        if (btn) btn.classList.toggle('active', t === tabId);
+        if (content) content.style.display = (t === tabId) ? 'block' : 'none';
+    });
+}
+
+// Global modal dismiss on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeUserGuideModal();
+    }
+});
+
+// Guide modal backdrop click listener
+document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('st_guide_banner_visible');
+    if (saved === 'false') {
+        toggleGuideBanner(false);
+    }
+    const guideOverlay = document.getElementById('guideModal');
+    if (guideOverlay) {
+        guideOverlay.addEventListener('click', (e) => {
+            if (e.target === guideOverlay) {
+                closeUserGuideModal();
+            }
+        });
+    }
+});

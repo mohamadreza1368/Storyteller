@@ -44,6 +44,14 @@
                     </svg>
                     New Novel
                 </button>
+                <button class="btn btn-ghost btn-sm" onclick="openUserGuideModal()" id="navLinkGuide">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    Workflow Guide
+                </button>
                 <button class="btn btn-ghost btn-sm" onclick="navigateTo('admin')" id="navLinkAdmin" style="display: none; color: #8B5CF6; border: 1px solid rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08);">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7"></rect>
@@ -120,12 +128,20 @@
 
         <!-- ==================== 1. VIEW: LIBRARY ==================== -->
         <section id="viewLibrary">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
                 <div>
                     <h1 style="font-size: 2.2rem; font-weight: 800; margin-bottom: 6px;">Author's Desk</h1>
                     <p style="color: var(--text-secondary); font-size: 1.05rem;">Shape the world, cast autonomous characters, and watch the story weave itself across dynamic scenes.</p>
                 </div>
-                <div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="openUserGuideModal()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        Workflow Guide
+                    </button>
                     <button class="btn btn-primary" onclick="startNewNovel()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -133,6 +149,218 @@
                         </svg>
                         Create Novel
                     </button>
+                </div>
+            </div>
+
+            <!-- Interactive Author Workflow Guide Banner -->
+            <div id="authorGuideBanner" class="author-guide-card">
+                <div class="guide-header-bar">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="guide-brand-pill">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span>Step-by-Step Guide</span>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin: 0;">How Storyteller AI Works</h3>
+                            <p style="font-size: 0.84rem; color: var(--text-secondary); margin: 2px 0 0 0;">From your initial premise to living multi-agent dialogue and publishable literary chapters.</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button class="btn btn-ghost btn-xs" onclick="toggleGuideBanner()" title="Minimize / Expand Guide">
+                            <span id="guideToggleText" style="font-size: 0.78rem; font-weight: 600;">Collapse</span>
+                            <svg id="guideToggleIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.25s ease;">
+                                <polyline points="18 15 12 9 6 15"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="authorGuideBannerBody" class="guide-body" style="display: block;">
+                    <!-- 4 Interactive Step Cards -->
+                    <div class="guide-steps-grid">
+                        <!-- Step 1 -->
+                        <div class="guide-step-card active" id="guideStepTab1" onclick="selectGuideStep(1)">
+                            <div class="guide-step-top">
+                                <span class="guide-step-num">Step 1</span>
+                                <span class="guide-step-phase">Foundation</span>
+                            </div>
+                            <div class="guide-step-title">Premise, Setting & Era</div>
+                            <div class="guide-step-desc">Establish your story idea, location, historical year, and short chapter budget.</div>
+                            <div class="guide-step-footer">
+                                <span>World & Rules</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="guide-step-card" id="guideStepTab2" onclick="selectGuideStep(2)">
+                            <div class="guide-step-top">
+                                <span class="guide-step-num">Step 2</span>
+                                <span class="guide-step-phase">Cast & Mind</span>
+                            </div>
+                            <div class="guide-step-title">Autonomous Characters</div>
+                            <div class="guide-step-desc">Cast main and supporting agents with isolated wants, flaws, and buried secrets.</div>
+                            <div class="guide-step-footer">
+                                <span>Isolated LLM Agents</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </div>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="guide-step-card" id="guideStepTab3" onclick="selectGuideStep(3)">
+                            <div class="guide-step-top">
+                                <span class="guide-step-num">Step 3</span>
+                                <span class="guide-step-phase">Simulation</span>
+                            </div>
+                            <div class="guide-step-title">Scene Directing & Dialogue</div>
+                            <div class="guide-step-desc">The Director stages scenes with tension arcs. Characters engage in live multi-turn dialogue.</div>
+                            <div class="guide-step-footer">
+                                <span>Real-time Interaction</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </div>
+                        </div>
+
+                        <!-- Step 4 -->
+                        <div class="guide-step-card" id="guideStepTab4" onclick="selectGuideStep(4)">
+                            <div class="guide-step-top">
+                                <span class="guide-step-num">Step 4</span>
+                                <span class="guide-step-phase">Synthesis</span>
+                            </div>
+                            <div class="guide-step-title">Master Prose Synthesis</div>
+                            <div class="guide-step-desc">Narrator writes humanized prose with sensory interiority under strict anti-AI rules.</div>
+                            <div class="guide-step-footer">
+                                <span>Publishable Fiction</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step Detail Content Pane -->
+                    <div class="guide-detail-pane">
+                        <!-- Pane 1: Step 1 Details -->
+                        <div id="guideStepPane1" class="guide-pane-content" style="display: block;">
+                            <div class="guide-pane-header">
+                                <div class="guide-pane-badge">Phase 1: Setting the Story Stage</div>
+                                <h4 style="font-size: 1.1rem; font-weight: 700; margin: 4px 0 6px 0;">Step 1: Set Premise, Historical Era & Chapter Budget</h4>
+                                <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">Start by defining the world rules, geography, and the historical timeline where your characters will collide.</p>
+                            </div>
+                            <div class="guide-tips-grid">
+                                <div class="guide-tip-box">
+                                    <div class="guide-tip-title">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                        Short Story Architecture (3 to 6 Chapters)
+                                    </div>
+                                    <div class="guide-tip-text">To prevent repetitive wandering, short stories work best when planned for <strong>3 to 6 focused chapters</strong>. Each chapter is strictly capped under <strong>3,000 words</strong> (averaging 1,500 to 2,200 words) with tight narrative progression.</div>
+                                </div>
+                                <div class="guide-tip-box">
+                                    <div class="guide-tip-title">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                        Grounding Era & Custom Locations
+                                    </div>
+                                    <div class="guide-tip-text">Specify an exact year or era (e.g. <em>1894 Victorian Edinburgh</em> or <em>2045 Cyberpunk London</em>). The world builder locks in your custom locations and uses authentic physical textures (wet slate, cold iron, tallow candles).</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 14px; display: flex; justify-content: flex-end;">
+                                <button class="btn btn-primary btn-sm" onclick="startNewNovel()">
+                                    <span>Start Novel with Step 1</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Pane 2: Step 2 Details -->
+                        <div id="guideStepPane2" class="guide-pane-content" style="display: none;">
+                            <div class="guide-pane-header">
+                                <div class="guide-pane-badge">Phase 2: Independent Character Agents</div>
+                                <h4 style="font-size: 1.1rem; font-weight: 700; margin: 4px 0 6px 0;">Step 2: Cast Autonomous Characters & Secret Motivations</h4>
+                                <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">Each character operates as an independent LLM agent with their own private mind, isolated knowledge, and hidden vulnerabilities.</p>
+                            </div>
+                            <div class="guide-tips-grid">
+                                <div class="guide-tip-box">
+                                    <div class="guide-tip-title">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                                        Main vs. Supporting Characters
+                                    </div>
+                                    <div class="guide-tip-text">You can designate any character as <strong>Main</strong> or <strong>Supporting</strong>. The engine preserves every supporting character, ensuring they appear consistently across scenes with their own distinct speaking cadence.</div>
+                                </div>
+                                <div class="guide-tip-box">
+                                    <div class="guide-tip-title">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                        Zero Telepathy / Isolated Knowledge
+                                    </div>
+                                    <div class="guide-tip-text">Characters do not know each other's secrets or inner thoughts unless revealed openly in dialogue. This creates authentic subtext, misunderstandings, and high-stakes dramatic tension.</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center;">
+                                <button class="btn btn-ghost btn-sm" onclick="selectGuideStep(1)">← Back to Step 1</button>
+                                <button class="btn btn-secondary btn-sm" onclick="selectGuideStep(3)">Next: Step 3 Simulation →</button>
+                            </div>
+                        </div>
+
+                        <!-- Pane 3: Step 3 Details -->
+                        <div id="guideStepPane3" class="guide-pane-content" style="display: none;">
+                            <div class="guide-pane-header">
+                                <div class="guide-pane-badge">Phase 3: Real-Time Character Interaction</div>
+                                <h4 style="font-size: 1.1rem; font-weight: 700; margin: 4px 0 6px 0;">Step 3: Director Blocking & Live Multi-Turn Dialogue</h4>
+                                <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">Before prose is written, the Scene Director orchestrates dynamic encounters where character agents speak and react in real time.</p>
+                            </div>
+                            <div class="guide-tips-grid">
+                                <div class="guide-tip-box">
+                                    <div class="guide-tip-title">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                                        Scene Tension Mapping
+                                    </div>
+                                    <div class="guide-tip-text">Each chapter is broken into 2 to 3 dramatic scenes featuring a concrete beginning complication, rising interpersonal friction, and a pivotal outcome that changes the power balance.</div>
+                                </div>
+                                <div class="guide-tip-box">
+                                    <div class="guide-tip-title">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                        Spoken Words & Secret Calculations
+                                    </div>
+                                    <div class="guide-tip-text">During each turn, the agent outputs an observable physical action, natural spoken dialogue addressing the other character, and a private calculated thought kept strictly to themselves.</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center;">
+                                <button class="btn btn-ghost btn-sm" onclick="selectGuideStep(2)">← Back to Step 2</button>
+                                <button class="btn btn-secondary btn-sm" onclick="selectGuideStep(4)">Next: Step 4 Synthesis →</button>
+                            </div>
+                        </div>
+
+                        <!-- Pane 4: Step 4 Details -->
+                        <div id="guideStepPane4" class="guide-pane-content" style="display: none;">
+                            <div class="guide-pane-header">
+                                <div class="guide-pane-badge">Phase 4: Literary Novelist Synthesis</div>
+                                <h4 style="font-size: 1.1rem; font-weight: 700; margin: 4px 0 6px 0;">Step 4: Master Author Prose Synthesis & Quality Gates</h4>
+                                <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">The Master Narrator weaves the simulated scenes and dialogue into publication-grade chapters, enforcing strict anti-AI craft rules.</p>
+                            </div>
+                            <div class="guide-tips-grid">
+                                <div class="guide-tip-box">
+                                    <div class="guide-tip-title">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                        Show, Don't Explain (Sensory Interiority)
+                                    </div>
+                                    <div class="guide-tip-text">Strict Third-Person Limited narration weaves character thoughts directly into prose without italics or melodrama. Physical instincts and silence carry the emotional weight.</div>
+                                </div>
+                                <div class="guide-tip-box">
+                                    <div class="guide-tip-title">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                                        Zero Tolerance for AI Tells
+                                    </div>
+                                    <div class="guide-tip-text">Automated quality gates eliminate cliché vocabulary (<em>delve, tapestry, testament, beacon, palpable</em>), forbid "Not X, but Y" formulas, remove forced triads, and regulate em dashes.</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center;">
+                                <button class="btn btn-ghost btn-sm" onclick="selectGuideStep(3)">← Back to Step 3</button>
+                                <button class="btn btn-primary btn-sm" onclick="openUserGuideModal()">
+                                    <span>Explore Full User Manual</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1175,6 +1403,186 @@
                     <button type="submit" id="btnSaveProfile" class="btn btn-primary">Save Changes</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ==================== WORKFLOW GUIDE MODAL ==================== -->
+    <div id="guideModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box" style="max-width: 840px; max-height: 88vh; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+            <!-- Modal Header -->
+            <div style="padding: 24px 28px 18px 28px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                        <span class="badge badge-ready" style="font-size: 0.72rem; padding: 2px 8px;">Comprehensive Guide</span>
+                        <span style="font-size: 0.8rem; color: var(--text-tertiary);">Autonomous Multi-Agent Architecture</span>
+                    </div>
+                    <h3 style="font-size: 1.45rem; font-weight: 800; color: var(--text-primary); margin: 0;">Author's Workflow Manual</h3>
+                    <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 4px 0 0 0;">Learn how to direct independent character agents, set historical parameters, and craft tight literary stories.</p>
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="closeUserGuideModal()" style="margin-top: -4px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Nav Tabs -->
+            <div class="guide-modal-tabs">
+                <button class="guide-modal-tab-btn active" id="btn_guideModalTabOverview" onclick="switchGuideModalTab('guideModalTabOverview')">
+                    1. The 4-Step Journey
+                </button>
+                <button class="guide-modal-tab-btn" id="btn_guideModalTabCharacters" onclick="switchGuideModalTab('guideModalTabCharacters')">
+                    2. Character LLM Agents
+                </button>
+                <button class="guide-modal-tab-btn" id="btn_guideModalTabCraft" onclick="switchGuideModalTab('guideModalTabCraft')">
+                    3. Anti-AI Writing Craft
+                </button>
+                <button class="guide-modal-tab-btn" id="btn_guideModalTabPacing" onclick="switchGuideModalTab('guideModalTabPacing')">
+                    4. Short Story Pacing
+                </button>
+            </div>
+
+            <!-- Modal Scrollable Body -->
+            <div style="flex: 1; overflow-y: auto; padding: 24px 28px;">
+                <!-- Tab 1: Overview -->
+                <div id="guideModalTabOverview" style="display: block;">
+                    <div class="guide-doc-section">
+                        <h4 class="guide-doc-heading">Overview: How an Autonomous Novel is Created</h4>
+                        <p class="guide-doc-p">Storyteller AI operates on an autonomous 6-stage narrative engine. Unlike conventional LLM chatbots that produce generic text summaries in a single shot, Storyteller simulates independent character minds, blocks cinematic scenes, and synthesizes publication-grade chapters.</p>
+                    </div>
+
+                    <div class="guide-flow-steps">
+                        <div class="guide-flow-card">
+                            <div class="guide-flow-card-num">01</div>
+                            <div class="guide-flow-card-content">
+                                <strong>Step 1: Premise, World & Era Setting</strong>
+                                <p>Provide your title, logline, genre, and world environment. Be specific with historical years (e.g., <em>Victorian Edinburgh, 1894</em> or <em>2045 London</em>) and custom locations. These are strictly locked into the narrative anchor.</p>
+                            </div>
+                        </div>
+
+                        <div class="guide-flow-card">
+                            <div class="guide-flow-card-num">02</div>
+                            <div class="guide-flow-card-content">
+                                <strong>Step 2: Casting Main & Supporting Characters</strong>
+                                <p>Define each character's role, external tangible want, internal emotional need, fatal blindspot, and buried secret. The engine guarantees complete preservation of supporting characters across chapters.</p>
+                            </div>
+                        </div>
+
+                        <div class="guide-flow-card">
+                            <div class="guide-flow-card-num">03</div>
+                            <div class="guide-flow-card-content">
+                                <strong>Step 3: Multi-Agent Live Dialogue Simulation</strong>
+                                <p>Before a chapter is written, the Scene Director breaks the chapter into 2 to 3 dramatic scenes. Characters engage in turn-by-turn dialogue where each agent outputs a physical action, spoken words, and secret internal thoughts.</p>
+                            </div>
+                        </div>
+
+                        <div class="guide-flow-card">
+                            <div class="guide-flow-card-num">04</div>
+                            <div class="guide-flow-card-content">
+                                <strong>Step 4: Master Prose Synthesis & Anti-AI Quality Gate</strong>
+                                <p>The Master Narrator weaves the simulated scenes and dialogue turns into expansive prose. An automated post-processor cleans all AI tells (no "Not X but Y", no forced triads, no cliché words like <em>tapestry</em> or <em>delve</em>).</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Characters -->
+                <div id="guideModalTabCharacters" style="display: none;">
+                    <div class="guide-doc-section">
+                        <h4 class="guide-doc-heading">Autonomous Character Simulation (No Telepathy)</h4>
+                        <p class="guide-doc-p">Every character in your novel is powered by a dedicated LLM instance with an isolated System Prompt. They act, speak, and make deductions strictly from their own point of view.</p>
+                    </div>
+
+                    <div class="guide-tips-grid" style="margin-top: 16px;">
+                        <div class="guide-tip-box">
+                            <div class="guide-tip-title" style="color: var(--accent);">The Motivational Engine</div>
+                            <div class="guide-tip-text">
+                                • <strong>External Want:</strong> The tangible objective they chase (e.g., recovering a stolen ledger).<br>
+                                • <strong>Internal Need:</strong> The psychological void they must resolve.<br>
+                                • <strong>Fatal Flaw:</strong> The blindspot that causes conflict with others.<br>
+                                • <strong>Buried Secret:</strong> The secret they must guard at all costs.
+                            </div>
+                        </div>
+                        <div class="guide-tip-box">
+                            <div class="guide-tip-title" style="color: var(--success);">Multi-Turn Conversational Rounds</div>
+                            <div class="guide-tip-text">
+                                When characters are placed in a scene together, they respond directly to the previous character's spoken words and body language. They speak with human brevity, interruptions, and natural hesitations.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Writing Craft -->
+                <div id="guideModalTabCraft" style="display: none;">
+                    <div class="guide-doc-section">
+                        <h4 class="guide-doc-heading">Integrated Writing Craft & Humanizer Rules</h4>
+                        <p class="guide-doc-p">The storytelling engine enforces the literary principles from <strong>book-writer-skill</strong>, <strong>humanizer</strong>, and <strong>avoid-ai-writing</strong> at every generation stage:</p>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+                        <div style="background: var(--bg-surface-subtle); padding: 14px 18px; border-radius: var(--radius-sm); border-left: 3px solid var(--danger);">
+                            <strong style="color: var(--text-primary); font-size: 0.95rem;">1. Banned AI Clichés & Words:</strong>
+                            <div style="font-size: 0.86rem; color: var(--text-secondary); margin-top: 4px;">
+                                Forbidden: <code>delve</code>, <code>tapestry</code>, <code>testament</code>, <code>beacon</code>, <code>palpable</code>, <code>labyrinthine</code>, <code>dance of shadows</code>, <code>whispers of</code>, <code>chill ran down</code>, <code>air was thick with</code>, <code>time stood still</code>, <code>little did they know</code>, <code>crescendo</code>, <code>inexorably</code>. Replaced with concrete physical descriptions (wet mortar, cold iron, quiet breath).
+                            </div>
+                        </div>
+
+                        <div style="background: var(--bg-surface-subtle); padding: 14px 18px; border-radius: var(--radius-sm); border-left: 3px solid var(--gold);">
+                            <strong style="color: var(--text-primary); font-size: 0.95rem;">2. Elimination of AI Structural Habits:</strong>
+                            <div style="font-size: 0.86rem; color: var(--text-secondary); margin-top: 4px;">
+                                • <strong>No "Not X, but Y":</strong> Forbid artificial contrasting formulas (e.g. <em>"It was not merely cold, but freezing"</em>).<br>
+                                • <strong>No Trailing Closers:</strong> Forbid dramatic one-line conclusions (e.g. <em>"And nothing would ever be the same."</em>).<br>
+                                • <strong>No Forced Triads:</strong> Forbid artificial groupings of three adjectives or three clauses for fake rhythm.
+                            </div>
+                        </div>
+
+                        <div style="background: var(--bg-surface-subtle); padding: 14px 18px; border-radius: var(--radius-sm); border-left: 3px solid var(--accent);">
+                            <strong style="color: var(--text-primary); font-size: 0.95rem;">3. Show, Don't Explain & Punctuation Discipline:</strong>
+                            <div style="font-size: 0.86rem; color: var(--text-secondary); margin-top: 4px;">
+                                Thoughts are woven directly into third-person limited prose without italics or quotation marks. Em dashes (<code>—</code>) are used sparingly (max 1-2 per scene strictly for genuine interruption).
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Pacing & Word Limits -->
+                <div id="guideModalTabPacing" style="display: none;">
+                    <div class="guide-doc-section">
+                        <h4 class="guide-doc-heading">Short Story Architecture & Chapter Limits</h4>
+                        <p class="guide-doc-p">Storyteller is optimized for short, impactful stories where every chapter pushes the plot forward without filler.</p>
+                    </div>
+
+                    <div class="guide-tips-grid" style="margin-top: 16px;">
+                        <div class="guide-tip-box">
+                            <div class="guide-tip-title">Target: 3 to 6 Chapters Total</div>
+                            <div class="guide-tip-text">
+                                • <strong>Chapter 1:</strong> Inciting incident, arrival at location, initial clash of objectives.<br>
+                                • <strong>Chapters 2-(N-1):</strong> Escalation, discoveries, secret pressures, shifting alliances.<br>
+                                • <strong>Final Chapter:</strong> Climax, central conflict resolution, and definitive closure.
+                            </div>
+                        </div>
+                        <div class="guide-tip-box">
+                            <div class="guide-tip-title">Strict Word Cap: Under 3,000 Words</div>
+                            <div class="guide-tip-text">
+                                Every chapter aims for <strong>1,500 to 2,500 words</strong> and is strictly constrained to never exceed 3,000 words. This ensures tight narrative momentum, sharp dialogue, and memorable reading.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="padding: 16px 28px; border-top: 1px solid var(--border-subtle); background: var(--bg-surface-subtle); display: flex; justify-content: space-between; align-items: center;">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeUserGuideModal()">Close Guide</button>
+                <button type="button" class="btn btn-primary" onclick="closeUserGuideModal(); startNewNovel();">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Create Novel Now
+                </button>
+            </div>
         </div>
     </div>
 

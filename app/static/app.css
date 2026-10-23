@@ -1295,4 +1295,291 @@ h1, h2, h3, h4, h5 {
     color: var(--text-primary);
 }
 
+/* ==================== AUTHOR WORKFLOW GUIDE BANNER & STEPPER ==================== */
+.author-guide-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    margin-bottom: 28px;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: all 0.25s ease;
+    position: relative;
+}
+
+.author-guide-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-gradient);
+}
+
+.guide-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--bg-surface-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.guide-brand-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--accent-subtle);
+    color: var(--accent);
+    border: 1px solid var(--border-accent);
+    border-radius: 9999px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.guide-body {
+    padding: 20px;
+}
+
+.guide-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+@media (max-width: 992px) {
+    .guide-steps-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .guide-steps-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.guide-step-card {
+    background: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.guide-step-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.guide-step-card.active {
+    background: var(--bg-surface);
+    border: 2px solid var(--accent);
+    box-shadow: 0 4px 16px -2px rgba(99, 102, 241, 0.25);
+}
+
+.guide-step-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.guide-step-num {
+    font-size: 0.74rem;
+    font-weight: 800;
+    background: var(--accent-gradient);
+    color: #ffffff;
+    padding: 2px 7px;
+    border-radius: var(--radius-xs);
+    text-transform: uppercase;
+}
+
+.guide-step-phase {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+}
+
+.guide-step-title {
+    font-size: 0.96rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.guide-step-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+    margin-bottom: 10px;
+}
+
+.guide-step-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--accent);
+    border-top: 1px dashed var(--border-subtle);
+    padding-top: 8px;
+}
+
+/* Detail Pane */
+.guide-detail-pane {
+    background: var(--bg-surface-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 18px 22px;
+}
+
+.guide-pane-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.guide-tips-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 14px;
+}
+
+@media (max-width: 768px) {
+    .guide-tips-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.guide-tip-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+}
+
+.guide-tip-title {
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.guide-tip-text {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Modal Tabs */
+.guide-modal-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-surface-subtle);
+    overflow-x: auto;
+}
+
+.guide-modal-tab-btn {
+    padding: 12px 20px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.guide-modal-tab-btn:hover {
+    color: var(--text-primary);
+}
+
+.guide-modal-tab-btn.active {
+    color: var(--accent);
+    font-weight: 700;
+    border-bottom-color: var(--accent);
+    background: var(--bg-surface);
+}
+
+.guide-doc-section {
+    margin-bottom: 16px;
+}
+
+.guide-doc-heading {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.guide-doc-p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.guide-flow-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.guide-flow-card {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 14px 18px;
+    background: var(--bg-surface-subtle);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+}
+
+.guide-flow-card-num {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    min-width: 28px;
+}
+
+.guide-flow-card-content strong {
+    display: block;
+    font-size: 0.94rem;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.guide-flow-card-content p {
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+
 
