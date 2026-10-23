@@ -1581,5 +1581,36 @@ h1, h2, h3, h4, h5 {
     line-height: 1.5;
 }
 
+/* ==================== FLOATING GLOBAL HELP & GUIDE BUTTON ==================== */
+.floating-help-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 99;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: var(--bg-surface-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-accent);
+    border-radius: 9999px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 0 14px rgba(99, 102, 241, 0.25);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(8px);
+}
+
+.floating-help-btn:hover {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 8px 28px rgba(99, 102, 241, 0.4);
+}
+
+
 
 

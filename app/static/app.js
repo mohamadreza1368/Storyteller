@@ -148,6 +148,20 @@ document.addEventListener("DOMContentLoaded", async () => {
             dropdown.classList.remove("show");
         }
     });
+
+    // Check initial route hash
+    const initialHash = window.location.hash.replace("#", "");
+    if (["guide", "admin", "wizard", "library"].includes(initialHash)) {
+        navigateTo(initialHash);
+    }
+
+    // Support browser back/forward hash navigation
+    window.addEventListener("hashchange", () => {
+        const h = window.location.hash.replace("#", "");
+        if (["guide", "admin", "wizard", "library"].includes(h)) {
+            navigateTo(h);
+        }
+    });
 });
 
 function populateEnums() {
@@ -175,12 +189,29 @@ function navigateTo(viewName) {
         }
     }
 
-    document.getElementById("viewLibrary").style.display = (viewName === "library") ? "block" : "none";
-    document.getElementById("viewWizard").style.display = (viewName === "wizard") ? "block" : "none";
-    document.getElementById("viewNovel").style.display = (viewName === "novel") ? "block" : "none";
-    document.getElementById("viewReader").style.display = (viewName === "reader") ? "block" : "none";
-    const adminEl = document.getElementById("viewAdmin");
-    if (adminEl) adminEl.style.display = (viewName === "admin") ? "block" : "none";
+    const views = {
+        library: document.getElementById("viewLibrary"),
+        wizard: document.getElementById("viewWizard"),
+        novel: document.getElementById("viewNovel"),
+        reader: document.getElementById("viewReader"),
+        admin: document.getElementById("viewAdmin"),
+        guide: document.getElementById("viewGuide")
+    };
+
+    for (const [name, el] of Object.entries(views)) {
+        if (el) el.style.display = (name === viewName) ? "block" : "none";
+    }
+
+    // Update active state on header navigation buttons
+    const navLib = document.getElementById("navLinkLibrary");
+    const navWiz = document.getElementById("navLinkNewNovel");
+    const navGde = document.getElementById("navLinkGuide");
+    const navAdm = document.getElementById("navLinkAdmin");
+
+    if (navLib) navLib.classList.toggle("btn-secondary", viewName === "library");
+    if (navWiz) navWiz.classList.toggle("btn-secondary", viewName === "wizard");
+    if (navGde) navGde.classList.toggle("btn-secondary", viewName === "guide");
+    if (navAdm) navAdm.classList.toggle("btn-secondary", viewName === "admin");
 
     if (viewName === "library") {
         stopProgressPolling();
@@ -188,7 +219,14 @@ function navigateTo(viewName) {
     } else if (viewName === "admin") {
         stopProgressPolling();
         loadAdminDashboard();
+    } else if (viewName === "guide") {
+        stopProgressPolling();
     }
+
+    try {
+        window.history.replaceState(null, "", `#${viewName}`);
+    } catch (_) {}
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
