@@ -277,4 +277,8 @@ class LLMClient:
                 return await fallback_generator()
             raise e
 
+    async def generate(self, prompt: str, system_prompt: str = "", temperature: float = 0.7, max_tokens: int = 1500) -> str:
+        """Convenience alias for text generation across providers."""
+        return await self.generate_text(system_prompt=system_prompt, user_prompt=prompt)
+
 llm = LLMClient()
