@@ -19,7 +19,13 @@ logger = logging.getLogger(__name__)
 
 # Strong references to background tasks to prevent garbage collection in Python 3.12+
 ACTIVE_TASKS: Set[asyncio.Task] = set()
+INITIALIZING_NOVELS: Set[str] = set()
 RUNNING_NOVELS: Set[str] = set()
+ACTIVE_GENERATIONS: Set[str] = set()
+
+def is_novel_active(novel_id: str) -> bool:
+    """Returns True if novel is currently being initialized or written in memory."""
+    return (novel_id in INITIALIZING_NOVELS) or (novel_id in RUNNING_NOVELS) or (novel_id in ACTIVE_GENERATIONS)
 
 def track_task(task: asyncio.Task) -> asyncio.Task:
     ACTIVE_TASKS.add(task)
@@ -70,6 +76,7 @@ async def update_progress(
 async def initialize_novel(blueprint: StoryBlueprint):
     """Initializes the world, characters, and story matrix."""
     novel_id = blueprint.novel_id
+    INITIALIZING_NOVELS.add(novel_id)
     try:
         blueprint.status = NovelStatus.DESIGNING.value
         store.save_blueprint(blueprint)
@@ -127,17 +134,26 @@ async def initialize_novel(blueprint: StoryBlueprint):
     except Exception as e:
         logger.error(f"Error in initialize_novel: {e}", exc_info=True)
         blueprint.status = NovelStatus.FAILED.value
+        blueprint.auto_continue = False
         store.save_blueprint(blueprint)
         await update_progress(
             novel_id, "Failed during world design", 1, 2, 0, 0, blueprint.total_episodes,
             is_active=False, err=str(e),
             log_line=f"❌ Error during world design: {str(e)}"
         )
+    finally:
+        INITIALIZING_NOVELS.discard(novel_id)
 
 async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[EpisodeResponse]:
     """Runs stages 3 to 6 for a single episode."""
+    if novel_id in ACTIVE_GENERATIONS:
+        logger.warning(f"generate_single_episode already active for {novel_id}, skipping duplicate execution.")
+        return None
+
+    ACTIVE_GENERATIONS.add(novel_id)
     blueprint = store.get_blueprint(novel_id)
     if not blueprint:
+        ACTIVE_GENERATIONS.discard(novel_id)
         return None
 
     memory = store.get_memory(novel_id) or StoryMemory(novel_id=novel_id)
@@ -289,6 +305,7 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
     except Exception as e:
         logger.error(f"Error generating episode {ep_num}: {e}", exc_info=True)
         blueprint.status = NovelStatus.FAILED.value
+        blueprint.auto_continue = False
         store.save_blueprint(blueprint)
         await update_progress(
             novel_id, f"Error generating Chapter {ep_num}", 5, 6, 0, ep_num, blueprint.total_episodes,
@@ -296,6 +313,8 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
             log_line=f"❌ Error generating Chapter {ep_num}: {str(e)}"
         )
         return None
+    finally:
+        ACTIVE_GENERATIONS.discard(novel_id)
 
 async def run_novel_episodes(novel_id: str):
     """Continuously writes episodes until novel is completed or auto-continue is stopped."""
@@ -330,19 +349,20 @@ async def run_novel_episodes(novel_id: str):
                 log_line=f"⏳ Initiating generation pipeline for Chapter {next_ep} of {blueprint.total_episodes}..."
             )
 
-            # Generate episode with retry
-            retries = 2
-            success = False
-            for attempt in range(retries):
-                res = await generate_single_episode(novel_id, next_ep)
-                if res is not None:
-                    success = True
-                    break
-                logger.warning(f"Episode {next_ep} generation failed (attempt {attempt + 1}/{retries}). Retrying...")
-                await asyncio.sleep(2)
-
-            if not success:
-                logger.error(f"Failed to generate episode {next_ep} after {retries} attempts.")
+            # Generate episode cleanly without looping retries that cause stage resets
+            res = await generate_single_episode(novel_id, next_ep)
+            if res is None:
+                logger.error(f"Failed to generate episode {next_ep}. Stopping auto-continue pipeline.")
+                blueprint = store.get_blueprint(novel_id)
+                if blueprint:
+                    blueprint.auto_continue = False
+                    blueprint.status = NovelStatus.FAILED.value
+                    store.save_blueprint(blueprint)
+                await update_progress(
+                    novel_id, f"Generation stopped at Chapter {next_ep}", 5, 6, 0, next_ep, blueprint.total_episodes if blueprint else 1,
+                    is_active=False, err=f"Chapter {next_ep} encountered an error.",
+                    log_line=f"❌ Auto-continue halted at Chapter {next_ep}. You can resume anytime by clicking 'Write Chapter {next_ep}'."
+                )
                 break
 
             # Pause briefly between chapters

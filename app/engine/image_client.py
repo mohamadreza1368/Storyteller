@@ -119,7 +119,7 @@ class ChapterImageClient:
 
                 ai_prompt = await asyncio.wait_for(
                     llm.generate_text(sys_prompt, user_prompt, fallback_generator=lambda: heuristic_prompt),
-                    timeout=15.0
+                    timeout=8.0
                 )
                 if ai_prompt and len(ai_prompt.strip()) > 30 and "[TITLE]:" not in ai_prompt:
                     clean_ai_prompt = re.sub(r'^(prompt|image prompt):?\s*', '', ai_prompt.strip(), flags=re.IGNORECASE)
@@ -289,7 +289,7 @@ class ChapterImageClient:
             loop = asyncio.get_event_loop()
 
             def _fetch():
-                with urllib.request.urlopen(req, timeout=40) as resp:
+                with urllib.request.urlopen(req, timeout=12) as resp:
                     return resp.read(), resp.headers.get("content-type", "image/jpeg")
 
             data, content_type = await loop.run_in_executor(None, _fetch)
@@ -414,13 +414,14 @@ class ChapterImageClient:
         img_base_url = cfg.get("image_base_url") or cfg.get("base_url") or ""
         img_model = cfg.get("image_model") or ""
 
-        # 1. Custom or OpenAI Dedicated API
-        if (img_provider in ("custom", "openai") and img_key) or (img_provider == "auto" and img_model and img_key):
+        # 1. Custom or OpenAI Dedicated API (only if specifically configured with an image model)
+        is_dedicated_image_endpoint = bool(img_provider in ("openai", "custom") and img_model and any(k in img_model.lower() for k in ("dall", "image", "flux", "diffusion", "sdxl")))
+        if is_dedicated_image_endpoint and img_key:
             target_model = img_model or "dall-e-3"
             target_base_url = img_base_url or ("https://api.openai.com/v1" if img_provider == "openai" else None)
             try:
                 from openai import AsyncOpenAI
-                client = AsyncOpenAI(api_key=img_key, base_url=target_base_url, timeout=35.0)
+                client = AsyncOpenAI(api_key=img_key, base_url=target_base_url, timeout=20.0, max_retries=0)
                 logger.info(f"Generating chapter illustration with {target_model} via {target_base_url or 'default endpoint'}...")
                 response = await client.images.generate(
                     model=target_model,

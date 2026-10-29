@@ -1090,9 +1090,15 @@ async function renderEpisodesList(episodes) {
     `).join("");
 }
 
-// Progress Polling with Live Production Terminal & Auto-Stop
+// Progress Polling with Live Production Terminal & Watchdog
+let lastProgressSnapshot = null;
+let lastProgressChangeTime = Date.now();
+
 function startProgressPolling() {
     stopProgressPolling();
+    lastProgressSnapshot = null;
+    lastProgressChangeTime = Date.now();
+
     progressPollTimer = setInterval(async () => {
         if (!currentNovelId) return;
         try {
@@ -1104,6 +1110,20 @@ function startProgressPolling() {
             const p = await res.json();
             const card = document.getElementById("novelProgressCard");
             
+            // Watchdog: detect if progress has stalled for more than 90 seconds without changes
+            const snapshot = `${p.current_step}_${p.percentage}_${(p.logs || []).length}`;
+            if (snapshot !== lastProgressSnapshot) {
+                lastProgressSnapshot = snapshot;
+                lastProgressChangeTime = Date.now();
+            } else if (Date.now() - lastProgressChangeTime > 90000 && p.is_active) {
+                console.warn("Progress watchdog triggered: no updates for 90s. Halting poll.");
+                stopProgressPolling();
+                if (card) card.style.display = "none";
+                showToast("Generation session reached timeout or paused. Click 'Write Chapter' to proceed.", "info");
+                await refreshNovelView();
+                return;
+            }
+
             if (p.is_active || (p.percentage > 0 && p.percentage < 100)) {
                 if (card) card.style.display = "block";
                 
@@ -1170,6 +1190,20 @@ function stopProgressPolling() {
     if (progressPollTimer) {
         clearInterval(progressPollTimer);
         progressPollTimer = null;
+    }
+}
+
+async function resetCurrentNovelGeneration() {
+    if (!currentNovelId) return;
+    try {
+        await fetchWithAuth(`/api/novels/${currentNovelId}/reset-generation`, { method: "POST" });
+        stopProgressPolling();
+        const card = document.getElementById("novelProgressCard");
+        if (card) card.style.display = "none";
+        showToast("Generation state reset. Ready to write.", "info");
+        await refreshNovelView();
+    } catch (e) {
+        showToast("Error resetting generation: " + e.message, "error");
     }
 }
 

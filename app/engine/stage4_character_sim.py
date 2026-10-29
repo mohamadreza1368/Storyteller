@@ -25,6 +25,9 @@ async def execute_stage4(
     for c in blueprint.cast.characters:
         char_map[c.key] = c
 
+    consecutive_slow_or_failed = 0
+    llm_circuit_broken = False
+
     for scene in scenes:
         scene_history: List[CharacterTurn] = []
         present_chars = [char_map[name] for name in scene.character_keys if name in char_map]
@@ -35,41 +38,64 @@ async def execute_stage4(
         rounds = 2 if len(present_chars) > 1 else 1
         for round_idx in range(rounds):
             for char in present_chars:
-                # Use the dedicated system prompt stored on the character if present
-                if getattr(char, "system_prompt", None):
-                    sys_prompt = char.system_prompt
+                async def fallback_turn(c=char, r=round_idx, sc=scene, hist=scene_history):
+                    other_name = [p.core.name for p in present_chars if p.core.name != c.core.name]
+                    target_name = other_name[0] if other_name else "the room"
+                    if r == 0:
+                        return {
+                            "action": f"{c.core.name} set a hand against the doorframe at {sc.location_key}, watching {target_name} closely.",
+                            "dialogue": f"Keep your voice down, {target_name}. If they find out what happened with {sc.goal.lower()}, we will not get another chance.",
+                            "thought": f"I need to secure {c.motivation.want or 'my objective'} before anyone realizes what is missing.",
+                            "emotion": "Guarded and alert",
+                            "knowledge_gain": f"Identified immediate risk from {sc.conflict}."
+                        }
+                    else:
+                        return {
+                            "action": f"{c.core.name} closed the distance, eyes fixed on {target_name}.",
+                            "dialogue": f"There is no turning back now. We finish this at {sc.location_key}.",
+                            "thought": f"If my secret ({c.motivation.secret or 'intentions'}) comes to light, everything collapses.",
+                            "emotion": "Resolute",
+                            "knowledge_gain": f"Committed to resolving {sc.resolution}."
+                        }
+
+                if llm_circuit_broken:
+                    turn_data = await fallback_turn(char, round_idx, scene, scene_history)
                 else:
-                    sys_prompt = CHARACTER_ACTOR_SYSTEM_PROMPT.format(
-                        name=char.core.name,
-                        occupation=char.core.occupation or "Unknown",
-                        age=char.core.age or 30,
-                        temperament=char.core.temperament or "Idealist",
-                        values=", ".join(char.core.values) if char.core.values else "Truth",
-                        want=char.motivation.want,
-                        need=char.motivation.need,
-                        flaw=char.motivation.flaw,
-                        secret=char.motivation.secret,
-                        voice=char.behavior.voice or "Measured and natural",
-                        knowledge=" | ".join(char.state.knowledge) if char.state.knowledge else "General opening knowledge"
-                    )
-
-                history_str = "\n".join([
-                    f"- {t.character_key}: [Action: {t.action}] [Dialogue: \"{t.dialogue}\"]"
-                    for t in scene_history
-                ]) if scene_history else "The scene has just commenced; no dialogue spoken yet."
-
-                last_exchange_directive = ""
-                if scene_history:
-                    last_turn = scene_history[-1]
-                    if last_turn.character_key != char.core.name:
-                        last_exchange_directive = (
-                            f"\nIMMEDIATE INTERPERSONAL CUE TO ADDRESS:\n"
-                            f"{last_turn.character_key} just said: \"{last_turn.dialogue}\"\n"
-                            f"{last_turn.character_key}'s physical action: {last_turn.action}\n"
-                            f"Directly reply and react to {last_turn.character_key}! Speak naturally in dialogue and describe your bodily reaction.\n"
+                    # Use the dedicated system prompt stored on the character if present
+                    if getattr(char, "system_prompt", None):
+                        sys_prompt = char.system_prompt
+                    else:
+                        sys_prompt = CHARACTER_ACTOR_SYSTEM_PROMPT.format(
+                            name=char.core.name,
+                            occupation=char.core.occupation or "Unknown",
+                            age=char.core.age or 30,
+                            temperament=char.core.temperament or "Idealist",
+                            values=", ".join(char.core.values) if char.core.values else "Truth",
+                            want=char.motivation.want,
+                            need=char.motivation.need,
+                            flaw=char.motivation.flaw,
+                            secret=char.motivation.secret,
+                            voice=char.behavior.voice or "Measured and natural",
+                            knowledge=" | ".join(char.state.knowledge) if char.state.knowledge else "General opening knowledge"
                         )
 
-                user_prompt = f"""Scene Context: "{scene.title}"
+                    history_str = "\n".join([
+                        f"- {t.character_key}: [Action: {t.action}] [Dialogue: \"{t.dialogue}\"]"
+                        for t in scene_history
+                    ]) if scene_history else "The scene has just commenced; no dialogue spoken yet."
+
+                    last_exchange_directive = ""
+                    if scene_history:
+                        last_turn = scene_history[-1]
+                        if last_turn.character_key != char.core.name:
+                            last_exchange_directive = (
+                                f"\nIMMEDIATE INTERPERSONAL CUE TO ADDRESS:\n"
+                                f"{last_turn.character_key} just said: \"{last_turn.dialogue}\"\n"
+                                f"{last_turn.character_key}'s physical action: {last_turn.action}\n"
+                                f"Directly reply and react to {last_turn.character_key}! Speak naturally in dialogue and describe your bodily reaction.\n"
+                            )
+
+                    user_prompt = f"""Scene Context: "{scene.title}"
 Location: {scene.location_key} | Time: {scene.time_marker}
 Scene Dramatic Goal: {scene.goal}
 Immediate Conflict: {scene.conflict}
@@ -92,31 +118,25 @@ Return strictly a JSON object matching this schema:
 }}
 """
 
-                async def fallback_turn(c=char, r=round_idx, sc=scene, hist=scene_history):
-                    other_name = [p.core.name for p in present_chars if p.core.name != c.core.name]
-                    target_name = other_name[0] if other_name else "the room"
-                    if r == 0:
-                        return {
-                            "action": f"{c.core.name} set a hand against the doorframe at {sc.location_key}, watching {target_name} closely.",
-                            "dialogue": f"Keep your voice down, {target_name}. If they find out what happened with {sc.goal.lower()}, we will not get another chance.",
-                            "thought": f"I need to secure {c.motivation.want or 'my objective'} before anyone realizes what is missing.",
-                            "emotion": "Guarded and alert",
-                            "knowledge_gain": f"Identified immediate risk from {sc.conflict}."
-                        }
-                    else:
-                        return {
-                            "action": f"{c.core.name} closed the distance, eyes fixed on {target_name}.",
-                            "dialogue": f"There is no turning back now. We finish this at {sc.location_key}.",
-                            "thought": f"If my secret ({c.motivation.secret or 'intentions'}) comes to light, everything collapses.",
-                            "emotion": "Resolute",
-                            "knowledge_gain": f"Committed to resolving {sc.resolution}."
-                        }
+                    import time
+                    start_t = time.time()
+                    try:
+                        turn_data = await llm.generate_json(
+                            sys_prompt,
+                            user_prompt,
+                            fallback_generator=lambda c=char, r=round_idx, sc=scene, h=scene_history: fallback_turn(c, r, sc, h)
+                        )
+                        elapsed = time.time() - start_t
+                        if elapsed > 14.0:
+                            consecutive_slow_or_failed += 1
+                        else:
+                            consecutive_slow_or_failed = 0
+                    except Exception:
+                        consecutive_slow_or_failed += 1
+                        turn_data = await fallback_turn(char, round_idx, scene, scene_history)
 
-                turn_data = await llm.generate_json(
-                    sys_prompt,
-                    user_prompt,
-                    fallback_generator=lambda c=char, r=round_idx, sc=scene, h=scene_history: fallback_turn(c, r, sc, h)
-                )
+                    if consecutive_slow_or_failed >= 2:
+                        llm_circuit_broken = True
 
                 raw_action = turn_data.get("action", "")
                 raw_dialogue = turn_data.get("dialogue", "")

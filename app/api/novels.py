@@ -16,7 +16,7 @@ from app.models.character import Character, PersonaCore, CharacterSeed
 from app.models.episode import EpisodeResponse, EpisodeSummary, GenerationProgress, SetAutoContinueRequest
 from app.models.enums import NovelStatus, Genre, ProseStyle, Theme, Tone, Perspective, EndingType
 from app.storage.store import store
-from app.engine.pipeline import initialize_novel, generate_single_episode, run_novel_episodes, track_task
+from app.engine.pipeline import initialize_novel, generate_single_episode, run_novel_episodes, track_task, is_novel_active
 from app.engine.image_client import chapter_image_client
 from app.engine.qloo_client import qloo_client, generate_scenarios_from_tastes
 
@@ -301,7 +301,12 @@ async def rename_novel(novel_id: str, req: RenameRequest, current_user: User = D
 async def get_progress(novel_id: str, user: Optional[User] = Depends(get_current_user_optional)):
     """Get live generation step progress (author or admin only)."""
     check_novel_access(novel_id, user)
-    return store.get_progress(novel_id)
+    p = store.get_progress(novel_id)
+    if p and p.is_active and not is_novel_active(novel_id):
+        # Auto-heal ghost active states if server restarted or task terminated
+        p.is_active = False
+        store.save_progress(p)
+    return p
 
 @router.post("/{novel_id}/auto-continue")
 async def toggle_auto_continue(novel_id: str, req: SetAutoContinueRequest, user: User = Depends(get_current_user)):
@@ -310,7 +315,7 @@ async def toggle_auto_continue(novel_id: str, req: SetAutoContinueRequest, user:
     bp.auto_continue = req.auto_continue
     store.save_blueprint(bp)
 
-    if bp.auto_continue:
+    if bp.auto_continue and not is_novel_active(novel_id):
         task = asyncio.create_task(run_novel_episodes(novel_id))
         track_task(task)
 
@@ -321,6 +326,9 @@ async def write_next_episode(novel_id: str, user: User = Depends(get_current_use
     """Manually trigger generation of the next episode (author or admin only)."""
     bp = check_novel_access(novel_id, user)
     
+    if is_novel_active(novel_id):
+        raise HTTPException(status_code=409, detail="A chapter generation is currently in progress for this novel")
+
     written = len(store.list_episodes(novel_id))
     next_ep = written + 1
     if next_ep > bp.total_episodes:
@@ -329,6 +337,24 @@ async def write_next_episode(novel_id: str, user: User = Depends(get_current_use
     task = asyncio.create_task(generate_single_episode(novel_id, next_ep))
     track_task(task)
     return {"message": f"Writing of Chapter {next_ep} initiated in background"}
+
+@router.post("/{novel_id}/reset-generation")
+async def reset_generation(novel_id: str, user: User = Depends(get_current_user)):
+    """Reset stuck or interrupted generation state for a novel."""
+    bp = check_novel_access(novel_id, user)
+    bp.auto_continue = False
+    if bp.status == NovelStatus.WRITING.value:
+        bp.status = NovelStatus.READY.value
+    store.save_blueprint(bp)
+
+    p = store.get_progress(novel_id)
+    if p:
+        p.is_active = False
+        p.percentage = 0
+        p.current_step = "Generation state reset"
+        store.save_progress(p)
+
+    return {"message": "Generation state reset successfully"}
 
 @router.get("/{novel_id}/episodes", response_model=List[EpisodeSummary])
 async def list_episodes(novel_id: str, user: Optional[User] = Depends(get_current_user_optional)):

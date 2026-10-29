@@ -46,12 +46,37 @@ class StorageManager:
                             bp = StoryBlueprint.model_validate_json(raw_bp)
 
                         conn.execute("""
-                            INSERT OR REPLACE INTO novels (
+                            INSERT INTO novels (
                                 id, title, working_title, premise, logline, synopsis, hook,
                                 genre, theme, tone, prose_style, perspective, ending_style,
                                 city, country, era, story_time_span, total_episodes, words_per_episode,
                                 auto_continue, status, created_at_utc, updated_at_utc, owner_id, owner_name, blueprint_json
                             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ON CONFLICT(id) DO UPDATE SET
+                                title = excluded.title,
+                                working_title = excluded.working_title,
+                                premise = excluded.premise,
+                                logline = excluded.logline,
+                                synopsis = excluded.synopsis,
+                                hook = excluded.hook,
+                                genre = excluded.genre,
+                                theme = excluded.theme,
+                                tone = excluded.tone,
+                                prose_style = excluded.prose_style,
+                                perspective = excluded.perspective,
+                                ending_style = excluded.ending_style,
+                                city = excluded.city,
+                                country = excluded.country,
+                                era = excluded.era,
+                                story_time_span = excluded.story_time_span,
+                                total_episodes = excluded.total_episodes,
+                                words_per_episode = excluded.words_per_episode,
+                                auto_continue = excluded.auto_continue,
+                                status = excluded.status,
+                                updated_at_utc = excluded.updated_at_utc,
+                                owner_id = excluded.owner_id,
+                                owner_name = excluded.owner_name,
+                                blueprint_json = excluded.blueprint_json
                         """, (
                             bp.novel_id, bp.title, bp.working_title, bp.premise, bp.logline, bp.synopsis, bp.hook,
                             bp.style.genre, bp.style.theme, bp.style.tone, bp.style.prose_style, bp.style.perspective,
@@ -139,12 +164,37 @@ class StorageManager:
 
         with db.get_connection() as conn:
             conn.execute("""
-                INSERT OR REPLACE INTO novels (
+                INSERT INTO novels (
                     id, title, working_title, premise, logline, synopsis, hook,
                     genre, theme, tone, prose_style, perspective, ending_style,
                     city, country, era, story_time_span, total_episodes, words_per_episode,
                     auto_continue, status, created_at_utc, updated_at_utc, owner_id, owner_name, blueprint_json
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    title = excluded.title,
+                    working_title = excluded.working_title,
+                    premise = excluded.premise,
+                    logline = excluded.logline,
+                    synopsis = excluded.synopsis,
+                    hook = excluded.hook,
+                    genre = excluded.genre,
+                    theme = excluded.theme,
+                    tone = excluded.tone,
+                    prose_style = excluded.prose_style,
+                    perspective = excluded.perspective,
+                    ending_style = excluded.ending_style,
+                    city = excluded.city,
+                    country = excluded.country,
+                    era = excluded.era,
+                    story_time_span = excluded.story_time_span,
+                    total_episodes = excluded.total_episodes,
+                    words_per_episode = excluded.words_per_episode,
+                    auto_continue = excluded.auto_continue,
+                    status = excluded.status,
+                    updated_at_utc = excluded.updated_at_utc,
+                    owner_id = excluded.owner_id,
+                    owner_name = excluded.owner_name,
+                    blueprint_json = excluded.blueprint_json
             """, (
                 bp.novel_id, bp.title, bp.working_title, bp.premise, bp.logline, bp.synopsis, bp.hook,
                 bp.style.genre, bp.style.theme, bp.style.tone, bp.style.prose_style, bp.style.perspective,

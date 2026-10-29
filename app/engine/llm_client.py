@@ -1,12 +1,30 @@
 import os
 import json
 import time
+import inspect
 import logging
 from typing import Optional, Dict, Any, List
 from app.config import settings
 from app.storage.store import store
 
 logger = logging.getLogger(__name__)
+
+async def _invoke_fallback(fallback_generator):
+    """Safely calls a fallback generator whether it is an async coroutine, regular function, or value."""
+    if fallback_generator is None:
+        return None
+    try:
+        if callable(fallback_generator):
+            res = fallback_generator()
+            if inspect.isawaitable(res):
+                return await res
+            return res
+        elif inspect.isawaitable(fallback_generator):
+            return await fallback_generator
+        return fallback_generator
+    except Exception as e:
+        logger.error(f"Fallback generator invocation error: {e}", exc_info=True)
+        return None
 
 def clean_and_parse_json(raw_text: str) -> Dict[str, Any]:
     """Robustly extracts and parses JSON from LLM output, handling markdown fences and formatting anomalies."""
@@ -151,7 +169,8 @@ class LLMClient:
                 client = AsyncOpenAI(
                     api_key=key or "dummy",
                     base_url=target_base_url,
-                    timeout=15.0
+                    timeout=10.0,
+                    max_retries=0
                 )
                 res = await client.chat.completions.create(
                     model=mod or "gpt-4o-mini",
@@ -187,7 +206,8 @@ class LLMClient:
         """Calls the configured LLM and expects structured JSON output."""
         if self.provider == "mock" or (not self.api_key and self.provider not in ("ollama", "custom")):
             if fallback_generator:
-                return await fallback_generator()
+                res = await _invoke_fallback(fallback_generator)
+                return res if isinstance(res, dict) else {}
             return {}
 
         prompt_with_format = f"{user_prompt}\n\nIMPORTANT: Return ONLY valid JSON matching the requested schema. Do NOT enclose in markdown backticks."
@@ -212,7 +232,8 @@ class LLMClient:
                 client = AsyncOpenAI(
                     api_key=self.api_key or "dummy",
                     base_url=target_base_url,
-                    timeout=25.0
+                    timeout=16.0,
+                    max_retries=0
                 )
                 res = await client.chat.completions.create(
                     model=self.model or "gpt-4o-mini",
@@ -229,14 +250,17 @@ class LLMClient:
         except Exception as e:
             logger.error(f"LLM Error ({self.provider}): {e}")
             if fallback_generator:
-                return await fallback_generator()
+                res = await _invoke_fallback(fallback_generator)
+                if isinstance(res, dict):
+                    return res
             raise e
 
     async def generate_text(self, system_prompt: str, user_prompt: str, fallback_generator=None) -> str:
         """Generates continuous prose or dialogue text."""
         if self.provider == "mock" or (not self.api_key and self.provider not in ("ollama", "custom")):
             if fallback_generator:
-                return await fallback_generator()
+                res = await _invoke_fallback(fallback_generator)
+                return str(res) if res is not None else ""
             return ""
 
         try:
@@ -259,7 +283,8 @@ class LLMClient:
                 client = AsyncOpenAI(
                     api_key=self.api_key or "dummy",
                     base_url=target_base_url,
-                    timeout=25.0
+                    timeout=28.0,
+                    max_retries=0
                 )
                 res = await client.chat.completions.create(
                     model=self.model or "gpt-4o-mini",
@@ -274,7 +299,9 @@ class LLMClient:
         except Exception as e:
             logger.error(f"LLM Error ({self.provider}): {e}")
             if fallback_generator:
-                return await fallback_generator()
+                res = await _invoke_fallback(fallback_generator)
+                if res is not None:
+                    return str(res)
             raise e
 
     async def generate(self, prompt: str, system_prompt: str = "", temperature: float = 0.7, max_tokens: int = 1500) -> str:

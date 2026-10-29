@@ -839,7 +839,12 @@
                             <div id="progressDetail" style="font-size: 0.85rem; color: var(--text-tertiary);">Processing pipeline stage...</div>
                         </div>
                     </div>
-                    <span id="progressPercentage" style="font-size: 1.3rem; font-weight: 800; color: var(--accent);">0%</span>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span id="progressPercentage" style="font-size: 1.3rem; font-weight: 800; color: var(--accent);">0%</span>
+                        <button class="btn btn-secondary btn-sm" onclick="resetCurrentNovelGeneration()" style="font-size: 0.78rem; padding: 4px 10px;" title="Reset generation if paused or interrupted">
+                            Reset
+                        </button>
+                    </div>
                 </div>
 
                 <div class="progress-bar-bg">
