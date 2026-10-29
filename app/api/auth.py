@@ -1,8 +1,9 @@
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Depends, Request, Response, status
 from pydantic import BaseModel, EmailStr
 from app.storage.users import User, UserPublic, user_manager
 from app.storage.store import store
+from app.engine.qloo_client import qloo_client
 from app.api.deps import get_current_user, get_token_from_request
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -12,6 +13,8 @@ class RegisterRequest(BaseModel):
     username: str
     password: str
     full_name: Optional[str] = ""
+    favorite_books: Optional[List[str]] = None
+    favorite_movies: Optional[List[str]] = None
 
 class LoginRequest(BaseModel):
     login: Optional[str] = None
@@ -23,10 +26,30 @@ class ProfileUpdateRequest(BaseModel):
     bio: Optional[str] = None
     current_password: Optional[str] = None
     new_password: Optional[str] = None
+    favorite_books: Optional[List[str]] = None
+    favorite_movies: Optional[List[str]] = None
 
 class AuthResponse(BaseModel):
     token: str
     user: UserPublic
+
+def user_to_public(u: User, novels_cnt: int = 0) -> UserPublic:
+    return UserPublic(
+        id=u.id,
+        username=u.username,
+        email=u.email,
+        full_name=u.full_name,
+        role=u.role,
+        status=u.status,
+        avatar_url=u.avatar_url,
+        bio=u.bio,
+        created_at=u.created_at,
+        last_login=u.last_login,
+        novels_count=novels_cnt,
+        favorite_books=u.favorite_books,
+        favorite_movies=u.favorite_movies,
+        cultural_taste=u.cultural_taste
+    )
 
 @router.post("/register", response_model=AuthResponse)
 async def register(req: RegisterRequest, response: Response):
@@ -35,12 +58,25 @@ async def register(req: RegisterRequest, response: Response):
     if len(req.username.strip()) < 3:
         raise HTTPException(status_code=400, detail="Username must be at least 3 characters long.")
     
+    clean_books = [b.strip() for b in (req.favorite_books or []) if b and b.strip()][:5]
+    clean_movies = [m.strip() for m in (req.favorite_movies or []) if m and m.strip()][:5]
+
+    taste_profile = {}
+    if clean_books or clean_movies:
+        try:
+            taste_profile = qloo_client.analyze_author_taste_profile(clean_books, clean_movies)
+        except Exception:
+            taste_profile = {}
+
     try:
         user = user_manager.create_user(
             email=req.email,
             username=req.username,
             password=req.password,
-            full_name=req.full_name or req.username
+            full_name=req.full_name or req.username,
+            favorite_books=clean_books,
+            favorite_movies=clean_movies,
+            cultural_taste=taste_profile
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -55,19 +91,7 @@ async def register(req: RegisterRequest, response: Response):
     
     return AuthResponse(
         token=token,
-        user=UserPublic(
-            id=user_obj.id,
-            username=user_obj.username,
-            email=user_obj.email,
-            full_name=user_obj.full_name,
-            role=user_obj.role,
-            status=user_obj.status,
-            avatar_url=user_obj.avatar_url,
-            bio=user_obj.bio,
-            created_at=user_obj.created_at,
-            last_login=user_obj.last_login,
-            novels_count=0
-        )
+        user=user_to_public(user_obj, 0)
     )
 
 @router.post("/login", response_model=AuthResponse)
@@ -89,19 +113,7 @@ async def login(req: LoginRequest, response: Response):
     novels_cnt = store.get_user_novels_count(user_obj.id)
     return AuthResponse(
         token=token,
-        user=UserPublic(
-            id=user_obj.id,
-            username=user_obj.username,
-            email=user_obj.email,
-            full_name=user_obj.full_name,
-            role=user_obj.role,
-            status=user_obj.status,
-            avatar_url=user_obj.avatar_url,
-            bio=user_obj.bio,
-            created_at=user_obj.created_at,
-            last_login=user_obj.last_login,
-            novels_count=novels_cnt
-        )
+        user=user_to_public(user_obj, novels_cnt)
     )
 
 @router.post("/logout")
@@ -115,19 +127,7 @@ async def logout(request: Request, response: Response):
 @router.get("/me", response_model=UserPublic)
 async def get_current_user_profile(user: User = Depends(get_current_user)):
     novels_cnt = store.get_user_novels_count(user.id)
-    return UserPublic(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        full_name=user.full_name,
-        role=user.role,
-        status=user.status,
-        avatar_url=user.avatar_url,
-        bio=user.bio,
-        created_at=user.created_at,
-        last_login=user.last_login,
-        novels_count=novels_cnt
-    )
+    return user_to_public(user, novels_cnt)
 
 @router.patch("/profile", response_model=UserPublic)
 async def update_profile(req: ProfileUpdateRequest, user: User = Depends(get_current_user)):
@@ -143,26 +143,23 @@ async def update_profile(req: ProfileUpdateRequest, user: User = Depends(get_cur
             raise HTTPException(status_code=400, detail="New password must be at least 6 characters.")
         new_pwd = req.new_password
 
+    taste_update = None
+    if req.favorite_books is not None or req.favorite_movies is not None:
+        b_list = req.favorite_books if req.favorite_books is not None else user.favorite_books
+        m_list = req.favorite_movies if req.favorite_movies is not None else user.favorite_movies
+        taste_update = qloo_client.analyze_author_taste_profile(b_list, m_list)
+
     updated = user_manager.update_profile(
         user_id=user.id,
         full_name=req.full_name,
         bio=req.bio,
-        new_password=new_pwd
+        new_password=new_pwd,
+        favorite_books=req.favorite_books,
+        favorite_movies=req.favorite_movies,
+        cultural_taste=taste_update
     )
     if not updated:
         raise HTTPException(status_code=404, detail="User not found")
 
     novels_cnt = store.get_user_novels_count(updated.id)
-    return UserPublic(
-        id=updated.id,
-        username=updated.username,
-        email=updated.email,
-        full_name=updated.full_name,
-        role=updated.role,
-        status=updated.status,
-        avatar_url=updated.avatar_url,
-        bio=updated.bio,
-        created_at=updated.created_at,
-        last_login=updated.last_login,
-        novels_count=novels_cnt
-    )
+    return user_to_public(updated, novels_cnt)

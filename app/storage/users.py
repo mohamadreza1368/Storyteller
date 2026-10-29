@@ -22,6 +22,9 @@ class User(BaseModel):
     bio: Optional[str] = ""
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     last_login: Optional[str] = None
+    favorite_books: List[str] = Field(default_factory=list)
+    favorite_movies: List[str] = Field(default_factory=list)
+    cultural_taste: Dict[str, Any] = Field(default_factory=dict)
 
 class UserPublic(BaseModel):
     id: str
@@ -35,6 +38,9 @@ class UserPublic(BaseModel):
     created_at: str
     last_login: Optional[str] = None
     novels_count: int = 0
+    favorite_books: List[str] = Field(default_factory=list)
+    favorite_movies: List[str] = Field(default_factory=list)
+    cultural_taste: Dict[str, Any] = Field(default_factory=dict)
 
 class UserManager:
     def __init__(self):
@@ -142,7 +148,37 @@ class UserManager:
                     now
                 ))
 
-    def create_user(self, email: str, username: str, password: str, full_name: str, role: str = "user") -> Optional[User]:
+    def _dict_to_user(self, d: dict) -> User:
+        """Helper to unpack JSON fields into structured list and dict attributes."""
+        raw = dict(d)
+        if "favorite_books_json" in raw:
+            try:
+                raw["favorite_books"] = json.loads(raw["favorite_books_json"] or "[]")
+            except Exception:
+                raw["favorite_books"] = []
+        if "favorite_movies_json" in raw:
+            try:
+                raw["favorite_movies"] = json.loads(raw["favorite_movies_json"] or "[]")
+            except Exception:
+                raw["favorite_movies"] = []
+        if "cultural_taste_json" in raw:
+            try:
+                raw["cultural_taste"] = json.loads(raw["cultural_taste_json"] or "{}")
+            except Exception:
+                raw["cultural_taste"] = {}
+        return User.model_validate(raw)
+
+    def create_user(
+        self,
+        email: str,
+        username: str,
+        password: str,
+        full_name: str,
+        role: str = "user",
+        favorite_books: Optional[List[str]] = None,
+        favorite_movies: Optional[List[str]] = None,
+        cultural_taste: Optional[Dict[str, Any]] = None
+    ) -> Optional[User]:
         email_clean = email.strip().lower()
         username_clean = username.strip().lower()
 
@@ -161,10 +197,15 @@ class UserManager:
             now = datetime.now(timezone.utc).isoformat()
             full_name_clean = full_name.strip() or username_clean
 
+            books_list = [b.strip() for b in (favorite_books or []) if b and b.strip()][:5]
+            movies_list = [m.strip() for m in (favorite_movies or []) if m and m.strip()][:5]
+            taste_dict = cultural_taste or {}
+
             conn.execute("""
                 INSERT INTO users 
-                (id, username, email, password_hash, salt, full_name, role, status, bio, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (id, username, email, password_hash, salt, full_name, role, status, bio, created_at,
+                 favorite_books_json, favorite_movies_json, cultural_taste_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 user_id,
                 username_clean,
@@ -175,7 +216,10 @@ class UserManager:
                 role,
                 "active",
                 "",
-                now
+                now,
+                json.dumps(books_list, ensure_ascii=False),
+                json.dumps(movies_list, ensure_ascii=False),
+                json.dumps(taste_dict, ensure_ascii=False)
             ))
 
             return User(
@@ -187,7 +231,10 @@ class UserManager:
                 full_name=full_name_clean,
                 role=role,
                 status="active",
-                created_at=now
+                created_at=now,
+                favorite_books=books_list,
+                favorite_movies=movies_list,
+                cultural_taste=taste_dict
             )
 
     def authenticate(self, email_or_username: str, password: str) -> Optional[tuple[User, str]]:
@@ -218,7 +265,7 @@ class UserManager:
             """, (token, user_dict["id"], now, None))
 
             user_dict["last_login"] = now
-            return User.model_validate(user_dict), token
+            return self._dict_to_user(user_dict), token
 
     def get_user_by_token(self, token: str) -> Optional[User]:
         if not token:
@@ -231,7 +278,7 @@ class UserManager:
             """, (token,))
             row = cursor.fetchone()
             if row:
-                return User.model_validate(dict(row))
+                return self._dict_to_user(dict(row))
         return None
 
     def revoke_token(self, token: str):
@@ -245,15 +292,24 @@ class UserManager:
             cursor = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,))
             row = cursor.fetchone()
             if row:
-                return User.model_validate(dict(row))
+                return self._dict_to_user(dict(row))
         return None
 
     def list_users(self) -> List[User]:
         with db.get_connection() as conn:
             cursor = conn.execute("SELECT * FROM users ORDER BY created_at ASC")
-            return [User.model_validate(dict(row)) for row in cursor.fetchall()]
+            return [self._dict_to_user(dict(row)) for row in cursor.fetchall()]
 
-    def update_profile(self, user_id: str, full_name: Optional[str] = None, bio: Optional[str] = None, new_password: Optional[str] = None) -> Optional[User]:
+    def update_profile(
+        self,
+        user_id: str,
+        full_name: Optional[str] = None,
+        bio: Optional[str] = None,
+        new_password: Optional[str] = None,
+        favorite_books: Optional[List[str]] = None,
+        favorite_movies: Optional[List[str]] = None,
+        cultural_taste: Optional[Dict[str, Any]] = None
+    ) -> Optional[User]:
         u = self.get_user_by_id(user_id)
         if not u:
             return None
@@ -272,6 +328,17 @@ class UserManager:
             params.append(pwd_hash)
             update_fields.append("salt = ?")
             params.append(salt)
+        if favorite_books is not None:
+            books_list = [b.strip() for b in favorite_books if b and b.strip()][:5]
+            update_fields.append("favorite_books_json = ?")
+            params.append(json.dumps(books_list, ensure_ascii=False))
+        if favorite_movies is not None:
+            movies_list = [m.strip() for m in favorite_movies if m and m.strip()][:5]
+            update_fields.append("favorite_movies_json = ?")
+            params.append(json.dumps(movies_list, ensure_ascii=False))
+        if cultural_taste is not None:
+            update_fields.append("cultural_taste_json = ?")
+            params.append(json.dumps(cultural_taste, ensure_ascii=False))
 
         if update_fields:
             params.append(user_id)

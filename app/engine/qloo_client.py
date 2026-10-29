@@ -369,6 +369,70 @@ class QlooClient:
                 "cultural_milieu": f"Local cafes, historic civic architecture, and tucked-away courtyards shaped by generations of {era} culture."
             }
 
+    def analyze_author_taste_profile(self, books: List[str], movies: List[str]) -> Dict[str, Any]:
+        """
+        Analyzes an author's favorite books and films to build a personal cultural identity,
+        recommending matching novel genres, aesthetic archetypes, and cultural affinities via Qloo.
+        """
+        clean_books = [b.strip() for b in books if b and b.strip()][:5]
+        clean_movies = [m.strip() for m in movies if m and m.strip()][:5]
+
+        if not clean_books and not clean_movies:
+            return {
+                "archetype": "Eclectic Story Architect",
+                "aesthetic_archetype": "Eclectic Story Architect",
+                "recommended_genres": ["Literary Fiction", "Mystery & Crime", "Speculative Drama"],
+                "recommended_tones": ["Atmospheric", "Tense", "Reflective"],
+                "cultural_affinities": [],
+                "suggested_world_settings": ["Edinburgh", "Paris", "Kyoto"],
+                "summary": "Open creative canvas ready to explore diverse genres and character-driven narratives."
+            }
+
+        affinities = self.discover_cultural_affinities(clean_books, clean_movies, [], target_count=5)
+        combined_text = " ".join(clean_books + clean_movies).lower()
+
+        # Determine author aesthetic archetype based on tastes
+        if any(w in combined_text for w in ["blade runner", "cyber", "future", "dune", "sci-fi", "matrix", "solaris", "1984"]):
+            archetype = "Visionary Speculative Architect"
+            genres = ["Sci-Fi & Speculative", "Cyberpunk / Tech Noir", "Dystopian Mystery"]
+            tones = ["Brooding & Atmospheric", "Philosophical", "Tense"]
+            settings = ["Neo-Tokyo", "London 2045", "Isolated Research Station"]
+            summary = "Drawn to high-stakes existential questions, technological frontiers, and atmospheric neo-noir worldbuilding."
+        elif any(w in combined_text for w in ["shadow of the wind", "gothic", "frankenstein", "dracula", "poe", "secret history", "dark academia"]):
+            archetype = "Gothic & Dark Academia Chronicler"
+            genres = ["Gothic Mystery", "Literary Drama", "Historical Thriller"]
+            tones = ["Eerie & Haunting", "Introspective", "Melancholic"]
+            settings = ["Edinburgh Old Town", "Oxford College Quads", "Victorian Prague"]
+            summary = "Fascinated by forgotten archives, intellectual obsessions, hidden guilt, and atmospheric historical settings."
+        elif any(w in combined_text for w in ["chinatown", "detective", "sherlock", "noir", "crime", "investigation", "godfather", "tinker tailor"]):
+            archetype = "Master of Intrigue & Moral Ambiguity"
+            genres = ["Mystery & Crime", "Political Espionage", "Noir Thriller"]
+            tones = ["Tense & Calculated", "Cynical yet Searching", "Suspenseful"]
+            settings = ["Cold War Berlin", "1940s Los Angeles", "Misty Maritime Wharfs"]
+            summary = "Excels at intricate chess-game plots, buried systemic corruption, and morally complex protagonists."
+        elif any(w in combined_text for w in ["mood for love", "gatsby", "romance", "pride", "normal people", "call me by your name", "interstellar"]):
+            archetype = "Lyrical Humanist & Emotional Realist"
+            genres = ["Literary Romance", "Character Drama", "Contemporary Odyssey"]
+            tones = ["Poignant & Bittersweet", "Lyrical", "Tender"]
+            settings = ["Autumn in Saint-Germain", "Coastal Mediterranean", "Rainy Lisbon"]
+            summary = "Focused on deep emotional undercurrents, the fragility of memory, and unforgettable interpersonal connections."
+        else:
+            archetype = "Literary Stylist & Atmospheric Realist"
+            genres = ["Literary Fiction", "Psychological Suspense", "Mystery & Crime"]
+            tones = ["Measured & Evocative", "Richly Textured", "Observant"]
+            settings = ["Edinburgh", "Paris", "New York Harbor"]
+            summary = "Grounded in sensory textures, strong character psychologies, and resonant narrative prose."
+
+        return {
+            "archetype": archetype,
+            "aesthetic_archetype": archetype,
+            "recommended_genres": genres,
+            "recommended_tones": tones,
+            "cultural_affinities": [a.model_dump() for a in affinities],
+            "suggested_world_settings": settings,
+            "summary": summary
+        }
+
 qloo_client = QlooClient()
 
 async def generate_scenarios_from_tastes(

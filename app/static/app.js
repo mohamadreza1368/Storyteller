@@ -341,6 +341,17 @@ async function loadLibrary() {
 // Wizard Logic
 function startNewNovel() {
     setWizardStep(1);
+    // Prefill Qloo cultural preferences if the author configured them
+    if (currentUser) {
+        const booksInput = document.getElementById("qlooInputBooks");
+        const moviesInput = document.getElementById("qlooInputMovies");
+        if (booksInput && !booksInput.value && Array.isArray(currentUser.favorite_books) && currentUser.favorite_books.length) {
+            booksInput.value = currentUser.favorite_books.join(", ");
+        }
+        if (moviesInput && !moviesInput.value && Array.isArray(currentUser.favorite_movies) && currentUser.favorite_movies.length) {
+            moviesInput.value = currentUser.favorite_movies.join(", ");
+        }
+    }
     navigateTo('wizard');
 }
 
@@ -1462,27 +1473,71 @@ async function handleLoginSubmit(event) {
     }
 }
 
-async function handleRegisterSubmit(event) {
-    event.preventDefault();
+function updateRegTasteCounters() {
+    const booksInput = document.getElementById("regFavoriteBooks");
+    const moviesInput = document.getElementById("regFavoriteMovies");
+    const bCounter = document.getElementById("regBooksCounter");
+    const mCounter = document.getElementById("regMoviesCounter");
+
+    if (booksInput && bCounter) {
+        const books = booksInput.value.split(",").map(s => s.trim()).filter(Boolean);
+        bCounter.innerText = `${Math.min(books.length, 5)}/5`;
+        bCounter.style.color = books.length > 5 ? "var(--accent-danger, #ef4444)" : "var(--text-tertiary)";
+    }
+    if (moviesInput && mCounter) {
+        const movies = moviesInput.value.split(",").map(s => s.trim()).filter(Boolean);
+        mCounter.innerText = `${Math.min(movies.length, 5)}/5`;
+        mCounter.style.color = movies.length > 5 ? "var(--accent-danger, #ef4444)" : "var(--text-tertiary)";
+    }
+}
+
+async function handleRegisterSkipTaste() {
+    const bInput = document.getElementById("regFavoriteBooks");
+    const mInput = document.getElementById("regFavoriteMovies");
+    if (bInput) bInput.value = "";
+    if (mInput) mInput.value = "";
+    updateRegTasteCounters();
+    const fakeEvent = { preventDefault: () => {} };
+    await handleRegisterSubmit(fakeEvent, true);
+}
+
+async function handleRegisterSubmit(event, isSkip = false) {
+    if (event && event.preventDefault) event.preventDefault();
     const fullName = document.getElementById("regFullName").value.trim();
     const username = document.getElementById("regUsername").value.trim();
     const email = document.getElementById("regEmail").value.trim();
     const password = document.getElementById("regPassword").value;
     const btn = document.getElementById("btnRegisterSubmit");
     const oldText = btn.innerHTML;
-    btn.innerHTML = "Creating account...";
+    btn.innerHTML = isSkip ? "Creating account..." : "Calibrating taste & creating...";
     btn.disabled = true;
 
+    let favorite_books = [];
+    let favorite_movies = [];
+    if (!isSkip) {
+        const bInput = document.getElementById("regFavoriteBooks")?.value.trim() || "";
+        const mInput = document.getElementById("regFavoriteMovies")?.value.trim() || "";
+        if (bInput) {
+            favorite_books = bInput.split(",").map(s => s.trim()).filter(Boolean).slice(0, 5);
+        }
+        if (mInput) {
+            favorite_movies = mInput.split(",").map(s => s.trim()).filter(Boolean).slice(0, 5);
+        }
+    }
+
     try {
+        const payload = {
+            username,
+            email,
+            password,
+            full_name: fullName || undefined,
+            favorite_books: favorite_books.length ? favorite_books : undefined,
+            favorite_movies: favorite_movies.length ? favorite_movies : undefined
+        };
         const res = await fetch("/api/auth/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                username,
-                email,
-                password,
-                full_name: fullName || undefined
-            })
+            body: JSON.stringify(payload)
         });
         const data = await res.json();
         if (!res.ok) {
@@ -1493,7 +1548,12 @@ async function handleRegisterSubmit(event) {
         currentUser = data.user;
         updateUserNavUI();
         closeAuthModal();
-        showToast(`Account created! Welcome, ${currentUser.full_name || currentUser.username}!`, "success");
+
+        if (currentUser.cultural_taste && currentUser.cultural_taste.archetype) {
+            showToast(`Welcome ${currentUser.full_name || currentUser.username}! Calibrated as: ${currentUser.cultural_taste.archetype}`, "success");
+        } else {
+            showToast(`Account created! Welcome, ${currentUser.full_name || currentUser.username}!`, "success");
+        }
         await loadLibrary();
     } catch (e) {
         showToast(e.message, "error");
@@ -1556,6 +1616,45 @@ async function openProfileModal() {
     }
     document.getElementById("profileStoriesCount").innerText = currentUser.novels_count || 0;
 
+    // Display Qloo Aesthetic Archetype if present
+    const tasteCard = document.getElementById("profileTasteCard");
+    const tasteBadge = document.getElementById("profileTasteBadge");
+    const tasteDesc = document.getElementById("profileTasteDesc");
+    const tasteAffinities = document.getElementById("profileTasteAffinities");
+
+    const taste = currentUser.cultural_taste || {};
+    if (taste && (taste.archetype || (currentUser.favorite_books && currentUser.favorite_books.length) || (currentUser.favorite_movies && currentUser.favorite_movies.length))) {
+        if (tasteCard) tasteCard.style.display = "block";
+        if (tasteBadge) tasteBadge.innerText = taste.archetype || "Cultural Storyteller";
+        if (tasteDesc) tasteDesc.innerText = taste.narrative_profile || taste.description || "Aesthetic taste profile analyzed by Qloo AI.";
+        
+        if (tasteAffinities) {
+            let html = "";
+            if (Array.isArray(taste.dominant_tones)) {
+                taste.dominant_tones.forEach(t => {
+                    html += `<span class="badge" style="font-size: 0.72rem; background: var(--bg-surface-elevated); color: var(--text-primary); border: 1px solid var(--border-subtle);">Tone: ${escapeHtml(t)}</span>`;
+                });
+            }
+            if (Array.isArray(taste.recommended_genres)) {
+                taste.recommended_genres.forEach(g => {
+                    html += `<span class="badge" style="font-size: 0.72rem; background: rgba(99, 102, 241, 0.12); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">Genre: ${escapeHtml(g)}</span>`;
+                });
+            }
+            tasteAffinities.innerHTML = html;
+        }
+    } else {
+        if (tasteCard) tasteCard.style.display = "none";
+    }
+
+    const editBooks = document.getElementById("profileEditBooks");
+    if (editBooks) {
+        editBooks.value = Array.isArray(currentUser.favorite_books) ? currentUser.favorite_books.join(", ") : "";
+    }
+    const editMovies = document.getElementById("profileEditMovies");
+    if (editMovies) {
+        editMovies.value = Array.isArray(currentUser.favorite_movies) ? currentUser.favorite_movies.join(", ") : "";
+    }
+
     document.getElementById("profileEditFullName").value = currentUser.full_name || "";
     document.getElementById("profileEditBio").value = currentUser.bio || "";
     document.getElementById("profileCurrentPwd").value = "";
@@ -1583,6 +1682,12 @@ async function handleProfileUpdateSubmit(event) {
             full_name: fullName,
             bio: bio
         };
+
+        const booksStr = document.getElementById("profileEditBooks")?.value.trim() || "";
+        const moviesStr = document.getElementById("profileEditMovies")?.value.trim() || "";
+        payload.favorite_books = booksStr ? booksStr.split(",").map(s => s.trim()).filter(Boolean).slice(0, 5) : [];
+        payload.favorite_movies = moviesStr ? moviesStr.split(",").map(s => s.trim()).filter(Boolean).slice(0, 5) : [];
+
         if (newPwd) {
             if (!currentPwd) {
                 throw new Error("Current password is required to set a new password");
@@ -1602,7 +1707,7 @@ async function handleProfileUpdateSubmit(event) {
         currentUser = data;
         updateUserNavUI();
         closeProfileModal();
-        showToast("Profile updated successfully", "success");
+        showToast("Profile and cultural taste updated successfully", "success");
     } catch (e) {
         showToast(e.message, "error");
     } finally {

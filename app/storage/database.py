@@ -48,7 +48,10 @@ class Database:
                     avatar_url TEXT,
                     bio TEXT DEFAULT '',
                     created_at TEXT NOT NULL,
-                    last_login TEXT
+                    last_login TEXT,
+                    favorite_books_json TEXT DEFAULT '[]',
+                    favorite_movies_json TEXT DEFAULT '[]',
+                    cultural_taste_json TEXT DEFAULT '{}'
                 );
                 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
                 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -146,5 +149,16 @@ class Database:
                     value_json TEXT NOT NULL
                 );
             """)
+
+            # Automatic column migration for existing user databases
+            for col_name, col_type, default_val in [
+                ("favorite_books_json", "TEXT", "'[]'"),
+                ("favorite_movies_json", "TEXT", "'[]'"),
+                ("cultural_taste_json", "TEXT", "'{}'")
+            ]:
+                try:
+                    conn.execute(f"ALTER TABLE users ADD COLUMN {col_name} {col_type} DEFAULT {default_val};")
+                except sqlite3.OperationalError:
+                    pass
 
 db = Database()
