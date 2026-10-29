@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Response, Depends
 from pydantic import BaseModel
-from app.api.deps import get_current_user_optional
+from app.api.deps import get_current_user_optional, get_current_user
 from app.storage.users import User
 
 from app.models.blueprint import (
@@ -264,20 +264,36 @@ async def get_novel_memory(novel_id: str):
     return mem
 
 @router.delete("/{novel_id}")
-async def delete_novel(novel_id: str):
-    """Delete a novel permanently."""
+async def delete_novel(novel_id: str, current_user: User = Depends(get_current_user)):
+    """Delete a novel permanently (author or admin only)."""
+    bp = store.get_blueprint(novel_id)
+    if not bp:
+        raise HTTPException(status_code=404, detail="Novel not found")
+
+    owner_id = getattr(bp, "owner_id", None) or getattr(bp, "user_id", None)
+    if owner_id and owner_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="You do not have permission to delete this novel.")
+
     success = store.delete_novel(novel_id)
     if not success:
         raise HTTPException(status_code=404, detail="Novel not found")
     return {"message": "Novel deleted successfully"}
 
 @router.patch("/{novel_id}/rename", response_model=StoryBlueprint)
-async def rename_novel(novel_id: str, req: RenameRequest):
-    """Rename a novel."""
-    bp = store.rename_novel(novel_id, req.title)
+async def rename_novel(novel_id: str, req: RenameRequest, current_user: User = Depends(get_current_user)):
+    """Rename a novel (author or admin only)."""
+    bp = store.get_blueprint(novel_id)
     if not bp:
         raise HTTPException(status_code=404, detail="Novel not found")
-    return bp
+
+    owner_id = getattr(bp, "owner_id", None) or getattr(bp, "user_id", None)
+    if owner_id and owner_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="You do not have permission to rename this novel.")
+
+    updated = store.rename_novel(novel_id, req.title)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Novel not found")
+    return updated
 
 @router.get("/{novel_id}/progress", response_model=GenerationProgress)
 async def get_progress(novel_id: str):

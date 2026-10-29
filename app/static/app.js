@@ -1142,7 +1142,11 @@ async function triggerWriteNext() {
 async function confirmDeleteNovel() {
     if (!confirm("Are you sure you want to permanently delete this novel and all chapters?")) return;
     try {
-        await fetch(`/api/novels/${currentNovelId}`, { method: "DELETE" });
+        const res = await fetchWithAuth(`/api/novels/${currentNovelId}`, { method: "DELETE" });
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.detail || "Failed to delete novel");
+        }
         showToast("Novel removed from Author's Desk", "info");
         navigateTo('library');
     } catch (e) {
@@ -1431,13 +1435,6 @@ function switchAuthTab(tab) {
     }
 }
 
-function fillDemoAdminLogin() {
-    const idInput = document.getElementById("loginIdentifier");
-    const pwdInput = document.getElementById("loginPassword");
-    if (idInput) idInput.value = "admin@storyteller.ai";
-    if (pwdInput) pwdInput.value = "admin123";
-    switchAuthTab("login");
-}
 
 async function handleLoginSubmit(event) {
     event.preventDefault();

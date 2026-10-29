@@ -9,9 +9,9 @@ from app.engine.llm_client import llm
 from app.engine.prompts import WORLD_CAST_SYSTEM_PROMPT
 from app.engine.writing_craft import (
     CHARACTER_HUMAN_DIALOGUE_DIRECTIVES,
-    AVOID_AI_VOCABULARY_DIRECTIVES
+    AVOID_AI_VOCABULARY_DIRECTIVES,
+    get_character_persona_texture
 )
-from app.engine.qloo_client import qloo_client
 
 def build_character_system_prompt(char: Character, world: WorldSettings) -> str:
     """Builds a comprehensive, isolated LLM System Prompt for an autonomous character agent."""
@@ -19,15 +19,15 @@ def build_character_system_prompt(char: Character, world: WorldSettings) -> str:
     values_text = ", ".join(char.core.values) if char.core.values else "Truth and self-preservation"
     mannerisms = ", ".join(char.core.quirks + char.core.habits) if (char.core.quirks or char.core.habits) else "Cautious and observant"
 
-    # Qloo Cultural Taste & Lifestyle Enrichment
-    cultural_taste = qloo_client.enrich_character_cultural_dossier(
+    # Character Persona & Aesthetic Texture
+    persona_texture = get_character_persona_texture(
         char.core.role or "Main",
         char.core.temperament or "Complex",
         world.era
     )
-    reading_pref = ", ".join(cultural_taste.get("reading_tastes", []))
-    music_pref = cultural_taste.get("musical_temperament", "Quiet ambient contemplation")
-    hallmarks = cultural_taste.get("aesthetic_hallmarks", "Distinctive period garments")
+    reading_pref = ", ".join(persona_texture.get("reading_tastes", []))
+    music_pref = persona_texture.get("musical_temperament", "Quiet ambient contemplation")
+    hallmarks = persona_texture.get("aesthetic_hallmarks", "Distinctive period garments")
     
     return f"""You are {char.core.name}, an autonomous agent roleplaying in a literary fiction narrative.
 Setting: {world.city}, {world.country} ({world.era})
@@ -39,7 +39,7 @@ CHARACTER DOSSIER & PSYCHOLOGY:
 - Core Values: {values_text}
 - Mannerisms & Habits: {mannerisms}
 
-CULTURAL TASTE & AESTHETIC PALETTE (Qloo Cultural Intelligence):
+CULTURAL TASTE & AESTHETIC PALETTE (Persona Architecture):
 - Intellectual & Reading Tastes: {reading_pref}
 - Musical & Atmospheric Cadence: {music_pref}
 - Personal Aesthetic & Artifacts: {hallmarks}

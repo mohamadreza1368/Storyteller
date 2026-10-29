@@ -122,12 +122,19 @@ class UserManager:
                 pass
 
     def _ensure_initial_admin(self):
-        """Creates the default admin account if no admin accounts exist."""
+        """Creates the initial admin account if no admin accounts exist."""
         with db.get_connection() as conn:
             cursor = conn.execute("SELECT COUNT(*) FROM users WHERE role = 'admin'")
             admin_count = cursor.fetchone()[0]
             if admin_count == 0:
-                pwd_hash, salt = self._hash_password("admin123")
+                initial_pwd = os.environ.get("STORYTELLER_ADMIN_PASSWORD") or os.environ.get("ADMIN_INITIAL_PASSWORD")
+                if not initial_pwd:
+                    initial_pwd = secrets.token_urlsafe(12)
+                    logger.info(f"Initialized platform administrator. Initial admin password: {initial_pwd}")
+                else:
+                    logger.info("Initialized platform administrator using configured environment password.")
+
+                pwd_hash, salt = self._hash_password(initial_pwd)
                 admin_id = "usr_admin001"
                 now = datetime.now(timezone.utc).isoformat()
                 conn.execute("""

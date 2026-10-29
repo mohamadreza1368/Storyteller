@@ -15,16 +15,16 @@ Unlike simple chatbots that produce unstructured chapters in a single prompt, St
 
 ## 🌟 Key Architecture & Capabilities
 
-### 1. Story Muse & Cultural Taste Intelligence
-- **Taste Graph Insights**: Uncovers connected cultural affinities across books, films, and locations based on the author's artistic influences.
-- **Interactive 3-Scenario Generator**: Automatically generates 3 distinct, compelling book premises (complete with high-concept loglines, dramatic hooks, core conflict, and protagonist archetypes) and allows 1-click loading into the 4-step creation wizard.
-- **Deep Character Cultural Dossiers**: Enriches character profiles with cultural affinities (formative literature, cinema, aesthetic temperament) that directly inform the autonomous character's internal monologues, dialogue choices, and body language during scene simulation.
-- **Author Aesthetic Archetype**: Calibrates each author's creative studio with an aesthetic archetype (e.g., *Visionary Speculative Architect*, *Gothic & Dark Academia Chronicler*, *Master of Intrigue & Moral Ambiguity*, *Lyrical Humanist*, or *Literary Stylist*).
+### 1. Story Muse & Cultural Taste Intelligence (Powered by Qloo Basic Insights)
+- **Qloo Taste Graph Queries**: Directly queries Qloo's `/search` and `/v2/insights` endpoints (using the documented `take` parameter and deep entity extraction) to discover real cross-domain cultural recommendations across books, films, and places based on user-provided cultural signals.
+- **Interactive 3-Scenario Generator**: Translates Qloo cultural affinities into 3 distinct, compelling novel premises (complete with high-concept loglines, dramatic hooks, core conflict, and protagonist archetypes) with instant 1-click loading into the creation wizard.
+- **Dynamic Contextual Synthesis**: When offline or unconfigured, dynamically synthesizes tailored creative affinities matching the specific input genres rather than relying on static lists.
+- **Author Aesthetic Archetype**: Synthesizes the author's narrative profile and aesthetic archetype (e.g., *Visionary Speculative Architect*, *Gothic & Dark Academia Chronicler*, *Master of Intrigue & Moral Ambiguity*, *Lyrical Humanist*, or *Literary Stylist*).
 
 ### 2. The 6-Stage Autonomous Multi-Agent Pipeline
 1. **Stage 1: World & Cast Architect**
    - Synthesizes indelible world locations, atmospheric rules, and deep psychological character dossiers.
-   - Distinctly isolates external **Want**, internal **Need**, tragic **Flaw**, hidden **Secret**, and Jungian / classical archetypes (`Temperament`).
+   - Character Persona Architecture models external **Want**, internal **Need**, tragic **Flaw**, hidden **Secret**, intellectual reading interests, and aesthetic temperament.
 2. **Stage 2: Story Matrix Weaver**
    - Constructs a 2D matrix of `Character × Episode`, tracking main arcs, subplots, and escalation beats across every chapter.
 3. **Stage 3: Scene Director**

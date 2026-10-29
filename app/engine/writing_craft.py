@@ -1,9 +1,9 @@
 """
 Writing Craft & Humanizer Enforcement Engine.
 Synthesizes instructions and automated quality gates from:
-1. kshanxs/book-writer-skill (Master Author Craft, Pacing, Sensory Interiority)
-2. blader/humanizer (Elimination of AI Staging, Forced Triads, Fake-Deep Aphorisms)
-3. conorbronsdon/avoid-ai-writing (Banned AI Clichés, Rhythm Diversity, Authentic Voice)
+1. Master Author Craft, Narrative Pacing, and Sensory Interiority Standards
+2. Elimination of AI Staging, Forced Triads, and Fake-Deep Aphorisms
+3. Banned AI Clichés, Sentence Rhythm Diversity, and Authentic Character Voice
 """
 
 import re
@@ -305,3 +305,37 @@ def audit_and_clean_prose(text: str) -> Tuple[str, List[str]]:
             flagged.append(pf)
 
     return cleaned.strip(), flagged
+
+def get_character_persona_texture(role: str, archetype: str, era: str) -> Dict[str, Any]:
+    """
+    Synthesizes psychological habits, reading interests, musical cadence, and aesthetic artifacts
+    for an autonomous character actor based on their narrative role, temperament, and story era.
+    Part of Storyteller's Character Persona Architecture.
+    """
+    role_lower = (role or "").lower()
+    arch_lower = (archetype or "").lower()
+
+    if any(k in role_lower or k in arch_lower for k in ["scholar", "intellectual", "academic", "philosopher", "professor", "curator"]):
+        return {
+            "reading_tastes": ["Classical political philosophy", "Rare archival periodicals", "Gothic antiquities"],
+            "musical_temperament": "Baroque cello suites, melancholic solo piano",
+            "aesthetic_hallmarks": "Iron gall ink stains, tweed lapels, vintage brass pocket watch"
+        }
+    elif any(k in role_lower or k in arch_lower for k in ["detective", "investigator", "inspector", "lawyer", "judge", "officer"]):
+        return {
+            "reading_tastes": ["Forensic case law", "Local municipal maps", "Hardboiled crime fiction"],
+            "musical_temperament": "Cool midnight jazz, muted trumpet, slow rain ambiance",
+            "aesthetic_hallmarks": "Heavy woolen trench coat, dog-eared field notebook, cold black coffee"
+        }
+    elif any(k in role_lower or k in arch_lower for k in ["operative", "rebel", "infiltrator", "soldier", "spy", "dissident"]):
+        return {
+            "reading_tastes": ["Cryptographic treatises", "Underground pamphlets", "Urban architecture blueprints"],
+            "musical_temperament": "Industrial synth-wave, low-frequency atmospheric drones",
+            "aesthetic_hallmarks": "Tactical matte-black hardware, unbranded waterproof garments, silent footsteps"
+        }
+    else:
+        return {
+            "reading_tastes": ["Modern literary memoirs", "Psychological drama", "Historical diaries"],
+            "musical_temperament": "Acoustic folk, ambient chamber orchestrations",
+            "aesthetic_hallmarks": "Handmade leather journals, tailored linen coats, quiet observational pauses"
+        }

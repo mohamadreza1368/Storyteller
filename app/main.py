@@ -12,7 +12,7 @@ from app.api.admin import router as admin_router
 
 app = FastAPI(
     title=settings.app_name,
-    description="Autonomous Multi-Agent Novel Writing Studio reverse-engineered from BookWriter architecture",
+    description="Autonomous Multi-Agent Novel Writing & Cultural Narrative Intelligence Studio",
     version="1.0.0"
 )
 

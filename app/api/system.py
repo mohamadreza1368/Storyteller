@@ -1,10 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
 from app.config import settings
 from app.engine.llm_client import llm
 from app.engine.qloo_client import qloo_client
 from app.storage.store import store
+from app.storage.users import User
+from app.api.deps import get_current_admin
 
 router = APIRouter(prefix="/api/system", tags=["System"])
 
@@ -57,7 +59,7 @@ async def get_system_info():
     }
 
 @router.post("/config")
-async def update_system_config(req: SystemConfigRequest):
+async def update_system_config(req: SystemConfigRequest, admin: User = Depends(get_current_admin)):
     llm.update_config(
         provider=req.provider,
         api_key=req.api_key,
@@ -82,7 +84,7 @@ async def update_system_config(req: SystemConfigRequest):
     return await get_system_info()
 
 @router.post("/test-connection")
-async def test_api_connection(req: TestConnectionRequest):
+async def test_api_connection(req: TestConnectionRequest, admin: User = Depends(get_current_admin)):
     """Live test of LLM connectivity with latency and response."""
     result = await llm.test_connection(
         provider=req.provider,
@@ -93,7 +95,7 @@ async def test_api_connection(req: TestConnectionRequest):
     return result
 
 @router.post("/test-qloo-connection")
-async def test_qloo_connection(req: TestQlooRequest):
+async def test_qloo_connection(req: TestQlooRequest, admin: User = Depends(get_current_admin)):
     """Live test of Qloo Taste API credentials and connectivity."""
     saved = store.get_system_settings() or {}
     key = req.api_key if req.api_key is not None else saved.get("qloo_api_key") or settings.qloo_api_key
