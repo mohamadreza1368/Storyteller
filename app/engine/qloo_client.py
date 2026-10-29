@@ -57,10 +57,12 @@ class QlooClient:
         return bool(self.enabled and self.api_key)
 
     def _headers(self, key_override: Optional[str] = None) -> Dict[str, str]:
-        key = key_override if key_override is not None else self.api_key
+        key = (key_override if key_override is not None else self.api_key).strip()
         return {
             "X-Api-Key": key,
-            "Accept": "application/json"
+            "Accept": "application/json",
+            "User-Agent": "StorytellerAI/1.0",
+            "Connection": "close"
         }
 
     def _extract_entities_from_response(self, data: Any) -> List[Dict[str, Any]]:
@@ -99,7 +101,7 @@ class QlooClient:
 
         return []
 
-    def search_entities(self, query: str, entity_type: Optional[str] = None, timeout: int = 3) -> List[Dict[str, Any]]:
+    def search_entities(self, query: str, entity_type: Optional[str] = None, timeout: int = 5) -> List[Dict[str, Any]]:
         """
         Searches Qloo entity catalog for books, movies, or locations.
         Unpacks nested Qloo results properly with fast network failover.
@@ -136,7 +138,7 @@ class QlooClient:
         signal_entities: Optional[List[str]] = None,
         signal_tags: Optional[List[str]] = None,
         take: int = 5,
-        timeout: int = 3
+        timeout: int = 6
     ) -> List[Dict[str, Any]]:
         """
         Queries Qloo Basic Insights endpoint (/v2/insights) according to the official documentation.
@@ -151,7 +153,7 @@ class QlooClient:
         if time.time() - self._last_network_error_time < 30.0:
             return []
 
-        endpoints = [f"{self.base_url}/v2/insights", f"{self.base_url}/insights"]
+        url = f"{self.base_url}/v2/insights"
         params: Dict[str, Any] = {
             "filter.type": filter_type,
             "take": take
@@ -161,24 +163,18 @@ class QlooClient:
         if signal_tags:
             params["signal.interests.tags"] = ",".join(signal_tags)
 
-        for url in endpoints:
-            try:
-                resp = requests.get(url, headers=self._headers(), params=params, timeout=timeout)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    items = self._extract_entities_from_response(data)
-                    if items:
-                        return items
-                elif resp.status_code == 404:
-                    continue
-                else:
-                    logger.warning(f"Qloo {url} returned HTTP {resp.status_code}: {resp.text[:200]}")
-            except Exception as e:
-                self._last_network_error_time = time.time()
-                logger.warning(f"Qloo {url} network exception (circuit breaker active for 30s): {e}")
-                break
-
-        return []
+        try:
+            resp = requests.get(url, headers=self._headers(), params=params, timeout=timeout)
+            if resp.status_code == 200:
+                data = resp.json()
+                return self._extract_entities_from_response(data)
+            else:
+                logger.warning(f"Qloo /v2/insights returned HTTP {resp.status_code}: {resp.text[:200]}")
+                return []
+        except Exception as e:
+            self._last_network_error_time = time.time()
+            logger.warning(f"Qloo /v2/insights network exception (circuit breaker active for 30s): {e}")
+            return []
 
     def test_connection(self, api_key: Optional[str] = None, base_url: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -196,7 +192,12 @@ class QlooClient:
             }
 
         start = time.time()
-        headers = {"X-Api-Key": test_key, "Accept": "application/json"}
+        headers = {
+            "X-Api-Key": test_key,
+            "Accept": "application/json",
+            "User-Agent": "StorytellerAI/1.0",
+            "Connection": "close"
+        }
 
         # Step 1: Test entity search endpoint
         search_url = f"{test_url}/search"
@@ -281,54 +282,69 @@ class QlooClient:
             movie_entity_ids: List[str] = []
             location_entity_ids: List[str] = []
 
-            # 1. Search for book entity IDs
+            # 1. Search for book entity IDs (collect top candidates to ensure valid graph nodes)
             for b in clean_books[:2]:
                 res = self.search_entities(b, "urn:entity:book")
-                if res and len(res) > 0:
-                    eid = res[0].get("id") or res[0].get("entity_id") or res[0].get("urn")
-                    if eid:
+                for hit in res[:3]:
+                    eid = hit.get("id") or hit.get("entity_id") or hit.get("urn")
+                    if eid and str(eid) not in book_entity_ids:
                         book_entity_ids.append(str(eid))
 
-            # 2. Search for movie entity IDs
+            # 2. Search for movie entity IDs (collect top candidates to ensure valid graph nodes)
             for m in clean_movies[:2]:
                 res = self.search_entities(m, "urn:entity:movie")
-                if res and len(res) > 0:
-                    eid = res[0].get("id") or res[0].get("entity_id") or res[0].get("urn")
-                    if eid:
+                for hit in res[:3]:
+                    eid = hit.get("id") or hit.get("entity_id") or hit.get("urn")
+                    if eid and str(eid) not in movie_entity_ids:
                         movie_entity_ids.append(str(eid))
 
             # 3. Search for location entity IDs ONLY if location was provided
             for loc in clean_locations[:2]:
                 res = self.search_entities(loc, "urn:entity:place")
-                if res and len(res) > 0:
-                    eid = res[0].get("id") or res[0].get("entity_id") or res[0].get("urn")
-                    if eid:
+                for hit in res[:3]:
+                    eid = hit.get("id") or hit.get("entity_id") or hit.get("urn")
+                    if eid and str(eid) not in location_entity_ids:
                         location_entity_ids.append(str(eid))
 
             all_media_signals = (book_entity_ids + movie_entity_ids)[:4]
 
-            # 4. Query book insights
-            if all_media_signals:
-                book_recs = self.get_insights("urn:entity:book", signal_entities=all_media_signals, take=3)
+            # 4. Query book insights (prefer book entity IDs, then all media signals)
+            book_signals = book_entity_ids if book_entity_ids else all_media_signals
+            if book_signals:
+                book_recs = self.get_insights("urn:entity:book", signal_entities=book_signals, take=3)
                 for item in book_recs:
                     name = item.get("name") or item.get("title")
                     if name and not any(name.lower() == b.lower() for b in clean_books):
-                        desc = item.get("description") or item.get("summary") or "Resonant narrative themes, prose style, and character tension"
+                        props = item.get("properties") or {}
+                        desc = props.get("short_description") or props.get("description") or item.get("description") or item.get("summary")
+                        tags = [t.get("name") for t in item.get("tags", []) if t.get("name")][:3]
+                        if tags:
+                            tag_str = f" [Themes: {', '.join(tags)}]"
+                            desc = f"{desc}{tag_str}" if desc else f"Resonant aesthetic: {', '.join(tags)}"
+                        desc = desc or "Resonant narrative themes, prose style, and character tension"
                         discovered.append(CulturalAffinityItem(
                             title=name,
                             category="book",
                             affinity_reason=desc,
                             icon="book"
                         ))
-                    if len(discovered) >= 3:
+                    if len(discovered) >= 2:
                         break
 
-                # 5. Query movie insights
-                movie_recs = self.get_insights("urn:entity:movie", signal_entities=all_media_signals, take=3)
+            # 5. Query movie insights (prefer movie entity IDs, then all media signals)
+            movie_signals = movie_entity_ids if movie_entity_ids else all_media_signals
+            if movie_signals:
+                movie_recs = self.get_insights("urn:entity:movie", signal_entities=movie_signals, take=3)
                 for item in movie_recs:
                     name = item.get("name") or item.get("title")
                     if name and not any(name.lower() == m.lower() for m in clean_movies):
-                        desc = item.get("description") or item.get("summary") or "Shared atmospheric visual palette, pacing, and emotional depth"
+                        props = item.get("properties") or {}
+                        desc = props.get("short_description") or props.get("description") or item.get("description") or item.get("summary")
+                        tags = [t.get("name") for t in item.get("tags", []) if t.get("name")][:3]
+                        if tags:
+                            tag_str = f" [Themes: {', '.join(tags)}]"
+                            desc = f"{desc}{tag_str}" if desc else f"Shared cinematic tone: {', '.join(tags)}"
+                        desc = desc or "Shared atmospheric visual palette, pacing, and emotional depth"
                         discovered.append(CulturalAffinityItem(
                             title=name,
                             category="movie",
@@ -344,7 +360,8 @@ class QlooClient:
                 for item in place_recs:
                     name = item.get("name") or item.get("title")
                     if name and not any(name.lower() == l.lower() for l in clean_locations):
-                        desc = item.get("description") or item.get("summary") or "Architectural atmosphere and sensory milieu matching setting"
+                        props = item.get("properties") or {}
+                        desc = props.get("short_description") or props.get("description") or item.get("description") or item.get("summary") or "Architectural atmosphere and sensory milieu matching setting"
                         discovered.append(CulturalAffinityItem(
                             title=name,
                             category="place",
@@ -400,12 +417,17 @@ class QlooClient:
                     )
                     user_msg = f"User Favorites:\nBooks: {', '.join(books) or 'None'}\nMovies: {', '.join(movies) or 'None'}\nLocations: {', '.join(locations) or 'None'}"
                     
-                    resp_text = asyncio.run(llm.generate(
-                        prompt=user_msg,
-                        system_prompt=system_prompt,
-                        temperature=0.7,
-                        max_tokens=500
-                    ))
+                    async def _quick_generate():
+                        return await asyncio.wait_for(
+                            llm.generate(
+                                prompt=user_msg,
+                                system_prompt=system_prompt,
+                                temperature=0.7,
+                                max_tokens=500
+                            ),
+                            timeout=3.0
+                        )
+                    resp_text = asyncio.run(_quick_generate())
                     parsed = clean_and_parse_json(resp_text)
                     if isinstance(parsed, list) and len(parsed) > 0:
                         items = []
