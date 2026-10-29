@@ -513,8 +513,18 @@ async function submitCreateNovel() {
         prose_style: prose_style,
         theme: theme,
         tone: tone,
-        country: "United Kingdom",
-        city: city || "London",
+        country: (function() {
+            if (city && city.includes(",")) {
+                return city.split(",")[1].trim() || "United Kingdom";
+            }
+            return "United Kingdom";
+        })(),
+        city: (function() {
+            if (city && city.includes(",")) {
+                return city.split(",")[0].trim() || "London";
+            }
+            return city || "London";
+        })(),
         era: era || "Contemporary",
         world_rules: rules,
         locations: locations,
@@ -2351,14 +2361,14 @@ function applyQlooScenarioIndex(index) {
     const elTone = document.getElementById("wizTone");
     const elStyle = document.getElementById("wizProseStyle");
     const elCity = document.getElementById("wizCity");
-    const elCountry = document.getElementById("wizCountry");
     const elEra = document.getElementById("wizEra");
+    const elRules = document.getElementById("wizRules");
 
     if (elTitle) elTitle.value = sc.title;
     if (elPremise) elPremise.value = sc.premise;
-    if (elCity) elCity.value = sc.city;
-    if (elCountry) elCountry.value = sc.country;
+    if (elCity) elCity.value = sc.country ? `${sc.city}, ${sc.country}` : sc.city;
     if (elEra) elEra.value = sc.era;
+    if (elRules) elRules.value = `No secret buried in ${sc.city} survives beyond a single generation without leaving a visible trace.`;
 
     // Match genre
     if (elGenre) {
@@ -2389,18 +2399,48 @@ function applyQlooScenarioIndex(index) {
         }
     }
 
-    // Populate Character if on Step 3 or protagonist inputs exist
-    const pName = document.getElementById("wizChar1Name");
-    const pRole = document.getElementById("wizChar1Role");
-    if (pName && sc.protagonist_name) pName.value = sc.protagonist_name;
-    if (pRole && sc.protagonist_role) pRole.value = sc.protagonist_role;
+    // Populate Key Locations (Step 2)
+    const locContainer = document.getElementById("wizLocationsList");
+    if (locContainer) {
+        locContainer.innerHTML = "";
+        addLocationRow(
+            `${sc.city} Historical Quarter`,
+            `Cobblestones, period architecture, and atmospheric rain-slicked avenues of ${sc.era}.`
+        );
+        addLocationRow(
+            `The Vaulted Sanctuary`,
+            `A sequestered meeting space where buried archives and clandestine pacts converge.`
+        );
+    }
+
+    // Populate Characters List (Step 3)
+    const charContainer = document.getElementById("wizCharactersList");
+    if (charContainer) {
+        charContainer.innerHTML = "";
+        // 1. Protagonist
+        addCharacterCard(
+            sc.protagonist_name || "Julian Vance",
+            "Main",
+            "Male",
+            sc.protagonist_role || "Investigator",
+            sc.protagonist_archetype || "Reluctant Seeker"
+        );
+        // 2. Confidant / Ally
+        addCharacterCard(
+            "Elena Vane",
+            "Main",
+            "Female",
+            "Archival Specialist & Ally",
+            "Sharp & Guarded Realist"
+        );
+    }
 
     // Move to step 1 so user can review and proceed
     setWizardStep(1);
     const nav1 = document.getElementById("tabNav1");
     if (nav1) nav1.scrollIntoView({ behavior: "smooth", block: "center" });
 
-    showToast(`Scenario loaded: "${sc.title}"! Review Step 1 and launch your novel.`, "success");
+    showToast(`Scenario loaded: "${sc.title}"! All 4 steps pre-filled and ready to launch.`, "success");
 }
 
 
