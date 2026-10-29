@@ -101,3 +101,13 @@ async def test_qloo_connection(req: TestQlooRequest, admin: User = Depends(get_c
     key = req.api_key if req.api_key is not None else saved.get("qloo_api_key") or settings.qloo_api_key
     url = req.base_url if req.base_url is not None else saved.get("qloo_base_url") or settings.qloo_base_url
     return qloo_client.test_connection(api_key=key, base_url=url)
+
+@router.get("/skills")
+async def get_system_skills():
+    """Returns the list of active modular agent skills registered in the skills/ directory."""
+    from app.engine.writing_craft import list_registered_skills
+    return {
+        "status": "ok",
+        "skills": list_registered_skills()
+    }
+

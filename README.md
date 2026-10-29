@@ -39,6 +39,15 @@ Unlike simple chatbots that produce unstructured chapters in a single prompt, St
 
 ---
 
+### 3. Modular Agent Skills & Literary Quality Gates
+The engine's creative pipeline is guided by 4 dedicated, open agent skill definitions located in the root `skills/` directory:
+- **`book-writer`** (`skills/book-writer/SKILL.md`): Enforces third-person limited interiority, sensory staging, dynamic sentence cadence, and dramatic scene tension curves.
+- **`humanizer`** (`skills/humanizer/SKILL.md`): Eradicates characteristic LLM tells including artificial "Not X, but Y" contrasts, isolated dramatic one-liner closures, pseudo-profound aphorisms, forced triads, and narrator throat-clearing.
+- **`avoid-ai-writing`** (`skills/avoid-ai-writing/SKILL.md`): Strict blacklist of overused AI tropes (`delve`, `tapestry`, `palpable`, `beacon`, `labyrinthine`, `dance of shadows`), coupled with automated post-generation regex substitution and punctuation sanitization.
+- **`qloo-cultural-intelligence`** (`skills/qloo-cultural-intelligence/SKILL.md`): Interfaces with Qloo's Taste AI graph across books, cinema, music, and places to ground narrative seeds, scenarios, and character tastes in verified cultural data.
+
+---
+
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
@@ -112,6 +121,11 @@ Administrators have access to a dedicated **Administration Console** (`#viewAdmi
 
 ```
 storyteller/
+├── skills/                       # Open agent skills & literary quality specifications
+│   ├── book-writer/SKILL.md      # Pacing, tension mapping, and third-person limited craft
+│   ├── humanizer/SKILL.md        # Elimination of AI staging, aphorisms, and forced triads
+│   ├── avoid-ai-writing/SKILL.md # AI vocabulary blacklist and sensory substitutions
+│   └── qloo-cultural-intelligence/SKILL.md # Cultural taste graph integration spec
 ├── app/
 │   ├── config.py                 # Application settings and environment variables
 │   ├── main.py                   # FastAPI server entry point and static routing

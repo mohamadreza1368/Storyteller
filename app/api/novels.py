@@ -185,8 +185,14 @@ async def create_novel(req: CreateNovelRequest, background_tasks: BackgroundTask
     """Creates a new novel tied to the authenticated user and initiates world/matrix building in the background."""
     novel_id = f"novel_{uuid.uuid4().hex[:8]}"
     now = datetime.now(timezone.utc).isoformat()
-    owner_id = user.id
-    owner_name = user.full_name or user.username
+    if isinstance(user, User):
+        owner_id = user.id
+        owner_name = user.full_name or user.username
+    else:
+        owner_id = "usr_admin001"
+        owner_name = "Master Author"
+
+
 
     chars = []
     if req.characters:

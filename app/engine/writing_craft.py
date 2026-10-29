@@ -339,3 +339,58 @@ def get_character_persona_texture(role: str, archetype: str, era: str) -> Dict[s
             "musical_temperament": "Acoustic folk, ambient chamber orchestrations",
             "aesthetic_hallmarks": "Handmade leather journals, tailored linen coats, quiet observational pauses"
         }
+
+
+from pathlib import Path
+
+SKILLS_ROOT_DIR = Path(__file__).resolve().parent.parent.parent / "skills"
+
+def list_registered_skills() -> List[Dict[str, Any]]:
+    """
+    Scans the repository's root `skills/` directory for modular agent skill definitions.
+    Returns metadata for each discovered skill.
+    """
+    skills = []
+    if not SKILLS_ROOT_DIR.exists():
+        return skills
+
+    for child in SKILLS_ROOT_DIR.iterdir():
+        skill_file = child / "SKILL.md"
+        if child.is_dir() and skill_file.exists():
+            desc = ""
+            name = child.name
+            try:
+                content = skill_file.read_text(encoding="utf-8")
+                # Parse frontmatter if present
+                if content.startswith("---"):
+                    parts = content.split("---", 2)
+                    if len(parts) >= 3:
+                        frontmatter = parts[1]
+                        for line in frontmatter.splitlines():
+                            if line.startswith("description:"):
+                                desc = line.split("description:", 1)[1].strip()
+                            elif line.startswith("name:"):
+                                name = line.split("name:", 1)[1].strip()
+            except Exception:
+                pass
+            skills.append({
+                "id": child.name,
+                "name": name,
+                "description": desc,
+                "path": f"skills/{child.name}/SKILL.md"
+            })
+
+    return sorted(skills, key=lambda s: s["id"])
+
+def get_skill_content(skill_id: str) -> Optional[str]:
+    """
+    Reads the full markdown content of a registered skill by ID.
+    """
+    skill_file = SKILLS_ROOT_DIR / skill_id / "SKILL.md"
+    if skill_file.exists():
+        try:
+            return skill_file.read_text(encoding="utf-8")
+        except Exception:
+            return None
+    return None
+
