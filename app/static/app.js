@@ -1626,7 +1626,7 @@ async function openProfileModal() {
     if (taste && (taste.archetype || (currentUser.favorite_books && currentUser.favorite_books.length) || (currentUser.favorite_movies && currentUser.favorite_movies.length))) {
         if (tasteCard) tasteCard.style.display = "block";
         if (tasteBadge) tasteBadge.innerText = taste.archetype || "Cultural Storyteller";
-        if (tasteDesc) tasteDesc.innerText = taste.narrative_profile || taste.description || "Aesthetic taste profile analyzed by Qloo AI.";
+        if (tasteDesc) tasteDesc.innerText = taste.narrative_profile || taste.description || "Aesthetic taste profile analyzed by Storyteller Taste Intelligence.";
         
         if (tasteAffinities) {
             let html = "";
@@ -2283,7 +2283,7 @@ async function saveAdminAiConfig() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Failed to save configuration");
         await checkSystemInfo();
-        showToast("Global AI, Image, and Qloo configurations saved successfully!", "success");
+        showToast("Global AI, Image, and Cultural Engine configurations saved successfully!", "success");
         await loadAdminAiConfig();
     } catch (e) {
         showToast("Error saving configuration: " + e.message, "error");
@@ -2449,7 +2449,7 @@ function renderQlooScenarios(scenarios) {
                         <span style="color: var(--text-secondary);">${escapeHtml(sc.protagonist_name)} (${escapeHtml(sc.protagonist_role)} — ${escapeHtml(sc.protagonist_archetype)})</span>
                     </div>
                     <div>
-                        <strong style="color: var(--text-primary);">Qloo Injected Milieu:</strong>
+                        <strong style="color: var(--text-primary);">Cultural Milieu & Setting:</strong>
                         <span style="color: var(--text-secondary);">${escapeHtml(sc.inspirations_summary || 'Cultural taste affinities')}</span>
                     </div>
                 </div>
