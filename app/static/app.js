@@ -2138,6 +2138,10 @@ function applyAdminImagePreset(preset) {
     } else if (preset === "openrouter") {
         provSelect.value = "custom";
         baseUrlInput.value = "https://openrouter.ai/api/v1";
+        modelInput.value = "qwen/qwen-image-2.1-turbo";
+    } else if (preset === "openrouter-flux") {
+        provSelect.value = "custom";
+        baseUrlInput.value = "https://openrouter.ai/api/v1";
         modelInput.value = "black-forest-labs/flux-1-schnell";
     } else if (preset === "local") {
         provSelect.value = "custom";

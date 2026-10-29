@@ -13,6 +13,42 @@ from app.engine.llm_client import llm
 
 logger = logging.getLogger("storyteller.image")
 
+def _normalize_image_base_url(url: Optional[str]) -> Optional[str]:
+    if not url:
+        return None
+    cleaned = url.strip().rstrip("/")
+    if cleaned.endswith("/images/generations"):
+        cleaned = cleaned[:-19].rstrip("/")
+    elif cleaned.endswith("/images"):
+        cleaned = cleaned[:-7].rstrip("/")
+    return cleaned or None
+
+def _build_image_kwargs(target_model: str, prompt: str, target_url: Optional[str]) -> dict:
+    url_lower = (target_url or "").lower()
+    is_openrouter = "openrouter.ai" in url_lower
+    model_lower = (target_model or "").lower()
+
+    kwargs = {
+        "model": target_model,
+        "prompt": prompt,
+        "n": 1,
+    }
+
+    if is_openrouter:
+        # OpenRouter /api/v1/images expects quality to be one of ["auto", "low", "medium", "high", "xhigh", "max"]
+        # Passing quality="standard" triggers a 400 error.
+        kwargs["quality"] = "auto"
+        kwargs["size"] = "1024x1024"
+    elif "dall-e-3" in model_lower:
+        kwargs["size"] = "1024x1024"
+        kwargs["quality"] = "standard"
+    elif "dall-e-2" in model_lower:
+        kwargs["size"] = "1024x1024"
+    else:
+        kwargs["size"] = "1024x1024"
+
+    return kwargs
+
 class ChapterImageClient:
     """Handles visual illustration generation for novel chapters with AI art direction."""
 
@@ -370,17 +406,14 @@ class ChapterImageClient:
         # Custom API or OpenAI
         start = time.time()
         target_model = mod or ("dall-e-3" if prov == "openai" else "dall-e-3")
-        target_url = url or ("https://api.openai.com/v1" if prov == "openai" else None)
+        target_url = _normalize_image_base_url(url or ("https://api.openai.com/v1" if prov == "openai" else None))
+        is_openrouter = bool(target_url and "openrouter.ai" in target_url.lower())
+        kwargs = _build_image_kwargs(target_model, "A vintage leather-bound book on a wooden desk, warm golden hour light, cinematic illustration", target_url)
+
         try:
             from openai import AsyncOpenAI
             client = AsyncOpenAI(api_key=key or "dummy", base_url=target_url, timeout=30.0)
-            response = await client.images.generate(
-                model=target_model,
-                prompt="A vintage leather-bound book on a wooden desk, warm golden hour light, cinematic illustration",
-                size="1024x1024",
-                quality="standard",
-                n=1
-            )
+            response = await client.images.generate(**kwargs)
             latency = int((time.time() - start) * 1000)
             if response.data and (getattr(response.data[0], "url", None) or getattr(response.data[0], "b64_json", None)):
                 return {
@@ -395,6 +428,42 @@ class ChapterImageClient:
                 "error": "No image data received in API response."
             }
         except Exception as e:
+            # Direct HTTP fallback for OpenRouter or custom image proxies
+            if target_url and key:
+                try:
+                    import requests
+                    endpoint = f"{target_url}/images"
+                    headers = {
+                        "Authorization": f"Bearer {key}",
+                        "Content-Type": "application/json",
+                    }
+                    body = {
+                        "model": target_model,
+                        "prompt": kwargs["prompt"]
+                    }
+                    if is_openrouter:
+                        body["quality"] = "auto"
+
+                    req_res = requests.post(endpoint, headers=headers, json=body, timeout=30)
+                    latency = int((time.time() - start) * 1000)
+                    if req_res.status_code == 200:
+                        data = req_res.json()
+                        if data.get("data") and len(data["data"]) > 0:
+                            return {
+                                "success": True,
+                                "latency_ms": latency,
+                                "message": f"Image API connected successfully via direct endpoint! Model: {target_model}.",
+                                "model": target_model
+                            }
+                    else:
+                        return {
+                            "success": False,
+                            "latency_ms": latency,
+                            "error": f"Error code: {req_res.status_code} - {req_res.text}"
+                        }
+                except Exception as ex_direct:
+                    logger.debug(f"Direct image HTTP fallback failed: {ex_direct}")
+
             latency = int((time.time() - start) * 1000)
             return {
                 "success": False,
@@ -414,40 +483,74 @@ class ChapterImageClient:
         img_base_url = cfg.get("image_base_url") or cfg.get("base_url") or ""
         img_model = cfg.get("image_model") or ""
 
-        # 1. Custom or OpenAI Dedicated API (only if specifically configured with an image model)
-        is_dedicated_image_endpoint = bool(img_provider in ("openai", "custom") and img_model and any(k in img_model.lower() for k in ("dall", "image", "flux", "diffusion", "sdxl")))
+        # 1. Custom or OpenAI Dedicated API (if provider is custom/openai with key)
+        is_dedicated_image_endpoint = bool(img_provider in ("openai", "custom") and (img_model or img_base_url))
         if is_dedicated_image_endpoint and img_key:
             target_model = img_model or "dall-e-3"
-            target_base_url = img_base_url or ("https://api.openai.com/v1" if img_provider == "openai" else None)
+            target_base_url = _normalize_image_base_url(img_base_url or ("https://api.openai.com/v1" if img_provider == "openai" else None))
+            kwargs = _build_image_kwargs(target_model, vivid_prompt[:1000], target_base_url)
+
             try:
                 from openai import AsyncOpenAI
-                client = AsyncOpenAI(api_key=img_key, base_url=target_base_url, timeout=20.0, max_retries=0)
+                client = AsyncOpenAI(api_key=img_key, base_url=target_base_url, timeout=30.0, max_retries=0)
                 logger.info(f"Generating chapter illustration with {target_model} via {target_base_url or 'default endpoint'}...")
-                response = await client.images.generate(
-                    model=target_model,
-                    prompt=vivid_prompt[:1000],
-                    size="1024x1024",
-                    quality="standard",
-                    n=1
-                )
+                response = await client.images.generate(**kwargs)
                 if response.data:
                     first = response.data[0]
-                    if getattr(first, "b64_json", None):
-                        image_bytes = base64.b64decode(first.b64_json)
+                    b64_val = getattr(first, "b64_json", None) or (first.get("b64_json") if isinstance(first, dict) else None)
+                    url_val = getattr(first, "url", None) or (first.get("url") if isinstance(first, dict) else None)
+                    if b64_val:
+                        image_bytes = base64.b64decode(b64_val)
                         return image_bytes, "image/png", vivid_prompt
-                    elif getattr(first, "url", None):
-                        img_url = first.url
+                    elif url_val:
                         loop = asyncio.get_event_loop()
 
                         def _fetch():
-                            req = urllib.request.Request(img_url, headers={"User-Agent": "Storyteller/1.0"})
+                            req = urllib.request.Request(url_val, headers={"User-Agent": "Storyteller/1.0"})
                             with urllib.request.urlopen(req, timeout=25) as resp:
                                 return resp.read()
 
                         image_bytes = await loop.run_in_executor(None, _fetch)
                         return image_bytes, "image/jpeg", vivid_prompt
             except Exception as e:
-                logger.warning(f"Image API error ({img_provider} - {target_model}): {e}. Seamlessly falling back.")
+                logger.warning(f"Image API AsyncOpenAI note ({img_provider} - {target_model}): {e}. Trying direct HTTP fallback...")
+                try:
+                    if target_base_url:
+                        import requests
+                        endpoint = f"{target_base_url}/images"
+                        headers = {
+                            "Authorization": f"Bearer {img_key}",
+                            "Content-Type": "application/json",
+                        }
+                        body = {
+                            "model": target_model,
+                            "prompt": vivid_prompt[:1000]
+                        }
+                        if "openrouter" in target_base_url.lower():
+                            body["quality"] = "auto"
+
+                        req_res = requests.post(endpoint, headers=headers, json=body, timeout=35)
+                        if req_res.status_code == 200:
+                            data = req_res.json()
+                            if data.get("data") and len(data["data"]) > 0:
+                                first_item = data["data"][0]
+                                if first_item.get("b64_json"):
+                                    image_bytes = base64.b64decode(first_item["b64_json"])
+                                    return image_bytes, "image/png", vivid_prompt
+                                elif first_item.get("url"):
+                                    img_url = first_item["url"]
+                                    loop = asyncio.get_event_loop()
+
+                                    def _fetch():
+                                        req = urllib.request.Request(img_url, headers={"User-Agent": "Storyteller/1.0"})
+                                        with urllib.request.urlopen(req, timeout=25) as resp:
+                                            return resp.read()
+
+                                    image_bytes = await loop.run_in_executor(None, _fetch)
+                                    return image_bytes, "image/jpeg", vivid_prompt
+                except Exception as ex2:
+                    logger.warning(f"Direct HTTP image fallback error: {ex2}")
+
 
         # 2. Google Gemini Imagen
         if img_provider == "gemini" and img_key:
