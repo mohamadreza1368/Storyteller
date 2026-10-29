@@ -80,63 +80,112 @@ class QlooClient:
             logger.warning(f"Qloo /search exception: {e}")
             return []
 
-    def get_insights(self, filter_type: str, signal_entities: Optional[List[str]] = None, signal_tags: Optional[List[str]] = None, timeout: int = 10) -> List[Dict[str, Any]]:
-        """Queries Qloo /v2/insights for cultural recommendations and affinity graphs."""
+    def get_insights(
+        self,
+        filter_type: str,
+        signal_entities: Optional[List[str]] = None,
+        signal_tags: Optional[List[str]] = None,
+        sample: int = 5,
+        take: Optional[int] = None,
+        timeout: int = 10
+    ) -> List[Dict[str, Any]]:
+        """
+        Queries Qloo Basic Insights endpoint (/v2/insights) according to the official Basic Insights Use Case.
+        Fetches cultural affinity entities filtered by type and conditioned on user interest signals.
+        Reference: https://docs.qloo.com/reference/basic-insights-use-case
+        """
         self._refresh_config()
         if not self.is_available:
             return []
 
-        url = f"{self.base_url}/v2/insights"
-        params: Dict[str, Any] = {"filter.type": filter_type}
+        endpoints = [f"{self.base_url}/v2/insights", f"{self.base_url}/insights"]
+        params: Dict[str, Any] = {
+            "filter.type": filter_type,
+            "sample": sample
+        }
+        if take is not None:
+            params["take"] = take
         if signal_entities:
             params["signal.interests.entities"] = ",".join(signal_entities)
         if signal_tags:
             params["signal.interests.tags"] = ",".join(signal_tags)
 
-        try:
-            resp = requests.get(url, headers=self._headers(), params=params, timeout=timeout)
-            if resp.status_code == 200:
-                data = resp.json()
-                return data.get("entities", []) or data.get("results", [])
-            else:
-                logger.warning(f"Qloo /v2/insights returned HTTP {resp.status_code}: {resp.text[:200]}")
-                return []
-        except Exception as e:
-            logger.warning(f"Qloo /v2/insights exception: {e}")
-            return []
+        for url in endpoints:
+            try:
+                resp = requests.get(url, headers=self._headers(), params=params, timeout=timeout)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    # Qloo insights response can return entities, results, data, or direct list
+                    items = (
+                        data.get("entities")
+                        or data.get("results")
+                        or data.get("data")
+                        or data.get("insights")
+                        or []
+                    )
+                    if isinstance(items, list) and len(items) > 0:
+                        return items
+                elif resp.status_code == 404:
+                    continue
+                else:
+                    logger.warning(f"Qloo {url} returned HTTP {resp.status_code}: {resp.text[:200]}")
+            except Exception as e:
+                logger.warning(f"Qloo {url} exception: {e}")
+
+        return []
 
     def test_connection(self, api_key: Optional[str] = None, base_url: Optional[str] = None) -> Dict[str, Any]:
-        """Validates API credentials against Qloo hackathon base URL."""
+        """
+        Validates API credentials against Qloo Taste & Basic Insights API endpoints.
+        Reference: https://docs.qloo.com/reference/basic-insights-use-case
+        """
         test_key = (api_key if api_key is not None else self.api_key).strip()
         test_url = (base_url or self.base_url or "https://hackathon.api.qloo.com").rstrip("/")
 
         if not test_key:
             return {
                 "success": False,
-                "message": "Missing API Key. Please provide your Qloo hackathon API key.",
+                "message": "Missing API Key. Please provide your Qloo API key.",
                 "latency_ms": 0
             }
 
         start = time.time()
-        url = f"{test_url}/search"
         headers = {"X-Api-Key": test_key, "Accept": "application/json"}
-        params = {"query": "Dune", "types": "urn:entity:book"}
+
+        # Step 1: Test basic search endpoint
+        search_url = f"{test_url}/search"
+        search_params = {"query": "Dune", "types": "urn:entity:book"}
 
         try:
-            resp = requests.get(url, headers=headers, params=params, timeout=12)
+            resp = requests.get(search_url, headers=headers, params=search_params, timeout=12)
             latency = int((time.time() - start) * 1000)
 
             if resp.status_code == 200:
+                # Step 2: Also test Basic Insights endpoint (/v2/insights)
+                insights_url = f"{test_url}/v2/insights"
+                insights_params = {"filter.type": "urn:entity:book", "sample": 2}
+                try:
+                    ins_resp = requests.get(insights_url, headers=headers, params=insights_params, timeout=8)
+                    if ins_resp.status_code == 200:
+                        return {
+                            "success": True,
+                            "message": f"Connected successfully to Qloo Basic Insights & Taste API! ({test_url})",
+                            "endpoint": test_url,
+                            "latency_ms": latency
+                        }
+                except Exception:
+                    pass
+
                 return {
                     "success": True,
-                    "message": "Connected successfully to Qloo Hackathon Taste API!",
+                    "message": f"Connected successfully to Qloo Taste API ({test_url})!",
                     "endpoint": test_url,
                     "latency_ms": latency
                 }
             elif resp.status_code == 401:
                 return {
                     "success": False,
-                    "message": "Authentication failed (HTTP 401). Verify that your key is valid and base URL is set to https://hackathon.api.qloo.com",
+                    "message": "Authentication failed (HTTP 401). Verify that your key is valid and base URL matches your gateway (hackathon.api.qloo.com or api.qloo.com).",
                     "latency_ms": latency,
                     "status_code": 401
                 }
@@ -199,9 +248,9 @@ class QlooClient:
                     if eid:
                         entity_ids.append(str(eid))
 
-            # 3. Query insights across books and movies
+            # 3. Query insights across books, movies, and places
             if entity_ids:
-                book_recs = self.get_insights("urn:entity:book", signal_entities=entity_ids[:3])
+                book_recs = self.get_insights("urn:entity:book", signal_entities=entity_ids[:3], sample=3)
                 for item in book_recs[:3]:
                     name = item.get("name") or item.get("title")
                     if name and name.lower() not in [b.lower() for b in clean_books]:
@@ -213,7 +262,7 @@ class QlooClient:
                             icon="book"
                         ))
 
-                movie_recs = self.get_insights("urn:entity:movie", signal_entities=entity_ids[:3])
+                movie_recs = self.get_insights("urn:entity:movie", signal_entities=entity_ids[:3], sample=3)
                 for item in movie_recs[:3]:
                     name = item.get("name") or item.get("title")
                     if name and name.lower() not in [m.lower() for m in clean_movies]:
@@ -223,6 +272,18 @@ class QlooClient:
                             category="movie",
                             affinity_reason=desc,
                             icon="film"
+                        ))
+
+                place_recs = self.get_insights("urn:entity:place", signal_entities=entity_ids[:3], sample=2)
+                for item in place_recs[:2]:
+                    name = item.get("name") or item.get("title")
+                    if name and name.lower() not in [l.lower() for l in clean_locations]:
+                        desc = item.get("description") or "Geographical and atmospheric setting matching aesthetic tone"
+                        discovered.append(CulturalAffinityItem(
+                            title=name,
+                            category="place",
+                            affinity_reason=desc,
+                            icon="map-pin"
                         ))
 
         # If discovered items are fewer than target_count, supplement with intelligent literary & cinematic affinities

@@ -2180,10 +2180,13 @@ async function testAdminImageConnection() {
 }
 
 function applyAdminQlooPreset(preset) {
+    const urlInput = document.getElementById("adminCfgQlooBaseUrl");
     if (preset === 'hackathon') {
-        const urlInput = document.getElementById("adminCfgQlooBaseUrl");
         if (urlInput) urlInput.value = "https://hackathon.api.qloo.com";
         showToast("Applied Qloo Hackathon Gateway Preset", "info");
+    } else if (preset === 'production') {
+        if (urlInput) urlInput.value = "https://api.qloo.com";
+        showToast("Applied Qloo Production Gateway Preset", "info");
     }
 }
 
