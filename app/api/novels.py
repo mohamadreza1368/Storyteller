@@ -18,6 +18,7 @@ from app.models.enums import NovelStatus, Genre, ProseStyle, Theme, Tone, Perspe
 from app.storage.store import store
 from app.engine.pipeline import initialize_novel, generate_single_episode, run_novel_episodes, track_task
 from app.engine.image_client import chapter_image_client
+from app.engine.qloo_client import qloo_client, generate_scenarios_from_tastes
 
 router = APIRouter(prefix="/api/novels", tags=["Novels"])
 
@@ -27,6 +28,23 @@ class RenameRequest(BaseModel):
 class MagicIdeaRequest(BaseModel):
     prompt: Optional[str] = ""
     genre: Optional[str] = None
+
+class QlooScenarioRequest(BaseModel):
+    books: List[str] = []
+    movies: List[str] = []
+    locations: List[str] = []
+
+@router.post("/qloo-scenarios")
+async def generate_qloo_scenarios_endpoint(req: QlooScenarioRequest):
+    """
+    Discovers 5 cultural affinity matches via Qloo's taste graph,
+    then synthesizes 3 rich, distinct book writing scenarios for the author.
+    """
+    return await generate_scenarios_from_tastes(
+        books=req.books,
+        movies=req.movies,
+        locations=req.locations
+    )
 
 @router.post("/magic-blueprint", response_model=CreateNovelRequest)
 async def generate_magic_blueprint(req: MagicIdeaRequest):

@@ -11,12 +11,23 @@ from app.engine.writing_craft import (
     CHARACTER_HUMAN_DIALOGUE_DIRECTIVES,
     AVOID_AI_VOCABULARY_DIRECTIVES
 )
+from app.engine.qloo_client import qloo_client
 
 def build_character_system_prompt(char: Character, world: WorldSettings) -> str:
     """Builds a comprehensive, isolated LLM System Prompt for an autonomous character agent."""
     rules_text = "; ".join(world.world_rules) if world.world_rules else "Grounded physical reality."
     values_text = ", ".join(char.core.values) if char.core.values else "Truth and self-preservation"
     mannerisms = ", ".join(char.core.quirks + char.core.habits) if (char.core.quirks or char.core.habits) else "Cautious and observant"
+
+    # Qloo Cultural Taste & Lifestyle Enrichment
+    cultural_taste = qloo_client.enrich_character_cultural_dossier(
+        char.core.role or "Main",
+        char.core.temperament or "Complex",
+        world.era
+    )
+    reading_pref = ", ".join(cultural_taste.get("reading_tastes", []))
+    music_pref = cultural_taste.get("musical_temperament", "Quiet ambient contemplation")
+    hallmarks = cultural_taste.get("aesthetic_hallmarks", "Distinctive period garments")
     
     return f"""You are {char.core.name}, an autonomous agent roleplaying in a literary fiction narrative.
 Setting: {world.city}, {world.country} ({world.era})
@@ -27,6 +38,11 @@ CHARACTER DOSSIER & PSYCHOLOGY:
 - Temperament Archetype: {char.core.temperament or 'Complex & Guarded'}
 - Core Values: {values_text}
 - Mannerisms & Habits: {mannerisms}
+
+CULTURAL TASTE & AESTHETIC PALETTE (Qloo Cultural Intelligence):
+- Intellectual & Reading Tastes: {reading_pref}
+- Musical & Atmospheric Cadence: {music_pref}
+- Personal Aesthetic & Artifacts: {hallmarks}
 
 MOTIVATION ENGINE:
 - External Want (Tangible Objective): {char.motivation.want}
@@ -87,6 +103,7 @@ MANDATORY SPECIFICATION DIRECTIVES:
 1. YOU MUST PRESERVE AND ELABORATE UPON EVERY SINGLE CHARACTER LISTED ABOVE (both Main and Supporting!). Do NOT omit any character, do NOT rename them, and preserve their exact role (Main or Supporting).
 2. YOU MUST PRESERVE AND ELABORATE UPON EVERY LOCATION LISTED ABOVE.
 3. The narrative, logline, synopsis, and opening hook MUST be deeply rooted in {blueprint.world.city} during the {blueprint.world.era} era.
+4. Qloo Cultural Intelligence: enrich characters with distinctive intellectual and artistic tastes, and imbue locations with visceral sensory textures (scents, architectural acoustics, lighting).
 
 Return ONLY a valid JSON object matching this schema:
 {{

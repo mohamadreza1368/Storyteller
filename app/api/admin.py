@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from app.storage.users import User, UserPublic, user_manager
 from app.storage.store import store
 from app.engine.llm_client import llm
+from app.engine.qloo_client import qloo_client
 from app.config import settings
 from app.api.deps import get_current_admin
 
@@ -26,6 +27,10 @@ class AdminAIConfigRequest(BaseModel):
     image_api_key: Optional[str] = None
     image_base_url: Optional[str] = None
     image_model: Optional[str] = None
+    # Qloo Cultural AI settings
+    qloo_api_key: Optional[str] = None
+    qloo_base_url: Optional[str] = None
+    qloo_enabled: Optional[bool] = None
 
 class AdminDashboardStats(BaseModel):
     total_users: int
@@ -120,6 +125,10 @@ async def get_ai_config(admin: User = Depends(get_current_admin)):
     """Retrieve global AI configuration for the platform."""
     saved = store.get_system_settings() or {}
     img_key = saved.get("image_api_key", "")
+    q_key = saved.get("qloo_api_key") or settings.qloo_api_key or ""
+    q_url = saved.get("qloo_base_url") or settings.qloo_base_url or "https://hackathon.api.qloo.com"
+    q_en = saved.get("qloo_enabled", settings.qloo_enabled)
+    
     return {
         "provider": llm.provider,
         "model": llm.model,
@@ -130,7 +139,11 @@ async def get_ai_config(admin: User = Depends(get_current_admin)):
         "image_base_url": saved.get("image_base_url", ""),
         "image_model": saved.get("image_model", ""),
         "has_image_api_key": bool(img_key),
-        "image_api_key_masked": f"••••••••{img_key[-4:]}" if img_key and len(img_key) > 4 else ("••••" if img_key else "")
+        "image_api_key_masked": f"••••••••{img_key[-4:]}" if img_key and len(img_key) > 4 else ("••••" if img_key else ""),
+        "qloo_base_url": q_url,
+        "qloo_enabled": bool(q_en),
+        "has_qloo_api_key": bool(q_key),
+        "qloo_api_key_masked": f"••••••••{q_key[-4:]}" if q_key and len(q_key) > 4 else ("••••" if q_key else "")
     }
 
 @router.post("/ai-config")
@@ -146,6 +159,16 @@ async def update_ai_config(req: AdminAIConfigRequest, admin: User = Depends(get_
         image_base_url=req.image_base_url,
         image_model=req.image_model
     )
+    
+    saved = store.get_system_settings() or {}
+    if req.qloo_api_key is not None:
+        saved["qloo_api_key"] = req.qloo_api_key
+    if req.qloo_base_url is not None:
+        saved["qloo_base_url"] = req.qloo_base_url.rstrip("/")
+    if req.qloo_enabled is not None:
+        saved["qloo_enabled"] = req.qloo_enabled
+    store.save_system_settings(saved)
+
     return await get_ai_config(admin)
 
 @router.post("/test-connection")
@@ -170,3 +193,11 @@ async def test_admin_image_connection(req: AdminAIConfigRequest, admin: User = D
         base_url=req.image_base_url
     )
     return result
+
+@router.post("/test-qloo-connection")
+async def test_admin_qloo_connection(req: AdminAIConfigRequest, admin: User = Depends(get_current_admin)):
+    """Test live connectivity of Qloo Taste API credentials."""
+    saved = store.get_system_settings() or {}
+    key = req.qloo_api_key if req.qloo_api_key is not None else saved.get("qloo_api_key") or settings.qloo_api_key
+    url = req.qloo_base_url if req.qloo_base_url is not None else saved.get("qloo_base_url") or settings.qloo_base_url
+    return qloo_client.test_connection(api_key=key, base_url=url)

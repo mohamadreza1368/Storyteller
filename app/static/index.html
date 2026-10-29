@@ -442,6 +442,113 @@
                     <div class="form-hint" style="color: var(--text-tertiary);">Provide a single premise or prompt, and the AI will forge characters, world rules, and plotlines for you.</div>
                 </div>
 
+                <!-- ==================== QLOO CULTURAL MUSE & SCENARIOS ==================== -->
+                <div style="background: var(--bg-surface-elevated); border: 1px solid rgba(99, 102, 241, 0.28); border-radius: var(--radius-md); padding: 22px; margin-bottom: 26px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 1.08rem; color: var(--text-primary);">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                                    <path d="M2 12h20"></path>
+                                </svg>
+                                <span>Qloo Cultural Muse: Story Scenarios from Your Tastes</span>
+                                <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(99, 102, 241, 0.15); color: #818cf8; font-weight: 700; border: 1px solid rgba(99, 102, 241, 0.3);">Taste Intelligence</span>
+                            </div>
+                            <div style="font-size: 0.86rem; color: var(--text-secondary); margin-top: 4px; max-width: 680px;">
+                                Name your favorite books, films, and locations. Qloo's cultural taste graph will uncover <strong>5 connected cultural affinities</strong> and forge <strong>3 distinct book writing scenarios</strong> tailored to your aesthetic.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 16px;">
+                        <!-- Favorite Books -->
+                        <div>
+                            <label class="form-label" style="font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                                Favorite Books / Authors
+                            </label>
+                            <input type="text" id="qlooInputBooks" class="form-input" style="font-size: 0.88rem;" placeholder="e.g. The Shadow of the Wind, Dune">
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
+                                <button type="button" class="btn btn-ghost btn-sm" style="padding: 2px 7px; font-size: 0.72rem;" onclick="appendQlooTag('qlooInputBooks', 'The Shadow of the Wind')">+ Shadow of Wind</button>
+                                <button type="button" class="btn btn-ghost btn-sm" style="padding: 2px 7px; font-size: 0.72rem;" onclick="appendQlooTag('qlooInputBooks', 'Dune')">+ Dune</button>
+                                <button type="button" class="btn btn-ghost btn-sm" style="padding: 2px 7px; font-size: 0.72rem;" onclick="appendQlooTag('qlooInputBooks', 'The Secret History')">+ Secret History</button>
+                            </div>
+                        </div>
+
+                        <!-- Favorite Movies -->
+                        <div>
+                            <label class="form-label" style="font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                                Favorite Films / Cinema
+                            </label>
+                            <input type="text" id="qlooInputMovies" class="form-input" style="font-size: 0.88rem;" placeholder="e.g. Blade Runner, Chinatown">
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
+                                <button type="button" class="btn btn-ghost btn-sm" style="padding: 2px 7px; font-size: 0.72rem;" onclick="appendQlooTag('qlooInputMovies', 'Blade Runner')">+ Blade Runner</button>
+                                <button type="button" class="btn btn-ghost btn-sm" style="padding: 2px 7px; font-size: 0.72rem;" onclick="appendQlooTag('qlooInputMovies', 'Inception')">+ Inception</button>
+                                <button type="button" class="btn btn-ghost btn-sm" style="padding: 2px 7px; font-size: 0.72rem;" onclick="appendQlooTag('qlooInputMovies', 'In the Mood for Love')">+ Mood for Love</button>
+                            </div>
+                        </div>
+
+                        <!-- Favorite Locations -->
+                        <div>
+                            <label class="form-label" style="font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                Favorite Locations / Vibe
+                            </label>
+                            <input type="text" id="qlooInputLocations" class="form-input" style="font-size: 0.88rem;" placeholder="e.g. Edinburgh, Paris, Kyoto">
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
+                                <button type="button" class="btn btn-ghost btn-sm" style="padding: 2px 7px; font-size: 0.72rem;" onclick="appendQlooTag('qlooInputLocations', 'Edinburgh')">+ Edinburgh</button>
+                                <button type="button" class="btn btn-ghost btn-sm" style="padding: 2px 7px; font-size: 0.72rem;" onclick="appendQlooTag('qlooInputLocations', 'Paris')">+ Paris</button>
+                                <button type="button" class="btn btn-ghost btn-sm" style="padding: 2px 7px; font-size: 0.72rem;" onclick="appendQlooTag('qlooInputLocations', 'Kyoto')">+ Kyoto</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trigger Button -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <button type="button" id="btnRunQlooMuse" class="btn btn-primary" onclick="triggerQlooScenarioGeneration()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                            <span>Discover 5 Cultural Affinities & 3 Scenarios</span>
+                        </button>
+                        <div id="qlooMuseLoadingText" style="display: none; font-size: 0.85rem; color: var(--accent); font-weight: 600; align-items: center; gap: 8px;">
+                            <div class="spinner-sm"></div>
+                            <span>Analyzing taste signals & forging scenarios...</span>
+                        </div>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div id="qlooResultsBox" style="display: none; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+                        <!-- Affinities -->
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-size: 0.88rem; font-weight: 800; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                                <span style="background: rgba(99, 102, 241, 0.2); color: #818cf8; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900;">5</span>
+                                <span>Discovered Cultural Affinities (Qloo Taste Intelligence):</span>
+                            </div>
+                            <div id="qlooAffinitiesGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Scenarios -->
+                        <div>
+                            <div style="font-size: 0.88rem; font-weight: 800; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                                    <path d="M12 20h9"></path>
+                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                </svg>
+                                <span>Synthesized Novel Scenarios (Select one to write):</span>
+                            </div>
+                            <div id="qlooScenariosContainer" style="display: grid; grid-template-columns: 1fr; gap: 16px;">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Step Navigator Tabs -->
                 <div class="tab-nav">
                     <button class="tab-btn active" id="tabNav1" onclick="setWizardStep(1)">
@@ -1211,10 +1318,65 @@
                             </div>
                         </div>
 
+                        <!-- ==================== Qloo Cultural AI & Taste Intelligence Engine ==================== -->
+                        <div style="margin-top: 32px; padding-top: 24px; border-top: 2px solid var(--border-subtle);">
+                            <div style="margin-bottom: 18px;">
+                                <div style="font-weight: 800; font-size: 1.15rem; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                                        <path d="M2 12h20"></path>
+                                    </svg>
+                                    <span>Qloo Cultural AI & Taste Intelligence Engine</span>
+                                    <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 9999px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-weight: 700; border: 1px solid rgba(59, 130, 246, 0.3);">Hackathon Ready</span>
+                                </div>
+                                <p style="font-size: 0.88rem; color: var(--text-secondary);">Connect Qloo's cultural taste graph to enrich character psychology, world location textures, and synthesize tailored novel scenarios from literary and cinematic affinities.</p>
+                            </div>
+
+                            <!-- Quick Qloo Presets -->
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-tertiary); margin-bottom: 8px;">Gateway Preset:</div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyAdminQlooPreset('hackathon')">Official Hackathon Gateway (hackathon.api.qloo.com)</button>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Qloo Hackathon Base URL</label>
+                                <input type="text" id="adminCfgQlooBaseUrl" class="form-input" placeholder="https://hackathon.api.qloo.com">
+                                <div style="font-size: 0.78rem; color: var(--text-tertiary); margin-top: 4px;">Note: Hackathon keys only authenticate against <code>https://hackathon.api.qloo.com</code></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Qloo API Key (X-Api-Key)</label>
+                                <input type="password" id="adminCfgQlooApiKey" class="form-input" placeholder="Your personal Qloo hackathon API key">
+                                <div id="adminQlooApiKeyMaskedNotice" style="font-size: 0.8rem; color: var(--text-tertiary); margin-top: 4px;"></div>
+                            </div>
+
+                            <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 14px;">
+                                <input type="checkbox" id="adminCfgQlooEnabled" style="width: 18px; height: 18px; cursor: pointer;" checked>
+                                <label for="adminCfgQlooEnabled" style="font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--text-primary);">
+                                    Enrich story world, locations, and characters using Qloo Cultural AI
+                                </label>
+                            </div>
+
+                            <!-- Test Qloo Connection Result -->
+                            <div id="adminQlooTestResultBox" style="display: none; padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 0.88rem; line-height: 1.5;"></div>
+
+                            <div style="margin-bottom: 24px;">
+                                <button type="button" id="btnAdminTestQlooConn" class="btn btn-secondary btn-sm" onclick="testAdminQlooConnection()">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                    </svg>
+                                    Test Qloo Taste API Connection
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Platform-wide Save Button -->
                         <div style="display: flex; gap: 12px; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
                             <button type="button" class="btn btn-primary btn-lg" style="width: 100%; justify-content: center;" onclick="saveAdminAiConfig()">
-                                Save Global AI & Image Configuration
+                                Save Global AI, Image & Qloo Configuration
                             </button>
                         </div>
                     </div>

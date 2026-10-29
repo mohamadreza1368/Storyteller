@@ -1818,6 +1818,22 @@ async function loadAdminAiConfig() {
             }
         }
 
+        // 3. Qloo Cultural AI Config
+        if (cfg.qloo_base_url && document.getElementById("adminCfgQlooBaseUrl")) {
+            document.getElementById("adminCfgQlooBaseUrl").value = cfg.qloo_base_url;
+        }
+        if (document.getElementById("adminCfgQlooEnabled")) {
+            document.getElementById("adminCfgQlooEnabled").checked = cfg.qloo_enabled !== false;
+        }
+        const qlooMaskedNotice = document.getElementById("adminQlooApiKeyMaskedNotice");
+        if (qlooMaskedNotice) {
+            if (cfg.qloo_api_key_masked) {
+                qlooMaskedNotice.innerText = `Current Qloo key: ${cfg.qloo_api_key_masked} (leave blank to retain)`;
+            } else {
+                qlooMaskedNotice.innerText = "No Qloo API key configured. Live cultural queries will use intelligent fallbacks.";
+            }
+        }
+
         onAdminProviderChanged();
         onAdminImageProviderChanged();
     } catch (e) {
@@ -2048,6 +2064,69 @@ async function testAdminImageConnection() {
     }
 }
 
+function applyAdminQlooPreset(preset) {
+    if (preset === 'hackathon') {
+        const urlInput = document.getElementById("adminCfgQlooBaseUrl");
+        if (urlInput) urlInput.value = "https://hackathon.api.qloo.com";
+        showToast("Applied Qloo Hackathon Gateway Preset", "info");
+    }
+}
+
+async function testAdminQlooConnection() {
+    const key = document.getElementById("adminCfgQlooApiKey")?.value || undefined;
+    const url = document.getElementById("adminCfgQlooBaseUrl")?.value || undefined;
+    const resultBox = document.getElementById("adminQlooTestResultBox");
+    const btn = document.getElementById("btnAdminTestQlooConn");
+    const oldText = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = `<div class="spinner-sm"></div> Testing Qloo API...`;
+    resultBox.style.display = "none";
+
+    try {
+        const res = await fetchWithAuth("/api/admin/test-qloo-connection", {
+            method: "POST",
+            body: JSON.stringify({
+                qloo_api_key: key,
+                qloo_base_url: url
+            })
+        });
+        const data = await res.json();
+        resultBox.style.display = "block";
+
+        if (data.success) {
+            resultBox.style.background = "var(--success-subtle)";
+            resultBox.style.border = "1px solid var(--success)";
+            resultBox.style.color = "var(--success)";
+            resultBox.innerHTML = `
+                <div style="font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                    ${ICONS.check} Qloo Taste API Connected (${data.latency_ms} ms)
+                </div>
+                <div style="margin-top: 6px; font-size: 0.82rem; color: var(--text-primary);">${data.message}</div>
+            `;
+        } else {
+            resultBox.style.background = "var(--danger-subtle)";
+            resultBox.style.border = "1px solid var(--danger)";
+            resultBox.style.color = "var(--danger)";
+            resultBox.innerHTML = `
+                <div style="font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                    ${ICONS.alert} Qloo API Test Failed
+                </div>
+                <div style="margin-top: 4px; font-size: 0.82rem;">${data.message || 'No response from Qloo API.'}</div>
+            `;
+        }
+    } catch (e) {
+        resultBox.style.display = "block";
+        resultBox.style.background = "var(--danger-subtle)";
+        resultBox.style.border = "1px solid var(--danger)";
+        resultBox.style.color = "var(--danger)";
+        resultBox.innerHTML = `<div style="font-weight: 700; display: flex; align-items: center; gap: 6px;">${ICONS.alert} Network Error: ${e.message}</div>`;
+    } finally {
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+    }
+}
+
 async function saveAdminAiConfig() {
     // 1. Narrative LLM
     const provider = document.getElementById("adminCfgProvider").value;
@@ -2061,6 +2140,11 @@ async function saveAdminAiConfig() {
     const imageBaseUrl = document.getElementById("adminCfgImageBaseUrl")?.value || undefined;
     const imageModel = document.getElementById("adminCfgImageModel")?.value || undefined;
 
+    // 3. Qloo Cultural AI
+    const qlooApiKey = document.getElementById("adminCfgQlooApiKey")?.value || undefined;
+    const qlooBaseUrl = document.getElementById("adminCfgQlooBaseUrl")?.value || undefined;
+    const qlooEnabled = document.getElementById("adminCfgQlooEnabled")?.checked ?? true;
+
     try {
         const res = await fetchWithAuth("/api/admin/ai-config", {
             method: "POST",
@@ -2072,17 +2156,251 @@ async function saveAdminAiConfig() {
                 image_provider: imageProvider,
                 image_api_key: imageApiKey,
                 image_base_url: imageBaseUrl,
-                image_model: imageModel
+                image_model: imageModel,
+                qloo_api_key: qlooApiKey,
+                qloo_base_url: qlooBaseUrl,
+                qloo_enabled: qlooEnabled
             })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Failed to save configuration");
         await checkSystemInfo();
-        showToast("Global AI and Image configurations saved successfully!", "success");
+        showToast("Global AI, Image, and Qloo configurations saved successfully!", "success");
         await loadAdminAiConfig();
     } catch (e) {
         showToast("Error saving configuration: " + e.message, "error");
     }
+}
+
+/* ==================== QLOO CULTURAL MUSE & SCENARIOS ==================== */
+
+function appendQlooTag(inputId, tag) {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    const current = el.value.trim();
+    if (!current) {
+        el.value = tag;
+    } else {
+        const parts = current.split(",").map(p => p.trim().toLowerCase());
+        if (!parts.includes(tag.toLowerCase())) {
+            el.value = current + ", " + tag;
+        }
+    }
+}
+
+let currentQlooScenarios = [];
+
+async function triggerQlooScenarioGeneration() {
+    const booksStr = document.getElementById("qlooInputBooks")?.value.trim() || "";
+    const moviesStr = document.getElementById("qlooInputMovies")?.value.trim() || "";
+    const locsStr = document.getElementById("qlooInputLocations")?.value.trim() || "";
+
+    const books = booksStr ? booksStr.split(",").map(s => s.trim()).filter(Boolean) : [];
+    const movies = moviesStr ? moviesStr.split(",").map(s => s.trim()).filter(Boolean) : [];
+    const locations = locsStr ? locsStr.split(",").map(s => s.trim()).filter(Boolean) : [];
+
+    if (!books.length && !movies.length && !locations.length) {
+        showToast("Please provide at least one favorite book, movie, or location.", "warning");
+        return;
+    }
+
+    const btn = document.getElementById("btnRunQlooMuse");
+    const loadingText = document.getElementById("qlooMuseLoadingText");
+    const resultsBox = document.getElementById("qlooResultsBox");
+    const oldBtnText = btn ? btn.innerHTML : "";
+
+    if (btn) btn.disabled = true;
+    if (loadingText) loadingText.style.display = "flex";
+
+    try {
+        const res = await fetch("/api/novels/qloo-scenarios", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ books, movies, locations })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Failed to generate scenarios");
+
+        currentQlooScenarios = data.scenarios || [];
+        renderQlooAffinities(data.similar_items || []);
+        renderQlooScenarios(currentQlooScenarios);
+
+        if (resultsBox) {
+            resultsBox.style.display = "block";
+            resultsBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+        showToast("Discovered 5 cultural affinities and synthesized 3 scenarios!", "success");
+    } catch (e) {
+        console.error("Qloo scenario generation error:", e);
+        showToast("Could not generate scenarios: " + e.message, "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = oldBtnText;
+        }
+        if (loadingText) loadingText.style.display = "none";
+    }
+}
+
+function renderQlooAffinities(items) {
+    const grid = document.getElementById("qlooAffinitiesGrid");
+    if (!grid) return;
+    if (!items || !items.length) {
+        grid.innerHTML = `<div style="font-size: 0.82rem; color: var(--text-tertiary);">No specific affinities found.</div>`;
+        return;
+    }
+
+    const categoryIcons = {
+        book: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>`,
+        movie: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>`,
+        place: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`,
+        artist: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`
+    };
+
+    grid.innerHTML = items.map((item, idx) => {
+        const iconSvg = categoryIcons[item.category] || categoryIcons.book;
+        return `
+            <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 6px; font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--accent); margin-bottom: 4px;">
+                        ${iconSvg}
+                        <span>${escapeHtml(item.category)} Match #${idx + 1}</span>
+                    </div>
+                    <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-primary); line-height: 1.3; margin-bottom: 4px;">
+                        ${escapeHtml(item.title)}
+                    </div>
+                </div>
+                <div style="font-size: 0.76rem; color: var(--text-secondary); line-height: 1.35; margin-top: 4px;">
+                    ${escapeHtml(item.affinity_reason)}
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+function renderQlooScenarios(scenarios) {
+    const container = document.getElementById("qlooScenariosContainer");
+    if (!container) return;
+    if (!scenarios || !scenarios.length) {
+        container.innerHTML = `<div style="font-size: 0.85rem; color: var(--text-tertiary);">No scenarios generated.</div>`;
+        return;
+    }
+
+    container.innerHTML = scenarios.map((sc, idx) => {
+        return `
+            <div class="card" style="background: var(--bg-surface); border: 1px solid rgba(99, 102, 241, 0.35); border-radius: var(--radius-md); padding: 18px 20px; transition: transform 0.15s ease, box-shadow 0.15s ease;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
+                            <span style="font-size: 0.72rem; font-weight: 800; background: var(--accent-subtle); color: var(--accent); padding: 2px 8px; border-radius: 9999px;">
+                                Scenario Option ${idx + 1}
+                            </span>
+                            <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">
+                                ${escapeHtml(sc.genre)} • ${escapeHtml(sc.tone)}
+                            </span>
+                            <span style="font-size: 0.75rem; color: var(--text-tertiary);">
+                                📍 ${escapeHtml(sc.city)}, ${escapeHtml(sc.country)} (${escapeHtml(sc.era)})
+                            </span>
+                        </div>
+                        <h4 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin: 0;">
+                            ${escapeHtml(sc.title)}
+                        </h4>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="applyQlooScenarioIndex(${idx})" style="white-space: nowrap;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Write This Novel
+                    </button>
+                </div>
+
+                <!-- Logline -->
+                <div style="font-size: 0.92rem; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; line-height: 1.45; border-left: 3px solid var(--accent); padding-left: 10px;">
+                    "${escapeHtml(sc.logline)}"
+                </div>
+
+                <!-- Premise & Conflict -->
+                <div style="font-size: 0.86rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 12px;">
+                    ${escapeHtml(sc.premise)}
+                </div>
+
+                <!-- Protagonist & Inspirations Row -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; padding-top: 10px; border-top: 1px dashed var(--border-subtle); font-size: 0.8rem;">
+                    <div>
+                        <strong style="color: var(--text-primary);">Protagonist:</strong>
+                        <span style="color: var(--text-secondary);">${escapeHtml(sc.protagonist_name)} (${escapeHtml(sc.protagonist_role)} — ${escapeHtml(sc.protagonist_archetype)})</span>
+                    </div>
+                    <div>
+                        <strong style="color: var(--text-primary);">Qloo Injected Milieu:</strong>
+                        <span style="color: var(--text-secondary);">${escapeHtml(sc.inspirations_summary || 'Cultural taste affinities')}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+function applyQlooScenarioIndex(index) {
+    if (!currentQlooScenarios || !currentQlooScenarios[index]) return;
+    const sc = currentQlooScenarios[index];
+
+    // Populate Wizard inputs
+    const elTitle = document.getElementById("wizTitle");
+    const elPremise = document.getElementById("wizPremise");
+    const elGenre = document.getElementById("wizGenre");
+    const elTone = document.getElementById("wizTone");
+    const elStyle = document.getElementById("wizProseStyle");
+    const elCity = document.getElementById("wizCity");
+    const elCountry = document.getElementById("wizCountry");
+    const elEra = document.getElementById("wizEra");
+
+    if (elTitle) elTitle.value = sc.title;
+    if (elPremise) elPremise.value = sc.premise;
+    if (elCity) elCity.value = sc.city;
+    if (elCountry) elCountry.value = sc.country;
+    if (elEra) elEra.value = sc.era;
+
+    // Match genre
+    if (elGenre) {
+        for (let opt of elGenre.options) {
+            if (opt.value.toLowerCase().includes(sc.genre.toLowerCase()) || sc.genre.toLowerCase().includes(opt.value.toLowerCase())) {
+                elGenre.value = opt.value;
+                break;
+            }
+        }
+    }
+
+    // Match tone
+    if (elTone) {
+        for (let opt of elTone.options) {
+            if (opt.value.toLowerCase().includes(sc.tone.toLowerCase()) || sc.tone.toLowerCase().includes(opt.value.toLowerCase())) {
+                elTone.value = opt.value;
+                break;
+            }
+        }
+    }
+
+    if (elStyle && sc.prose_style) {
+        for (let opt of elStyle.options) {
+            if (opt.value.toLowerCase().includes(sc.prose_style.toLowerCase())) {
+                elStyle.value = opt.value;
+                break;
+            }
+        }
+    }
+
+    // Populate Character if on Step 3 or protagonist inputs exist
+    const pName = document.getElementById("wizChar1Name");
+    const pRole = document.getElementById("wizChar1Role");
+    if (pName && sc.protagonist_name) pName.value = sc.protagonist_name;
+    if (pRole && sc.protagonist_role) pRole.value = sc.protagonist_role;
+
+    // Move to step 1 so user can review and proceed
+    setWizardStep(1);
+    const nav1 = document.getElementById("tabNav1");
+    if (nav1) nav1.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    showToast(`Scenario loaded: "${sc.title}"! Review Step 1 and launch your novel.`, "success");
 }
 
 

@@ -212,7 +212,7 @@ class LLMClient:
                 client = AsyncOpenAI(
                     api_key=self.api_key or "dummy",
                     base_url=target_base_url,
-                    timeout=120.0
+                    timeout=25.0
                 )
                 res = await client.chat.completions.create(
                     model=self.model or "gpt-4o-mini",
@@ -259,7 +259,7 @@ class LLMClient:
                 client = AsyncOpenAI(
                     api_key=self.api_key or "dummy",
                     base_url=target_base_url,
-                    timeout=120.0
+                    timeout=25.0
                 )
                 res = await client.chat.completions.create(
                     model=self.model or "gpt-4o-mini",

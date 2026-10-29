@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     llm_model: str = os.getenv("LLM_MODEL", "gemini-2.5-flash")
     llm_base_url: str = os.getenv("LLM_BASE_URL", "")
 
+    # Qloo Cultural AI / Taste Settings
+    qloo_api_key: str = os.getenv("QLOO_API_KEY", "")
+    qloo_base_url: str = os.getenv("QLOO_BASE_URL", "https://hackathon.api.qloo.com")
+    qloo_enabled: bool = os.getenv("QLOO_ENABLED", "true").lower() in ("true", "1")
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()
