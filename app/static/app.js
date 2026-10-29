@@ -188,6 +188,21 @@ window.navigateTo = function navigateTo(viewName) {
             return;
         }
     }
+    if (viewName === "wizard") {
+        if (!currentUser) {
+            showToast("Please sign in or create an account to start writing.", "info");
+            openAuthModal("login");
+            return;
+        }
+    }
+    if (viewName === "novel" || viewName === "reader") {
+        if (!currentUser) {
+            showToast("Please sign in to access your novels.", "info");
+            navigateTo("library");
+            openAuthModal("login");
+            return;
+        }
+    }
 
     const views = {
         library: document.getElementById("viewLibrary"),
@@ -276,6 +291,31 @@ async function loadLibrary() {
     const grid = document.getElementById("novelsGrid");
     grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-tertiary); padding: 50px;">Preparing Author's Desk…</div>`;
     
+    // If not authenticated, show guest portal prompt
+    if (!currentUser) {
+        grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 56px 24px; background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-subtle); overflow: hidden;">
+                <div style="max-width: 640px; margin: 0 auto;">
+                    <div style="border-radius: var(--radius-md); overflow: hidden; margin-bottom: 24px; box-shadow: var(--shadow-lg); border: 1px solid var(--border-strong);">
+                        <img src="/static/assets/illustrations/studio_desk.jpg" alt="Author's Desk Sanctuary" style="width: 100%; height: 260px; object-fit: cover; display: block;">
+                    </div>
+                    <h3 style="font-weight: 800; font-size: 1.65rem; margin-bottom: 8px;">Private Creative Studio</h3>
+                    <p style="color: var(--text-secondary); max-width: 520px; margin: 0 auto 28px; line-height: 1.6;">Welcome to Storyteller AI. Sign in to access your personal workspace or create a free account to craft original novels with Qloo Cultural AI.</p>
+                    <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-primary btn-lg" onclick="openAuthModal('login')">
+                            ${ICONS.quill}
+                            Sign In to Your Workspace
+                        </button>
+                        <button class="btn btn-secondary btn-lg" onclick="openAuthModal('register')">
+                            Create Free Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
     try {
         const res = await fetchWithAuth("/api/novels");
         const novels = await res.json();
@@ -340,6 +380,11 @@ async function loadLibrary() {
 
 // Wizard Logic
 function startNewNovel() {
+    if (!currentUser) {
+        showToast("Please sign in or create an account to start writing.", "info");
+        openAuthModal("login");
+        return;
+    }
     setWizardStep(1);
     // Prefill Qloo cultural preferences if the author configured them
     if (currentUser) {
@@ -366,9 +411,8 @@ function setWizardStep(stepNum) {
 // Apply Preset
 async function applyPreset(presetName) {
     try {
-        const res = await fetch("/api/novels/magic-blueprint", {
+        const res = await fetchWithAuth("/api/novels/magic-blueprint", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ prompt: presetName })
         });
         const bp = await res.json();
@@ -394,9 +438,8 @@ async function triggerMagicAutoFill() {
     btn.disabled = true;
 
     try {
-        const res = await fetch("/api/novels/magic-blueprint", {
+        const res = await fetchWithAuth("/api/novels/magic-blueprint", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ prompt: prompt })
         });
         const bp = await res.json();
@@ -572,7 +615,12 @@ async function openNovel(novelId) {
 async function refreshNovelView() {
     if (!currentNovelId) return;
     try {
-        const res = await fetch(`/api/novels/${currentNovelId}`);
+        const res = await fetchWithAuth(`/api/novels/${currentNovelId}`);
+        if (!res.ok) {
+            showToast("You do not have permission to view this novel.", "error");
+            navigateTo("library");
+            return;
+        }
         currentNovel = await res.json();
         
         document.getElementById("novelTitle").innerText = currentNovel.title;
@@ -662,8 +710,8 @@ async function refreshNovelView() {
         updateAutoContinueButtonUI(currentNovel.auto_continue);
 
         // Update Write Next Button state
-        const episodesRes = await fetch(`/api/novels/${currentNovelId}/episodes`);
-        const episodesList = await episodesRes.json();
+        const episodesRes = await fetchWithAuth(`/api/novels/${currentNovelId}/episodes`);
+        const episodesList = episodesRes.ok ? await episodesRes.json() : [];
         const writtenCount = episodesList.length;
         const btnWrite = document.getElementById("btnWriteNext");
         if (btnWrite) {
@@ -693,12 +741,12 @@ async function refreshNovelView() {
         let matrixData = null;
         let memoryData = null;
         try {
-            const mRes = await fetch(`/api/novels/${currentNovelId}/matrix`);
+            const mRes = await fetchWithAuth(`/api/novels/${currentNovelId}/matrix`);
             if (mRes.ok) matrixData = await mRes.json();
         } catch (e) {}
 
         try {
-            const memRes = await fetch(`/api/novels/${currentNovelId}/memory`);
+            const memRes = await fetchWithAuth(`/api/novels/${currentNovelId}/memory`);
             if (memRes.ok) memoryData = await memRes.json();
         } catch (e) {}
 
@@ -947,9 +995,8 @@ async function toggleNovelAutoContinue() {
     if (!currentNovelId || !currentNovel) return;
     const newStatus = !currentNovel.auto_continue;
     try {
-        const res = await fetch(`/api/novels/${currentNovelId}/auto-continue`, {
+        const res = await fetchWithAuth(`/api/novels/${currentNovelId}/auto-continue`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ auto_continue: newStatus })
         });
         const data = await res.json();
@@ -1049,7 +1096,11 @@ function startProgressPolling() {
     progressPollTimer = setInterval(async () => {
         if (!currentNovelId) return;
         try {
-            const res = await fetch(`/api/novels/${currentNovelId}/progress`);
+            const res = await fetchWithAuth(`/api/novels/${currentNovelId}/progress`);
+            if (!res.ok) {
+                stopProgressPolling();
+                return;
+            }
             const p = await res.json();
             const card = document.getElementById("novelProgressCard");
             
@@ -1125,7 +1176,7 @@ function stopProgressPolling() {
 // Write Next Episode
 async function triggerWriteNext() {
     try {
-        const res = await fetch(`/api/novels/${currentNovelId}/write-next`, { method: "POST" });
+        const res = await fetchWithAuth(`/api/novels/${currentNovelId}/write-next`, { method: "POST" });
         if (!res.ok) {
             const err = await res.json();
             showToast(err.detail || "Error starting chapter generation", "error");
@@ -1171,7 +1222,12 @@ async function openReader(episodeNumber) {
     navigateTo("reader");
     
     try {
-        const res = await fetch(`/api/novels/${currentNovelId}/episodes/${episodeNumber}`);
+        const res = await fetchWithAuth(`/api/novels/${currentNovelId}/episodes/${episodeNumber}`);
+        if (!res.ok) {
+            showToast("Failed to load chapter", "error");
+            navigateTo("novel");
+            return;
+        }
         currentEpisodeData = await res.json();
 
         // Update Chapter Artwork Hero
@@ -1233,7 +1289,7 @@ async function regenerateCurrentChapterArt() {
 
     try {
         showToast("Synthesizing tailored scene illustration...", "info");
-        const res = await fetch(`/api/novels/${currentNovelId}/episodes/${currentEpisodeNumber}/generate-image`, {
+        const res = await fetchWithAuth(`/api/novels/${currentNovelId}/episodes/${currentEpisodeNumber}/generate-image`, {
             method: "POST"
         });
         const data = await res.json();
@@ -2328,9 +2384,8 @@ async function triggerQlooScenarioGeneration() {
     if (loadingText) loadingText.style.display = "flex";
 
     try {
-        const res = await fetch("/api/novels/qloo-scenarios", {
+        const res = await fetchWithAuth("/api/novels/qloo-scenarios", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ books, movies, locations })
         });
         const data = await res.json();

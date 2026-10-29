@@ -156,20 +156,37 @@ async def generate_magic_blueprint(req: MagicIdeaRequest):
         start_now=False
     )
 
+def check_novel_access(novel_id: str, user: Optional[User]) -> StoryBlueprint:
+    """Enforces multi-tenant authorization: only the author or an admin can access this novel."""
+    bp = store.get_blueprint(novel_id)
+    if not bp:
+        raise HTTPException(status_code=404, detail="Novel not found")
+    owner_id = getattr(bp, "owner_id", None) or getattr(bp, "user_id", None)
+    if owner_id:
+        if not user:
+            raise HTTPException(status_code=401, detail="Authentication required to access this novel.")
+        if user.id != owner_id and user.role != "admin":
+            raise HTTPException(status_code=403, detail="Access denied. You do not have permission to view or modify this novel.")
+    elif not user or user.role != "admin":
+        raise HTTPException(status_code=403, detail="Access denied. This novel is private.")
+    return bp
+
 @router.get("", response_model=List[NovelSummary])
 async def list_novels(user: Optional[User] = Depends(get_current_user_optional)):
-    """List novels in the library for the current user (or all if admin)."""
-    if user and user.role != "admin":
+    """List novels in the library for the current user (or all if admin). Unauthenticated visitors see an empty list."""
+    if not user:
+        return []
+    if user.role != "admin":
         return store.list_novels(user_id=user.id)
     return store.list_novels()
 
 @router.post("", response_model=StoryBlueprint)
-async def create_novel(req: CreateNovelRequest, background_tasks: BackgroundTasks, user: Optional[User] = Depends(get_current_user_optional)):
-    """Creates a new novel and initiates world/matrix building in the background."""
+async def create_novel(req: CreateNovelRequest, background_tasks: BackgroundTasks, user: User = Depends(get_current_user)):
+    """Creates a new novel tied to the authenticated user and initiates world/matrix building in the background."""
     novel_id = f"novel_{uuid.uuid4().hex[:8]}"
     now = datetime.now(timezone.utc).isoformat()
-    owner_id = user.id if user else req.owner_id
-    owner_name = (user.full_name or user.username) if user else req.owner_name
+    owner_id = user.id
+    owner_name = user.full_name or user.username
 
     chars = []
     if req.characters:
@@ -240,24 +257,23 @@ async def create_novel(req: CreateNovelRequest, background_tasks: BackgroundTask
     return blueprint
 
 @router.get("/{novel_id}", response_model=StoryBlueprint)
-async def get_novel(novel_id: str):
-    """Retrieve full novel blueprint, cast, world, and settings."""
-    bp = store.get_blueprint(novel_id)
-    if not bp:
-        raise HTTPException(status_code=404, detail="Novel not found")
-    return bp
+async def get_novel(novel_id: str, user: Optional[User] = Depends(get_current_user_optional)):
+    """Retrieve full novel blueprint, cast, world, and settings (author or admin only)."""
+    return check_novel_access(novel_id, user)
 
 @router.get("/{novel_id}/matrix")
-async def get_novel_matrix(novel_id: str):
-    """Retrieve the Character x Episode Story Matrix."""
+async def get_novel_matrix(novel_id: str, user: Optional[User] = Depends(get_current_user_optional)):
+    """Retrieve the Character x Episode Story Matrix (author or admin only)."""
+    check_novel_access(novel_id, user)
     m = store.get_matrix(novel_id)
     if not m:
         return Response(content="{}", media_type="application/json")
     return m
 
 @router.get("/{novel_id}/memory")
-async def get_novel_memory(novel_id: str):
-    """Retrieve the continuous Story Memory."""
+async def get_novel_memory(novel_id: str, user: Optional[User] = Depends(get_current_user_optional)):
+    """Retrieve the continuous Story Memory (author or admin only)."""
+    check_novel_access(novel_id, user)
     mem = store.get_memory(novel_id)
     if not mem:
         return Response(content="{}", media_type="application/json")
@@ -266,14 +282,7 @@ async def get_novel_memory(novel_id: str):
 @router.delete("/{novel_id}")
 async def delete_novel(novel_id: str, current_user: User = Depends(get_current_user)):
     """Delete a novel permanently (author or admin only)."""
-    bp = store.get_blueprint(novel_id)
-    if not bp:
-        raise HTTPException(status_code=404, detail="Novel not found")
-
-    owner_id = getattr(bp, "owner_id", None) or getattr(bp, "user_id", None)
-    if owner_id and owner_id != current_user.id and current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="You do not have permission to delete this novel.")
-
+    check_novel_access(novel_id, current_user)
     success = store.delete_novel(novel_id)
     if not success:
         raise HTTPException(status_code=404, detail="Novel not found")
@@ -282,30 +291,22 @@ async def delete_novel(novel_id: str, current_user: User = Depends(get_current_u
 @router.patch("/{novel_id}/rename", response_model=StoryBlueprint)
 async def rename_novel(novel_id: str, req: RenameRequest, current_user: User = Depends(get_current_user)):
     """Rename a novel (author or admin only)."""
-    bp = store.get_blueprint(novel_id)
-    if not bp:
-        raise HTTPException(status_code=404, detail="Novel not found")
-
-    owner_id = getattr(bp, "owner_id", None) or getattr(bp, "user_id", None)
-    if owner_id and owner_id != current_user.id and current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="You do not have permission to rename this novel.")
-
+    check_novel_access(novel_id, current_user)
     updated = store.rename_novel(novel_id, req.title)
     if not updated:
         raise HTTPException(status_code=404, detail="Novel not found")
     return updated
 
 @router.get("/{novel_id}/progress", response_model=GenerationProgress)
-async def get_progress(novel_id: str):
-    """Get live generation step progress."""
+async def get_progress(novel_id: str, user: Optional[User] = Depends(get_current_user_optional)):
+    """Get live generation step progress (author or admin only)."""
+    check_novel_access(novel_id, user)
     return store.get_progress(novel_id)
 
 @router.post("/{novel_id}/auto-continue")
-async def toggle_auto_continue(novel_id: str, req: SetAutoContinueRequest):
-    """Toggle auto-continue mode."""
-    bp = store.get_blueprint(novel_id)
-    if not bp:
-        raise HTTPException(status_code=404, detail="Novel not found")
+async def toggle_auto_continue(novel_id: str, req: SetAutoContinueRequest, user: User = Depends(get_current_user)):
+    """Toggle auto-continue mode (author or admin only)."""
+    bp = check_novel_access(novel_id, user)
     bp.auto_continue = req.auto_continue
     store.save_blueprint(bp)
 
@@ -316,11 +317,9 @@ async def toggle_auto_continue(novel_id: str, req: SetAutoContinueRequest):
     return {"auto_continue": bp.auto_continue}
 
 @router.post("/{novel_id}/write-next")
-async def write_next_episode(novel_id: str):
-    """Manually trigger generation of the next episode."""
-    bp = store.get_blueprint(novel_id)
-    if not bp:
-        raise HTTPException(status_code=404, detail="Novel not found")
+async def write_next_episode(novel_id: str, user: User = Depends(get_current_user)):
+    """Manually trigger generation of the next episode (author or admin only)."""
+    bp = check_novel_access(novel_id, user)
     
     written = len(store.list_episodes(novel_id))
     next_ep = written + 1
@@ -332,30 +331,32 @@ async def write_next_episode(novel_id: str):
     return {"message": f"Writing of Chapter {next_ep} initiated in background"}
 
 @router.get("/{novel_id}/episodes", response_model=List[EpisodeSummary])
-async def list_episodes(novel_id: str):
-    """List written episodes for a novel."""
+async def list_episodes(novel_id: str, user: Optional[User] = Depends(get_current_user_optional)):
+    """List written episodes for a novel (author or admin only)."""
+    check_novel_access(novel_id, user)
     return store.list_episodes(novel_id)
 
 @router.get("/{novel_id}/episodes/{episode_number}", response_model=EpisodeResponse)
-async def get_episode(novel_id: str, episode_number: int):
-    """Retrieve full text and behind-the-scenes actor data of a specific episode."""
+async def get_episode(novel_id: str, episode_number: int, user: Optional[User] = Depends(get_current_user_optional)):
+    """Retrieve full text and behind-the-scenes actor data of a specific episode (author or admin only)."""
+    check_novel_access(novel_id, user)
     ep = store.get_episode(novel_id, episode_number)
     if not ep:
         raise HTTPException(status_code=404, detail="Episode not found")
     return ep
 
 @router.get("/{novel_id}/episodes/{episode_number}/image")
-async def get_episode_image(novel_id: str, episode_number: int):
-    """Serve the chapter illustration or dynamically generate it on demand."""
+async def get_episode_image(novel_id: str, episode_number: int, user: Optional[User] = Depends(get_current_user_optional)):
+    """Serve the chapter illustration or dynamically generate it on demand (author or admin only)."""
+    bp = check_novel_access(novel_id, user)
     img_data = store.get_episode_image(novel_id, episode_number)
     if img_data:
         data, mime_type = img_data
         return Response(content=data, media_type=mime_type, headers={"Cache-Control": "public, max-age=86400"})
 
     # Auto-generate if missing and episode exists
-    bp = store.get_blueprint(novel_id)
     ep = store.get_episode(novel_id, episode_number)
-    if not bp or not ep:
+    if not ep:
         raise HTTPException(status_code=404, detail="Episode or novel not found")
 
     data, mime_type, prompt = await chapter_image_client.generate(bp, ep)
@@ -367,11 +368,11 @@ async def get_episode_image(novel_id: str, episode_number: int):
     return Response(content=data, media_type=mime_type, headers={"Cache-Control": "public, max-age=86400"})
 
 @router.post("/{novel_id}/episodes/{episode_number}/generate-image")
-async def generate_episode_image(novel_id: str, episode_number: int):
-    """Regenerate the chapter artwork based on current settings and episode content."""
-    bp = store.get_blueprint(novel_id)
+async def generate_episode_image(novel_id: str, episode_number: int, user: User = Depends(get_current_user)):
+    """Regenerate the chapter artwork based on current settings and episode content (author or admin only)."""
+    bp = check_novel_access(novel_id, user)
     ep = store.get_episode(novel_id, episode_number)
-    if not bp or not ep:
+    if not ep:
         raise HTTPException(status_code=404, detail="Episode or novel not found")
 
     data, mime_type, prompt = await chapter_image_client.generate(bp, ep)
