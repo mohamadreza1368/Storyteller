@@ -3,12 +3,13 @@ from app.models.blueprint import StoryBlueprint, PlotLine, ArcBeat
 from app.models.simulation import StoryMatrix, MatrixEvent
 from app.engine.llm_client import llm
 from app.engine.prompts import MATRIX_SYSTEM_PROMPT
-from app.engine.writing_craft import AVOID_AI_VOCABULARY_DIRECTIVES
+from app.engine.writing_craft import AVOID_AI_VOCABULARY_DIRECTIVES, build_narrative_style_brief
 
 async def execute_stage2(blueprint: StoryBlueprint) -> Tuple[StoryBlueprint, StoryMatrix]:
     """Stage 2: Weaves the Story Matrix (Character x Episode grid, plotlines, beats) in English."""
 
     char_names = [c.core.name for c in blueprint.cast.characters]
+    style_brief = build_narrative_style_brief(blueprint.style, blueprint.world)
     user_prompt = f"""
 Novel: "{blueprint.title}"
 Logline: {blueprint.logline}
@@ -18,6 +19,8 @@ Characters: {char_names}
 Total Chapters Planned: {blueprint.total_episodes} (Short Story / Novella Arc)
 Plot Structure: {blueprint.plot.structure}
 Ending Style: {blueprint.plot.resolution}
+
+{style_brief}
 
 STRICT NARRATIVE PACING DIRECTIVES:
 This story MUST be tightly constructed to conclude within exactly {blueprint.total_episodes} chapters.
