@@ -97,6 +97,8 @@ async def execute_stage4(
 
                     user_prompt = f"""Scene Context: "{scene.title}"
 Location: {scene.location_key} | Time: {scene.time_marker}
+Era / Setting: {blueprint.world.city} ({blueprint.world.era})
+Narrative Tone: {blueprint.style.tone} | Genre: {blueprint.style.genre}
 Scene Dramatic Goal: {scene.goal}
 Immediate Conflict: {scene.conflict}
 
@@ -105,7 +107,7 @@ Dialogue & Action History So Far:
 {last_exchange_directive}
 It is your turn, {char.core.name}. Express your physical action, spoken words, and secret internal thought.
 MANDATORY HUMAN SPEECH RULES:
-- Speak concisely and directly. No speeches, no artificial triads, no philosophical lectures.
+- Speak concisely and directly in accordance with the {blueprint.world.era} era and {blueprint.style.tone} tone. No speeches, no artificial triads, no philosophical lectures.
 - Never use "Not X, but Y" constructions or fake-deep aphorisms.
 {AVOID_AI_VOCABULARY_DIRECTIVES}
 Return strictly a JSON object matching this schema:

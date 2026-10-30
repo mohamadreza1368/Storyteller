@@ -4,7 +4,7 @@ from app.models.blueprint import StoryBlueprint
 from app.models.simulation import SceneRecord, StoryMemory
 from app.engine.llm_client import llm
 from app.engine.prompts import NARRATOR_SYSTEM_PROMPT
-from app.engine.writing_craft import audit_and_clean_prose
+from app.engine.writing_craft import audit_and_clean_prose, build_narrative_style_brief
 
 logger = logging.getLogger(__name__)
 
@@ -53,10 +53,10 @@ async def execute_stage5(
 
     prior_text = "\n".join(prior_summary_lines) if prior_summary_lines else "None (Opening Chapter of the Novel)."
 
+    style_brief = build_narrative_style_brief(blueprint.style, blueprint.world)
+
     sys_prompt = NARRATOR_SYSTEM_PROMPT.format(
-        prose_style=blueprint.style.prose_style,
-        tone=blueprint.style.tone,
-        perspective=blueprint.style.perspective
+        style_brief=style_brief
     )
 
     target_words = min(max(blueprint.words_per_episode or 1800, 1200), 2800)
@@ -75,12 +75,15 @@ Episode to Write: Chapter {episode_number} of {blueprint.total_episodes}
 Primary POV Character: {pov_char}
 Target Word Count: around {target_words} words of literary prose (STRICT MAX: 3,000 words)
 
+{style_brief}
+
 WHAT TRANSPIRED IN PRIOR CHAPTERS:
 {prior_text}
 
 CRITICAL CONTINUITY & CRAFT DIRECTIVES:
 - Do NOT rewrite or restart the beginning of the book. The previous chapters have already taken place.
 - Pick up the story directly from the staged scenes for Chapter {episode_number}.
+- Strictly execute the Prose Style, Genre rules, Tone, and Theme from the style brief above!
 - Fully dramatize EVERY scene below, weaving in the multi-agent spoken dialogue and physical staging.
 - STRICT LENGTH DIRECTIVE: Keep the chapter focused and impactful (around {target_words} words). Under no circumstances exceed 3,000 words.
 - STRICT ANTI-AI MANDATE: Zero tolerance for AI clichés (banned: delve, tapestry, testament, beacon, palpable, labyrinthine, dance of shadows). No "Not X, but Y" formulas, no dramatic one-line closers, no forced triads.
@@ -125,7 +128,7 @@ Format the final output strictly as:
                     f"By the following morning, the repercussions of yesterday had reached the back streets of the quarter. "
                     f"Inside {sc.location_key}, the cold had settled into the woodwork, and the silence carried a sharp, brittle edge. "
                     f"{sc.pov_character_key} checked the latch and turned to face the room. "
-                    f"The immediate obstacle—{sc.conflict.lower()}—demanded an answer before noon."
+                    f"The dilemma at hand demanded a decisive answer before noon."
                 )
             elif episode_number == 3 and s_idx == 0:
                 p_intro = (

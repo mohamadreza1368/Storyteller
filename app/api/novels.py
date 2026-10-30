@@ -250,7 +250,9 @@ async def create_novel(req: CreateNovelRequest, background_tasks: BackgroundTask
             prose_style=req.prose_style or ProseStyle.LITERARY.value,
             theme=req.theme or Theme.IDENTITY_BELONGING.value,
             tone=req.tone or Tone.BITTERSWEET.value,
-            perspective=req.perspective or Perspective.THIRD_PERSON_LIMITED.value
+            perspective=req.perspective or Perspective.THIRD_PERSON_LIMITED.value,
+            cultural_influences=req.cultural_influences or [],
+            thematic_dna=req.thematic_dna or []
         )
     )
 

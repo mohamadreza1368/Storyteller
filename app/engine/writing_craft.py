@@ -392,5 +392,243 @@ def get_skill_content(skill_id: str) -> Optional[str]:
             return skill_file.read_text(encoding="utf-8")
         except Exception:
             return None
+
+GENRE_CRAFT_GUIDANCE: Dict[str, str] = {
+    "Drama": "Focus on intricate interpersonal friction, moral compromises, domestic and professional stakes, understated human behavior, and simmering resentment rather than melodrama.",
+    "Mystery & Crime": "Enforce investigative vigilance, forensic and observational details, hidden alibis, guarded motives, false trails, and the psychological paranoia of guilt and deduction.",
+    "Romance": "Channel electrifying emotional proximity, subtextual glances, vulnerability versus defensiveness, physical proximity tensions, and the agonizing risk of intimacy.",
+    "Historical": "Imbue the narrative with period-accurate material culture (fabrics, heating methods, lighting, transportation, etiquette, speech registers) without dry exposition; make historical constraints feel living and oppressive.",
+    "Fantasy": "Ground magical or wondrous elements in physical weight, bodily exhaustion, and clear consequence; maintain mythic resonance with tactile realism (iron, ash, ancient stones, bloodlines).",
+    "Sci-Fi": "Highlight technological alienation, speculative ethical boundaries, systematic surveillance, cold machine interfaces, and existential vertigo against cosmic or digital scales.",
+    "Horror": "Cultivate creeping psychological dread, sensory distortions, claustrophobic containment, uncanny irregularities in the mundane, and visceral bodily vulnerability.",
+    "Adventure": "Drive propulsive momentum, physical peril, environmental hazards, high-stakes tactical decisions, and immediate physical endurance.",
+    "Social Drama": "Interweave class disparities, bureaucratic cruelty, reputation risk, institutional hypocrisy, and the struggle of individuals against crushing societal norms.",
+    "Magical Realism": "Treat inexplicable phenomena with matter-of-fact solemnity and emotional truth; let reality blur seamlessly into folklore, symbol, and heightened subjective experience."
+}
+
+PROSE_STYLE_GUIDANCE: Dict[str, str] = {
+    "Literary & Elegant": "Rich, evocative syntax with rhythmic cadences. Deep psychological interiority, multi-layered sensory observations, resonant metaphors, and elegant sentence architecture.",
+    "Clear & Fluent": "Transparent, propulsive prose. Clean active verbs, uncluttered syntax, effortless readability, and immediate immersion without unnecessary ornamentation.",
+    "Poetic & Vivid": "Sensory-dense, impressionistic imagery. Lyrical cadences, heightened focus on light, shadow, texture, and scent. Metaphors that surprise and linger.",
+    "Crisp & Minimalist": "Hemingway/Cormac McCarthy stripped-down discipline. Short, muscular declarative sentences. Hard physical nouns. Zero sentimentality. Iceberg theory: convey profound emotional devastation through bare physical actions.",
+    "Witty & Satirical": "Razor-sharp observational humor, dry cosmopolitan irony, acerbic social commentary, clever dialogue retorts, and satirical subtext puncturing pretensions.",
+    "Cold & Journalistic": "Clinical, unsparing objectivity. Dispassionate factual observation, forensic documentation of events, and chilling detachment that allows horrific or tragic events to speak for themselves without editorial tears.",
+    "Stream of Consciousness": "Fluid psychological permeability. Thoughts, sensory impressions, memory fragments, and immediate perceptions bleeding into one another with intimate associative momentum.",
+    "Epic & Grand": "Sweeping, monumental tone with mythic gravity. Cadenced rhetoric, vast spatial awareness, and a palpable sense of destiny, scale, and historic weight."
+}
+
+TONE_GUIDANCE: Dict[str, str] = {
+    "Dark & Gritty": "Bleak realism, harsh physical consequences, corrupt institutions, moral ambiguity, and an unvarnished view of human frailty.",
+    "Hopeful & Inspiring": "Resilience in adversity, quiet moments of human solidarity, hard-won epiphanies, and faith in human redemption despite overwhelming odds.",
+    "Bittersweet": "A profound melancholic grace; victories bought with permanent sacrifice; acute awareness that every forward step leaves something cherished behind.",
+    "Tense & Suspenseful": "White-knuckle pacing, heightened paranoia, ticking clocks, sensory hyper-awareness, and characters balancing on the edge of catastrophe.",
+    "Humorous & Witty": "Playful cynicism, wry timing, comedic misunderstanding, self-deprecating interiority, and sparkling verbal sparring.",
+    "Nostalgic & Melancholic": "A lingering ache for bygone days, faded elegance, autumn light, forgotten promises, and the quiet sorrow of time's irreversible passage.",
+    "Cold & Objective": "Detached, analytical, unemotional scrutiny; stark reporting of human transactions and unforgiving environments."
+}
+
+THEME_GUIDANCE: Dict[str, str] = {
+    "Love & Sacrifice": "Force characters to choose between personal survival and the welfare of another; examine the devastating price of devotion.",
+    "Power & Corruption": "Trace how authority, leverage, and desperation erode ethical convictions and reshape human relationships into transactional warfare.",
+    "Identity & Belonging": "Confront characters with displacement, cultural or social alienation, masks worn for survival, and the agonizing question of who they truly are.",
+    "Forgiveness & Redemption": "Explore the heavy baggage of past guilt, the impossibility of clean slates, and the agonizing moral labor required to earn forgiveness.",
+    "Revenge & Justice": "Contrast the hollow appetite for vengeance against the demanding pursuit of moral justice, measuring the collateral damage of retribution.",
+    "Freedom & Autonomy": "Pit characters against suffocating institutional, social, or familial cages, testing what they are willing to forfeit to achieve true self-determination.",
+    "Loneliness & Connection": "Dramatize the acute pain of emotional isolation and the fragile, terrifying vulnerability required to build genuine human bridges.",
+    "Truth & Deceit": "Showcase how convenient lies rot relationships from within, and how unvarnished truth detonates established lives.",
+    "Death & Legacy": "Examine the shadow of mortality, what remains behind after one is gone, and the struggle to leave a meaningful imprint.",
+    "War & Humanity": "Illuminate the brutal dehumanization of systemic conflict and the quiet, miraculous acts of decency that preserve the human soul."
+}
+
+def build_narrative_style_brief(style: Any, world: Any) -> str:
+    """
+    Synthesizes an exhaustive, unambiguous Narrative Style & Craft Brief from the blueprint's
+    genre, prose_style, tone, theme, and Qloo cultural influences.
+    Injected directly into LLM stages to ensure stories possess unmistakable voice, atmospheric depth,
+    and distinct personality.
+    """
+    genre_val = getattr(style, "genre", "Drama")
+    prose_val = getattr(style, "prose_style", "Literary & Elegant")
+    tone_val = getattr(style, "tone", "Bittersweet")
+    theme_val = getattr(style, "theme", "Identity & Belonging")
+    perspective_val = getattr(style, "perspective", "Third-Person Limited")
+    influences = getattr(style, "cultural_influences", []) or []
+    thematic_dna = getattr(style, "thematic_dna", []) or []
+
+    genre_rule = "Root conflicts in realistic human friction and high personal stakes."
+    for k, v in GENRE_CRAFT_GUIDANCE.items():
+        if k.lower() in genre_val.lower() or genre_val.lower() in k.lower():
+            genre_rule = v
+            break
+
+    prose_rule = "Maintain elegant, engaging sentence structure and sensory depth."
+    for k, v in PROSE_STYLE_GUIDANCE.items():
+        if k.lower() in prose_val.lower() or prose_val.lower() in k.lower():
+            prose_rule = v
+            break
+
+    tone_rule = "Infuse every passage with subtle emotional atmosphere."
+    for k, v in TONE_GUIDANCE.items():
+        if k.lower() in tone_val.lower() or tone_val.lower() in k.lower():
+            tone_rule = v
+            break
+
+    theme_rule = "Test the characters' deepest convictions through difficult choices."
+    for k, v in THEME_GUIDANCE.items():
+        if k.lower() in theme_val.lower() or theme_val.lower() in k.lower():
+            theme_rule = v
+            break
+
+    qloo_section = ""
+    if influences or thematic_dna:
+        aff_lines = []
+        if influences:
+            aff_lines.append(f"- Aesthetic Reference Works & Cultural Affinities: {', '.join(influences)}")
+        if thematic_dna:
+            aff_lines.append(f"- Taste DNA & Thematic Motifs: {', '.join(thematic_dna)}")
+        qloo_section = (
+            f"\nQLOO CULTURAL & TASTE INTELLIGENCE:\n"
+            + "\n".join(aff_lines)
+            + "\nInfuse the narrative atmosphere, character tastes, and aesthetic palette with the distinctive mood and sensibilities of these cultural touchstones."
+        )
+
+    brief = f"""==================================================
+NARRATIVE STYLE & AESTHETIC DIRECTIVES:
+- PRIMARY GENRE: "{genre_val}"
+  Craft Directive: {genre_rule}
+
+- PROSE STYLE & SYNTAX: "{prose_val}"
+  Diction Directive: {prose_rule}
+
+- NARRATIVE TONE & MOOD: "{tone_val}"
+  Atmospheric Directive: {tone_rule}
+
+- CENTRAL THEME: "{theme_val}"
+  Thematic Tension: {theme_rule}
+
+- NARRATIVE PERSPECTIVE: "{perspective_val}"
+  Psychic Distance: Stay strictly grounded inside the viewpoint of the POV character. Never head-hop or judge from an omniscient outside narrator.
+{qloo_section}
+=================================================="""
+    return brief
     return None
+
+GENRE_CRAFT_GUIDANCE: Dict[str, str] = {
+    "Drama": "Focus on intricate interpersonal friction, moral compromises, domestic and professional stakes, understated human behavior, and simmering resentment rather than melodrama.",
+    "Mystery & Crime": "Enforce investigative vigilance, forensic and observational details, hidden alibis, guarded motives, false trails, and the psychological paranoia of guilt and deduction.",
+    "Romance": "Channel electrifying emotional proximity, subtextual glances, vulnerability versus defensiveness, physical proximity tensions, and the agonizing risk of intimacy.",
+    "Historical": "Imbue the narrative with period-accurate material culture (fabrics, heating methods, lighting, transportation, etiquette, speech registers) without dry exposition; make historical constraints feel living and oppressive.",
+    "Fantasy": "Ground magical or wondrous elements in physical weight, bodily exhaustion, and clear consequence; maintain mythic resonance with tactile realism (iron, ash, ancient stones, bloodlines).",
+    "Sci-Fi": "Highlight technological alienation, speculative ethical boundaries, systematic surveillance, cold machine interfaces, and existential vertigo against cosmic or digital scales.",
+    "Horror": "Cultivate creeping psychological dread, sensory distortions, claustrophobic containment, uncanny irregularities in the mundane, and visceral bodily vulnerability.",
+    "Adventure": "Drive propulsive momentum, physical peril, environmental hazards, high-stakes tactical decisions, and immediate physical endurance.",
+    "Social Drama": "Interweave class disparities, bureaucratic cruelty, reputation risk, institutional hypocrisy, and the struggle of individuals against crushing societal norms.",
+    "Magical Realism": "Treat inexplicable phenomena with matter-of-fact solemnity and emotional truth; let reality blur seamlessly into folklore, symbol, and heightened subjective experience."
+}
+
+PROSE_STYLE_GUIDANCE: Dict[str, str] = {
+    "Literary & Elegant": "Rich, evocative syntax with rhythmic cadences. Deep psychological interiority, multi-layered sensory observations, resonant metaphors, and elegant sentence architecture.",
+    "Clear & Fluent": "Transparent, propulsive prose. Clean active verbs, uncluttered syntax, effortless readability, and immediate immersion without unnecessary ornamentation.",
+    "Poetic & Vivid": "Sensory-dense, impressionistic imagery. Lyrical cadences, heightened focus on light, shadow, texture, and scent. Metaphors that surprise and linger.",
+    "Crisp & Minimalist": "Hemingway/Cormac McCarthy stripped-down discipline. Short, muscular declarative sentences. Hard physical nouns. Zero sentimentality. Iceberg theory: convey profound emotional devastation through bare physical actions.",
+    "Witty & Satirical": "Razor-sharp observational humor, dry cosmopolitan irony, acerbic social commentary, clever dialogue retorts, and satirical subtext puncturing pretensions.",
+    "Cold & Journalistic": "Clinical, unsparing objectivity. Dispassionate factual observation, forensic documentation of events, and chilling detachment that allows horrific or tragic events to speak for themselves without editorial tears.",
+    "Stream of Consciousness": "Fluid psychological permeability. Thoughts, sensory impressions, memory fragments, and immediate perceptions bleeding into one another with intimate associative momentum.",
+    "Epic & Grand": "Sweeping, monumental tone with mythic gravity. Cadenced rhetoric, vast spatial awareness, and a palpable sense of destiny, scale, and historic weight."
+}
+
+TONE_GUIDANCE: Dict[str, str] = {
+    "Dark & Gritty": "Bleak realism, harsh physical consequences, corrupt institutions, moral ambiguity, and an unvarnished view of human frailty.",
+    "Hopeful & Inspiring": "Resilience in adversity, quiet moments of human solidarity, hard-won epiphanies, and faith in human redemption despite overwhelming odds.",
+    "Bittersweet": "A profound melancholic grace; victories bought with permanent sacrifice; acute awareness that every forward step leaves something cherished behind.",
+    "Tense & Suspenseful": "White-knuckle pacing, heightened paranoia, ticking clocks, sensory hyper-awareness, and characters balancing on the edge of catastrophe.",
+    "Humorous & Witty": "Playful cynicism, wry timing, comedic misunderstanding, self-deprecating interiority, and sparkling verbal sparring.",
+    "Nostalgic & Melancholic": "A lingering ache for bygone days, faded elegance, autumn light, forgotten promises, and the quiet sorrow of time's irreversible passage.",
+    "Cold & Objective": "Detached, analytical, unemotional scrutiny; stark reporting of human transactions and unforgiving environments."
+}
+
+THEME_GUIDANCE: Dict[str, str] = {
+    "Love & Sacrifice": "Force characters to choose between personal survival and the welfare of another; examine the devastating price of devotion.",
+    "Power & Corruption": "Trace how authority, leverage, and desperation erode ethical convictions and reshape human relationships into transactional warfare.",
+    "Identity & Belonging": "Confront characters with displacement, cultural or social alienation, masks worn for survival, and the agonizing question of who they truly are.",
+    "Forgiveness & Redemption": "Explore the heavy baggage of past guilt, the impossibility of clean slates, and the agonizing moral labor required to earn forgiveness.",
+    "Revenge & Justice": "Contrast the hollow appetite for vengeance against the demanding pursuit of moral justice, measuring the collateral damage of retribution.",
+    "Freedom & Autonomy": "Pit characters against suffocating institutional, social, or familial cages, testing what they are willing to forfeit to achieve true self-determination.",
+    "Loneliness & Connection": "Dramatize the acute pain of emotional isolation and the fragile, terrifying vulnerability required to build genuine human bridges.",
+    "Truth & Deceit": "Showcase how convenient lies rot relationships from within, and how unvarnished truth detonates established lives.",
+    "Death & Legacy": "Examine the shadow of mortality, what remains behind after one is gone, and the struggle to leave a meaningful imprint.",
+    "War & Humanity": "Illuminate the brutal dehumanization of systemic conflict and the quiet, miraculous acts of decency that preserve the human soul."
+}
+
+def build_narrative_style_brief(style: Any, world: Any) -> str:
+    """
+    Synthesizes an exhaustive, unambiguous Narrative Style & Craft Brief from the blueprint's
+    genre, prose_style, tone, theme, and Qloo cultural influences.
+    Injected directly into LLM stages to ensure stories possess unmistakable voice, atmospheric depth,
+    and distinct personality.
+    """
+    genre_val = getattr(style, "genre", "Drama")
+    prose_val = getattr(style, "prose_style", "Literary & Elegant")
+    tone_val = getattr(style, "tone", "Bittersweet")
+    theme_val = getattr(style, "theme", "Identity & Belonging")
+    perspective_val = getattr(style, "perspective", "Third-Person Limited")
+    influences = getattr(style, "cultural_influences", []) or []
+    thematic_dna = getattr(style, "thematic_dna", []) or []
+
+    genre_rule = "Root conflicts in realistic human friction and high personal stakes."
+    for k, v in GENRE_CRAFT_GUIDANCE.items():
+        if k.lower() in genre_val.lower() or genre_val.lower() in k.lower():
+            genre_rule = v
+            break
+
+    prose_rule = "Maintain elegant, engaging sentence structure and sensory depth."
+    for k, v in PROSE_STYLE_GUIDANCE.items():
+        if k.lower() in prose_val.lower() or prose_val.lower() in k.lower():
+            prose_rule = v
+            break
+
+    tone_rule = "Infuse every passage with subtle emotional atmosphere."
+    for k, v in TONE_GUIDANCE.items():
+        if k.lower() in tone_val.lower() or tone_val.lower() in k.lower():
+            tone_rule = v
+            break
+
+    theme_rule = "Test the characters' deepest convictions through difficult choices."
+    for k, v in THEME_GUIDANCE.items():
+        if k.lower() in theme_val.lower() or theme_val.lower() in k.lower():
+            theme_rule = v
+            break
+
+    qloo_section = ""
+    if influences or thematic_dna:
+        aff_lines = []
+        if influences:
+            aff_lines.append(f"- Aesthetic Reference Works & Cultural Affinities: {', '.join(influences)}")
+        if thematic_dna:
+            aff_lines.append(f"- Taste DNA & Thematic Motifs: {', '.join(thematic_dna)}")
+        qloo_section = (
+            f"\nQLOO CULTURAL & TASTE INTELLIGENCE:\n"
+            + "\n".join(aff_lines)
+            + "\nInfuse the narrative atmosphere, character tastes, and aesthetic palette with the distinctive mood and sensibilities of these cultural touchstones."
+        )
+
+    brief = f"""==================================================
+NARRATIVE STYLE & AESTHETIC DIRECTIVES:
+- PRIMARY GENRE: "{genre_val}"
+  Craft Directive: {genre_rule}
+
+- PROSE STYLE & SYNTAX: "{prose_val}"
+  Diction Directive: {prose_rule}
+
+- NARRATIVE TONE & MOOD: "{tone_val}"
+  Atmospheric Directive: {tone_rule}
+
+- CENTRAL THEME: "{theme_val}"
+  Thematic Tension: {theme_rule}
+
+- NARRATIVE PERSPECTIVE: "{perspective_val}"
+  Psychic Distance: Stay strictly grounded inside the viewpoint of the POV character. Never head-hop or judge from an omniscient outside narrator.
+{qloo_section}
+=================================================="""
+    return brief
 

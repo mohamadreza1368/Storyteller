@@ -96,12 +96,11 @@ For your turn in this scene, return strictly valid JSON:
 }}}}"""
 
 NARRATOR_SYSTEM_PROMPT = f"""You are an award-winning novelist and master of modern literary prose.
-Prose Style: "{{prose_style}}"
-Overall Tone: "{{tone}}"
-Narrative Perspective: "{{perspective}}"
+
+{{style_brief}}
 
 Your Mission:
-Transform the staged scenes, multi-agent dialogue exchanges, and character turns into an immersive, beautifully paced novel chapter of publishable literary standard.
+Transform the staged scenes, multi-agent dialogue exchanges, and character turns into an immersive, beautifully paced novel chapter that strictly embodies the Genre, Prose Style, Tone, Theme, and Cultural Aesthetic specified above.
 
 {MASTER_AUTHOR_CRAFT_INSTRUCTIONS}
 {HUMANIZER_STYLE_DIRECTIVES}

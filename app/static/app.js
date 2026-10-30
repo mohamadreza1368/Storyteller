@@ -5,6 +5,8 @@ let currentEpisodeNumber = null;
 let currentEpisodeData = null;
 let readerFontSize = 1.25;
 let progressPollTimer = null;
+let currentWizardCulturalInfluences = [];
+let currentWizardThematicDna = [];
 
 // Authentication & Admin State
 let currentUser = null;
@@ -396,6 +398,10 @@ function startNewNovel() {
         openAuthModal("login");
         return;
     }
+    currentWizardCulturalInfluences = [];
+    currentWizardThematicDna = [];
+    const qlooBox = document.getElementById("wizQlooContextContainer");
+    if (qlooBox) qlooBox.style.display = "none";
     setWizardStep(1);
     // Prefill Qloo cultural preferences if the author configured them
     if (currentUser) {
@@ -599,6 +605,8 @@ async function submitCreateNovel() {
         perspective: perspective,
         ending: ending,
         auto_continue: auto_continue,
+        cultural_influences: currentWizardCulturalInfluences,
+        thematic_dna: currentWizardThematicDna,
         start_now: true
     };
 
@@ -2596,6 +2604,25 @@ function renderQlooScenarios(scenarios, queueMessage) {
 function applyQlooScenarioIndex(index) {
     if (!currentQlooScenarios || !currentQlooScenarios[index]) return;
     const sc = currentQlooScenarios[index];
+
+    currentWizardCulturalInfluences = sc.cultural_affinities || [];
+    currentWizardThematicDna = sc.thematic_dna || [];
+
+    const qlooBox = document.getElementById("wizQlooContextContainer");
+    const badgesBox = document.getElementById("wizQlooAffinitiesBadges");
+    if (qlooBox && badgesBox) {
+        if (currentWizardCulturalInfluences.length || currentWizardThematicDna.length) {
+            const allItems = [...currentWizardCulturalInfluences, ...currentWizardThematicDna];
+            badgesBox.innerHTML = allItems.map(item => `
+                <span class="badge" style="background: rgba(99, 102, 241, 0.15); color: var(--accent); padding: 4px 8px; border-radius: 4px; font-weight: 500;">
+                    ${escapeHtml(item)}
+                </span>
+            `).join("");
+            qlooBox.style.display = "block";
+        } else {
+            qlooBox.style.display = "none";
+        }
+    }
 
     // Populate Wizard inputs
     const elTitle = document.getElementById("wizTitle");

@@ -10,7 +10,8 @@ from app.engine.prompts import WORLD_CAST_SYSTEM_PROMPT
 from app.engine.writing_craft import (
     CHARACTER_HUMAN_DIALOGUE_DIRECTIVES,
     AVOID_AI_VOCABULARY_DIRECTIVES,
-    get_character_persona_texture
+    get_character_persona_texture,
+    build_narrative_style_brief
 )
 
 def build_character_system_prompt(char: Character, world: WorldSettings) -> str:
@@ -85,13 +86,14 @@ async def execute_stage1(blueprint: StoryBlueprint) -> StoryBlueprint:
         )
     locs_text = "\n".join(locs_seed_desc) if locs_seed_desc else "None provided (synthesize 2 to 4 atmospheric locations)."
 
+    style_brief = build_narrative_style_brief(blueprint.style, blueprint.world)
+
     user_prompt = f"""
 Novel Title: {blueprint.title}
 Core Premise: {blueprint.premise or 'An unfolding dramatic narrative in ' + blueprint.world.city}
-Genre: {blueprint.style.genre}
-Theme: {blueprint.style.theme}
-Tone: {blueprint.style.tone}
 World Setting: {blueprint.world.city}, {blueprint.world.country} (Year / Era: {blueprint.world.era})
+
+{style_brief}
 
 SPECIFIED CHARACTERS:
 {chars_text}
@@ -102,8 +104,8 @@ SPECIFIED LOCATIONS:
 MANDATORY SPECIFICATION DIRECTIVES:
 1. YOU MUST PRESERVE AND ELABORATE UPON EVERY SINGLE CHARACTER LISTED ABOVE (both Main and Supporting!). Do NOT omit any character, do NOT rename them, and preserve their exact role (Main or Supporting).
 2. YOU MUST PRESERVE AND ELABORATE UPON EVERY LOCATION LISTED ABOVE.
-3. The narrative, logline, synopsis, and opening hook MUST be deeply rooted in {blueprint.world.city} during the {blueprint.world.era} era.
-4. Qloo Cultural Intelligence: enrich characters with distinctive intellectual and artistic tastes, and imbue locations with visceral sensory textures (scents, architectural acoustics, lighting).
+3. The narrative, logline, synopsis, and opening hook MUST be deeply rooted in {blueprint.world.city} during the {blueprint.world.era} era, and vigorously reflect the PRIMARY GENRE, TONE, and CENTRAL THEME specified in the style brief.
+4. Qloo Cultural Intelligence: enrich characters with distinctive intellectual and artistic tastes, and imbue locations with visceral sensory textures (scents, architectural acoustics, lighting) informed by the reference touchstones.
 
 Return ONLY a valid JSON object matching this schema:
 {{

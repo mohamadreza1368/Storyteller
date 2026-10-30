@@ -81,6 +81,8 @@ class StoryScenario(BaseModel):
     protagonist_archetype: str = Field(..., description="Character archetype")
     conflict: str = Field(..., description="Core internal and external conflict")
     inspirations_summary: str = Field("", description="How user tastes and cultural affinities inspired this premise")
+    cultural_affinities: List[str] = Field(default_factory=list, description="Specific cultural works influencing this scenario")
+    thematic_dna: List[str] = Field(default_factory=list, description="Aesthetic themes and motifs")
 
 class QlooClient:
     """
@@ -735,7 +737,9 @@ Please generate the 3 distinct, irresistible novel scenarios tailored to these i
                 protagonist_role=s.get("protagonist_role") or "Archival Researcher",
                 protagonist_archetype=s.get("protagonist_archetype") or "Reluctant Truth-Seeker",
                 conflict=s.get("conflict") or "Obsession with historical truth against the safety of those he protects.",
-                inspirations_summary=s.get("inspirations_summary") or "Synthesized from literary and atmospheric cultural affinities."
+                inspirations_summary=s.get("inspirations_summary") or "Synthesized from literary and atmospheric cultural affinities.",
+                cultural_affinities=[f"{item.title} ({item.category})" for item in affinities],
+                thematic_dna=[item.affinity_reason for item in affinities[:3]]
             ))
 
         if len(scenarios) == 3:

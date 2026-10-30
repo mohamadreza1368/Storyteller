@@ -3,7 +3,7 @@ from app.models.blueprint import StoryBlueprint
 from app.models.simulation import SceneRecord, StoryMemory, StoryMatrix
 from app.engine.llm_client import llm
 from app.engine.prompts import SCENE_DIRECTOR_SYSTEM_PROMPT
-from app.engine.writing_craft import AVOID_AI_VOCABULARY_DIRECTIVES
+from app.engine.writing_craft import AVOID_AI_VOCABULARY_DIRECTIVES, build_narrative_style_brief
 
 async def execute_stage3(
     blueprint: StoryBlueprint,
@@ -61,12 +61,16 @@ async def execute_stage3(
         "deliver the climax, and bring the narrative to a complete, definitive resolution."
     ) if is_final_chapter else ""
 
+    style_brief = build_narrative_style_brief(blueprint.style, blueprint.world)
+
     user_prompt = f"""
 Novel: "{blueprint.title}"
 Current Chapter to Direct: Episode {episode_number} of {blueprint.total_episodes}
 Planned Event for this Episode: "{event_title}"
 Event Overview: {event_desc}
 Character Objectives for Chapter {episode_number}:{char_goals_text or ' Drive their individual arcs forward.'}
+
+{style_brief}
 
 NARRATIVE CONTINUITY & WHAT ALREADY HAPPENED:
 {prior_summary_block}
@@ -79,6 +83,9 @@ CRITICAL DIRECTORIAL MANDATE:
 - You are directing CHAPTER {episode_number}. The events of preceding chapters have ALREADY OCCURRED.
 - DO NOT REPEAT, restart, or rehash earlier scenes. The characters must be in new locations, facing escalating complications and new dilemmas.
 - Block 2 to 3 dynamic, distinct scenes that push the story forward from the end of Chapter {episode_number - 1} into Chapter {episode_number}.{final_mandate}
+- Strictly embody the PRIMARY GENRE, TONE, and THEME in the scene blocking, obstacles, and sensory setting.
+- If Genre is Mystery & Crime, focus scenes on clues, interrogation, evasion, or revelation; if Horror, build creeping dread and bodily peril; if Romance, engineer intimate emotional proximity and friction; if Drama, expose moral compromises.
+- Infuse scenes with the atmospheric DNA of the Qloo cultural reference works.
 - Apply Master Author Scene Craft: ground each scene in physical, tactile reality (weather, sound, objects).
 - Avoid generic AI obstacles or philosophical summaries. Ensure conflict is immediate and personal.
 {AVOID_AI_VOCABULARY_DIRECTIVES}
@@ -141,6 +148,23 @@ Return strictly a JSON object matching this schema:
                 ]
             }
         elif episode_number < blueprint.total_episodes:
+            genre_l = (blueprint.style.genre or "").lower()
+            if "mystery" in genre_l or "crime" in genre_l:
+                dyn_conflict_1 = f"A tampered ledger and hostile scrutiny at {loc1} threatens to expose {c2}'s discreet inquiries"
+                dyn_conflict_2 = f"A missing key witness and conflicting testimonies cast suspicion directly onto {c1}"
+            elif "horror" in genre_l:
+                dyn_conflict_1 = f"Unsettling physical anomalies and an unnatural chill at {loc1} trap {c2} in rising claustrophobia"
+                dyn_conflict_2 = f"A sudden blackout and approaching footsteps at {loc2} force {c1} to abandon cover"
+            elif "romance" in genre_l:
+                dyn_conflict_1 = f"Guarded defenses clash with irresistible proximity at {loc1}, threatening mutual composure"
+                dyn_conflict_2 = f"A revelation regarding past family obligations threatens the fragile intimacy between {c1} and {c2}"
+            elif "sci" in genre_l:
+                dyn_conflict_1 = f"Corrupted telemetry and automated surveillance drones converge on {loc1}"
+                dyn_conflict_2 = f"A containment breach at {loc2} compromises critical terminal access"
+            else:
+                dyn_conflict_1 = f"Escalating pressure from municipal rivals at {loc1} narrows {c2}'s room to negotiate"
+                dyn_conflict_2 = f"Buried secrets between {c1} and {c2} threaten to shatter their mutual pact"
+
             return {
                 "scenes": [
                     {
@@ -151,7 +175,7 @@ Return strictly a JSON object matching this schema:
                         "pov_character": c2,
                         "present_characters": [c1, c2],
                         "goal": f"Pursue key clues tied to the crisis in {blueprint.world.city}",
-                        "conflict": "An opposing force or unexpected obstacle threatens to derail their plans",
+                        "conflict": dyn_conflict_1,
                         "resolution": "A narrow breakthrough reveals deeper ramifications affecting both characters"
                     },
                     {
@@ -162,7 +186,7 @@ Return strictly a JSON object matching this schema:
                         "pov_character": c1,
                         "present_characters": [c1, c2],
                         "goal": "Confront the immediate consequences of their earlier discovery",
-                        "conflict": "Secrets between the characters threaten to shatter their mutual cooperation",
+                        "conflict": dyn_conflict_2,
                         "resolution": "They reach a critical turning point where neither can turn back"
                     }
                 ]

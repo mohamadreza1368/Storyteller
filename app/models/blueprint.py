@@ -61,6 +61,8 @@ class StyleSettings(BaseModel):
     perspective: str = Field(Perspective.THIRD_PERSON_LIMITED.value, description="Narrative point of view")
     theme: str = Field(Theme.IDENTITY_BELONGING.value, description="Core thematic question")
     genre: str = Field(Genre.DRAMA.value, description="Novel genre")
+    cultural_influences: List[str] = Field(default_factory=list, description="Qloo cultural touchstones, reference works, films, and books")
+    thematic_dna: List[str] = Field(default_factory=list, description="Aesthetic and thematic motifs discovered via taste intelligence")
 
 class StoryBlueprint(BaseModel):
     novel_id: str
@@ -106,6 +108,8 @@ class CreateNovelRequest(BaseModel):
     perspective: Optional[str] = Perspective.THIRD_PERSON_LIMITED.value
     ending: Optional[str] = EndingType.SURPRISING.value
     auto_continue: Optional[bool] = False
+    cultural_influences: Optional[List[str]] = None
+    thematic_dna: Optional[List[str]] = None
     start_now: Optional[bool] = True
     owner_id: Optional[str] = None
     owner_name: Optional[str] = None
