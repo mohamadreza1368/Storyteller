@@ -249,10 +249,12 @@ class LLMClient:
 
         except Exception as e:
             logger.error(f"LLM Error ({self.provider}): {e}")
-            if fallback_generator:
-                res = await _invoke_fallback(fallback_generator)
-                if isinstance(res, dict):
-                    return res
+            # Only use fallback generator if explicitly in test mode or running offline simulator
+            if os.environ.get("STORYTELLER_TEST_MODE") == "1" or self.provider == "mock":
+                if fallback_generator:
+                    res = await _invoke_fallback(fallback_generator)
+                    if isinstance(res, dict):
+                        return res
             raise e
 
     async def generate_text(self, system_prompt: str, user_prompt: str, fallback_generator=None) -> str:
@@ -298,10 +300,12 @@ class LLMClient:
 
         except Exception as e:
             logger.error(f"LLM Error ({self.provider}): {e}")
-            if fallback_generator:
-                res = await _invoke_fallback(fallback_generator)
-                if res is not None:
-                    return str(res)
+            # Only use fallback generator if explicitly in test mode or running offline simulator
+            if os.environ.get("STORYTELLER_TEST_MODE") == "1" or self.provider == "mock":
+                if fallback_generator:
+                    res = await _invoke_fallback(fallback_generator)
+                    if res is not None:
+                        return str(res)
             raise e
 
     async def generate(self, prompt: str, system_prompt: str = "", temperature: float = 0.7, max_tokens: int = 1500) -> str:

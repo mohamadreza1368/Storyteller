@@ -117,6 +117,7 @@ class Database:
                     pov_character TEXT,
                     image_url TEXT,
                     created_at_utc TEXT NOT NULL,
+                    scenes_json TEXT,
                     PRIMARY KEY (novel_id, episode_number)
                 );
                 CREATE INDEX IF NOT EXISTS idx_episodes_novel ON episodes(novel_id, episode_number);
@@ -151,6 +152,11 @@ class Database:
             """)
 
             # Automatic column migration for existing user databases
+            try:
+                conn.execute("ALTER TABLE episodes ADD COLUMN scenes_json TEXT;")
+            except sqlite3.OperationalError:
+                pass
+
             for col_name, col_type, default_val in [
                 ("favorite_books_json", "TEXT", "'[]'"),
                 ("favorite_movies_json", "TEXT", "'[]'"),

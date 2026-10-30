@@ -148,24 +148,23 @@ Format the final output strictly as:
             # Dramatize the conflict and staged turns
             if sc.turns:
                 for t in sc.turns:
-                    p_turn = (
-                        f"{t.action} "
-                        f"When words came, they cut straight through the pause: \"{t.dialogue}\" "
-                        f"{t.character_key} studied the reaction closely, keeping the real concern hidden: {t.thought.lower()} "
-                        f"The mood settled into {t.emotion.lower()}, leaving little room for polite evasion."
-                    )
+                    if t.dialogue:
+                        thought_clause = f" Underneath, the unspoken concern remained steady: {t.thought.lower()}." if t.thought else ""
+                        p_turn = f"{t.action} \"{t.dialogue}\"{thought_clause}"
+                    else:
+                        p_turn = f"{t.action} The silence was deliberate, anchored in a quiet resolve."
                     scene_paragraphs.append(p_turn)
             else:
                 p_solo = (
-                    f"{sc.pov_character_key} moved across {sc.location_key}, checking the locks and the floorboards beneath the rug. "
-                    f"The obstacle was immediate: {sc.conflict}. Waiting would only give the others time to consolidate their hold."
+                    f"{sc.pov_character_key} examined the perimeter of {sc.location_key}. "
+                    f"Every detail confirmed the initial assessment: {sc.conflict}. "
+                    f"Hesitation was no longer an option."
                 )
                 scene_paragraphs.append(p_solo)
 
-            # Scene resolution paragraph without melodramatic clichés
             p_res = (
-                f"With the first confrontation spent, the immediate focus shifted. {sc.resolution} "
-                f"{sc.pov_character_key} turned back toward the window, recognizing that the terms of the encounter had changed for good."
+                f"As the encounter settled, the path forward became clear. {sc.resolution}. "
+                f"{sc.pov_character_key} stepped back from the table, understanding that the encounter had permanently shifted the stakes."
             )
             scene_paragraphs.append(p_res)
 

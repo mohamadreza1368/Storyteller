@@ -6,7 +6,7 @@ from typing import List, Optional, Tuple
 from datetime import datetime, timezone
 from app.config import settings
 from app.models.blueprint import StoryBlueprint, NovelSummary
-from app.models.simulation import StoryMatrix, StoryMemory
+from app.models.simulation import StoryMatrix, StoryMemory, SceneRecord
 from app.models.episode import EpisodeResponse, GenerationProgress, EpisodeSummary
 from app.models.enums import NovelStatus
 from app.storage.database import db
@@ -324,14 +324,15 @@ class StorageManager:
     def save_episode(self, ep: EpisodeResponse):
         now = datetime.now(timezone.utc).isoformat()
         ep.created_at_utc = now
+        scenes_json_str = json.dumps([s.model_dump() for s in (ep.scenes or [])])
         with db.get_connection() as conn:
             conn.execute("""
                 INSERT OR REPLACE INTO episodes 
-                (novel_id, episode_number, title, summary, content, word_count, pov_character, image_url, created_at_utc)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (novel_id, episode_number, title, summary, content, word_count, pov_character, image_url, created_at_utc, scenes_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 ep.novel_id, ep.episode_number, ep.title, ep.summary, ep.content,
-                ep.word_count, ep.pov_character, ep.image_url, now
+                ep.word_count, ep.pov_character, ep.image_url, now, scenes_json_str
             ))
 
     def get_episode(self, novel_id: str, episode_number: int) -> Optional[EpisodeResponse]:
@@ -341,6 +342,14 @@ class StorageManager:
             """, (novel_id, episode_number))
             row = cursor.fetchone()
             if row:
+                scenes_list = []
+                if "scenes_json" in row.keys() and row["scenes_json"]:
+                    try:
+                        raw_s = json.loads(row["scenes_json"])
+                        scenes_list = [SceneRecord(**s) for s in raw_s]
+                    except Exception as e:
+                        logger.warning(f"Failed to parse scenes_json: {e}")
+
                 return EpisodeResponse(
                     novel_id=row["novel_id"],
                     episode_number=row["episode_number"],
@@ -350,7 +359,8 @@ class StorageManager:
                     word_count=row["word_count"],
                     pov_character=row["pov_character"] or "Narrator",
                     image_url=row["image_url"],
-                    created_at_utc=row["created_at_utc"]
+                    created_at_utc=row["created_at_utc"],
+                    scenes=scenes_list
                 )
         return None
 

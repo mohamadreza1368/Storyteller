@@ -9,6 +9,8 @@ from app.models.blueprint import CreateNovelRequest
 from app.storage.store import store
 from app.api.novels import create_novel
 from app.engine.pipeline import initialize_novel, generate_single_episode
+from app.engine.llm_client import llm
+llm.provider = "mock"
 from fastapi import BackgroundTasks
 
 async def test_full_pipeline():

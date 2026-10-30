@@ -39,24 +39,53 @@ async def execute_stage4(
         for round_idx in range(rounds):
             for char in present_chars:
                 async def fallback_turn(c=char, r=round_idx, sc=scene, hist=scene_history):
-                    other_name = [p.core.name for p in present_chars if p.core.name != c.core.name]
-                    target_name = other_name[0] if other_name else "the room"
-                    if r == 0:
-                        return {
-                            "action": f"{c.core.name} set a hand against the doorframe at {sc.location_key}, watching {target_name} closely.",
-                            "dialogue": f"Keep your voice down, {target_name}. If they find out what happened with {sc.goal.lower()}, we will not get another chance.",
-                            "thought": f"I need to secure {c.motivation.want or 'my objective'} before anyone realizes what is missing.",
-                            "emotion": "Guarded and alert",
-                            "knowledge_gain": f"Identified immediate risk from {sc.conflict}."
-                        }
+                    other_names = [p.core.name for p in present_chars if p.core.name != c.core.name]
+                    target_name = other_names[0] if other_names else None
+                    is_lead = (c.core.name == sc.pov_character_key)
+                    loc = sc.location_key or "the room"
+
+                    if target_name:
+                        if r == 0:
+                            if is_lead:
+                                action = f"{c.core.name} glanced toward the street before stepping further into {loc}."
+                                dialogue = f"{target_name}, close the blinds. We cannot afford any eyes on this."
+                                thought = f"If {target_name} realizes what is truly at stake regarding {c.motivation.want or 'our objective'}, this alliance fractures."
+                                emotion = "Hyper-vigilant"
+                            else:
+                                action = f"{c.core.name} remained seated near the lamp, arms folded and expression unreadable."
+                                dialogue = f"I took the precautions. Tell me what was found, or we are both wasting our time."
+                                thought = f"I will not commit myself until I see physical proof."
+                                emotion = "Skeptical and calculating"
+                        else:
+                            if is_lead:
+                                action = f"{c.core.name} produced the folded documents, laying them flat on the dark wood."
+                                dialogue = f"Everything points to {sc.resolution}. Look at the dates."
+                                thought = f"My secret ({c.motivation.secret or 'past involvement'}) stays buried. Only the immediate threat matters."
+                                emotion = "Determined"
+                            else:
+                                action = f"{c.core.name} leaned forward, fingers tracing the edge of the paper in silence."
+                                dialogue = f"Then the window is smaller than we thought. What is the next move?"
+                                thought = f"There is no turning back from this; we have crossed into dangerous territory."
+                                emotion = "Resolute"
                     else:
-                        return {
-                            "action": f"{c.core.name} closed the distance, eyes fixed on {target_name}.",
-                            "dialogue": f"There is no turning back now. We finish this at {sc.location_key}.",
-                            "thought": f"If my secret ({c.motivation.secret or 'intentions'}) comes to light, everything collapses.",
-                            "emotion": "Resolute",
-                            "knowledge_gain": f"Committed to resolving {sc.resolution}."
-                        }
+                        if r == 0:
+                            action = f"{c.core.name} surveyed the quiet expanse of {loc}, checking the locks along the perimeter."
+                            dialogue = ""
+                            thought = f"The risk is escalating. I must secure {c.motivation.want or 'the area'} before anyone arrives."
+                            emotion = "Focused and solitary"
+                        else:
+                            action = f"{c.core.name} paused beside the window, listening to the muffled rain outside."
+                            dialogue = ""
+                            thought = f"If the truth about {c.motivation.secret or 'what occurred'} surfaces, there will be no second chance."
+                            emotion = "Steadfast"
+
+                    return {
+                        "action": action,
+                        "dialogue": dialogue,
+                        "thought": thought,
+                        "emotion": emotion,
+                        "knowledge_gain": f"Assessed operational risks in {loc}."
+                    }
 
                 if llm_circuit_broken:
                     turn_data = await fallback_turn(char, round_idx, scene, scene_history)
