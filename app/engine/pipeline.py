@@ -1,3 +1,4 @@
+import os
 import asyncio
 import logging
 from datetime import datetime, timezone
@@ -7,6 +8,7 @@ from app.models.episode import EpisodeResponse, GenerationProgress
 from app.models.simulation import StoryMemory
 from app.models.enums import NovelStatus
 from app.storage.store import store
+from app.engine.llm_client import llm
 from app.engine.stage1_world_cast import execute_stage1
 from app.engine.stage2_matrix import execute_stage2
 from app.engine.stage3_director import execute_stage3
@@ -22,6 +24,16 @@ ACTIVE_TASKS: Set[asyncio.Task] = set()
 INITIALIZING_NOVELS: Set[str] = set()
 RUNNING_NOVELS: Set[str] = set()
 ACTIVE_GENERATIONS: Set[str] = set()
+
+def is_model_configured() -> bool:
+    """Returns True if a live LLM endpoint is configured and active."""
+    if os.environ.get("STORYTELLER_TEST_MODE") == "1":
+        return True
+    if llm.provider == "mock":
+        return False
+    if llm.provider in ("ollama", "custom"):
+        return bool(llm.base_url)
+    return bool(llm.api_key)
 
 def is_novel_active(novel_id: str) -> bool:
     """Returns True if novel is currently being initialized or written in memory."""
@@ -57,9 +69,15 @@ async def update_progress(
 
     preview = preview_text if preview_text is not None else (prev.current_preview if prev else None)
 
+    status_val = "queued" if (step_name and "Queue" in step_name) else (
+        NovelStatus.WRITING.value if is_active else (
+            NovelStatus.COMPLETED.value if percentage >= 100 and ep_num >= total_eps else NovelStatus.READY.value
+        )
+    )
+
     p = GenerationProgress(
         novel_id=novel_id,
-        status=NovelStatus.WRITING.value if is_active else (NovelStatus.COMPLETED.value if percentage >= 100 and ep_num >= total_eps else NovelStatus.READY.value),
+        status=status_val,
         current_step=step_name,
         step_number=step_num,
         total_steps=total_steps,
@@ -78,6 +96,16 @@ async def initialize_novel(blueprint: StoryBlueprint):
     novel_id = blueprint.novel_id
     INITIALIZING_NOVELS.add(novel_id)
     try:
+        if not is_model_configured():
+            blueprint.status = NovelStatus.READY.value
+            store.save_blueprint(blueprint)
+            await update_progress(
+                novel_id, "In Story Generation Queue", 1, 2, 0, 0, blueprint.total_episodes,
+                is_active=False,
+                log_line="⏳ Story generation request placed in production queue. World initialization will begin once AI capacity is allocated."
+            )
+            return
+
         blueprint.status = NovelStatus.DESIGNING.value
         store.save_blueprint(blueprint)
         
@@ -161,6 +189,16 @@ async def generate_single_episode(novel_id: str, ep_num: int) -> Optional[Episod
     prior_episodes = store.list_episodes(novel_id)
 
     try:
+        if not is_model_configured():
+            blueprint.status = NovelStatus.READY.value
+            store.save_blueprint(blueprint)
+            await update_progress(
+                novel_id, "In Story Generation Queue", 1, 6, 0, ep_num, blueprint.total_episodes,
+                is_active=False,
+                log_line="⏳ Chapter generation request placed in production queue. Chapter synthesis will begin once AI capacity is allocated."
+            )
+            return None
+
         blueprint.status = NovelStatus.WRITING.value
         store.save_blueprint(blueprint)
 
@@ -332,6 +370,17 @@ async def run_novel_episodes(novel_id: str):
 
             written = len(store.list_episodes(novel_id))
             next_ep = written + 1
+            if not is_model_configured():
+                blueprint.auto_continue = False
+                blueprint.status = NovelStatus.READY.value
+                store.save_blueprint(blueprint)
+                await update_progress(
+                    novel_id, "In Story Generation Queue", 1, 6, 0, next_ep, blueprint.total_episodes,
+                    is_active=False,
+                    log_line="⏳ Story generation request placed in production queue. Chapter synthesis will begin once AI capacity is allocated."
+                )
+                break
+
             if next_ep > blueprint.total_episodes:
                 blueprint.status = NovelStatus.COMPLETED.value
                 store.save_blueprint(blueprint)

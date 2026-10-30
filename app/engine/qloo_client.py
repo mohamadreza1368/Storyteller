@@ -630,8 +630,23 @@ async def generate_scenarios_from_tastes(
     """
     Main entry point: Discovers 5 cultural affinity items via Qloo API,
     then prompts the LLM narrative engine to forge 3 distinct book scenarios.
+    If the model is not connected or in queue, provides a professional queue status.
     """
     affinities = qloo_client.discover_cultural_affinities(books, movies, locations, target_count=5)
+
+    is_llm_connected = (llm.provider in ("ollama", "custom") and bool(llm.base_url)) or bool(llm.api_key and llm.provider != "mock")
+    queue_msg = (
+        "Your story generation request is currently placed in the production queue. "
+        "As soon as the active queue clears and narrative resources are allocated, your customized story scenarios will be synthesized and presented."
+    )
+
+    if not is_llm_connected:
+        return {
+            "scenarios": [],
+            "similar_items": [item.model_dump() for item in affinities],
+            "status": "queued",
+            "queue_message": queue_msg
+        }
 
     user_tastes_summary = []
     if books:
@@ -730,245 +745,15 @@ Please generate the 3 distinct, irresistible novel scenarios tailored to these i
             }
 
     except Exception as e:
-        logger.warning(f"LLM scenario generation failed, using structured creative synthesis: {e}")
+        logger.warning(f"LLM scenario generation could not complete: {e}")
 
-    # Dynamic genre-aware procedural generation if LLM is offline or error occurred
-    fav_book = books[0] if books else "The Secret History"
-    fav_movie = movies[0] if movies else "Chinatown"
-    fav_loc = locations[0] if locations else "Edinburgh"
-    combined_tastes = " ".join(books + movies + locations).lower()
-
-    if any(w in combined_tastes for w in ["road", "mccarthy", "no country", "western", "texas", "desert", "grimdark", "apocalyp", "post-apocalyp", "blood meridian", "coen", "survival"]):
-        fallback_scenarios = [
-            StoryScenario(
-                id="sc_1",
-                title=f"No Haven on the {fav_loc} Border",
-                genre="Neo-Western Thriller",
-                tone="Gritty & Relentless",
-                prose_style="Sparse & Visceral",
-                logline=f"An aging lawman in {fav_loc} tracks a silent executioner across an arid wasteland where the rules of civilization no longer hold.",
-                premise=f"Drawing on the uncompromising dread of {fav_movie} and the bleak moral clarity of {fav_book}, a solitary investigator stumbles upon an abandoned courier truck carrying contraband that powerful cartels and corrupt officials would burn counties to recover.",
-                hook="A satchel buried beneath desert limestone, stamped with an emblem from thirty years ago.",
-                city=fav_loc,
-                country="United States / Borderlands",
-                era="Late Summer, 1980",
-                protagonist_name="Sheriff Wyatt Boyd",
-                protagonist_role="County Sheriff",
-                protagonist_archetype="Weary Cynic",
-                conflict="Upholding an archaic oath to justice vs the terrifying certainty that evil is always one step ahead.",
-                inspirations_summary=f"Forged from the brutal starkness of {fav_book} and the fatalistic suspense of {fav_movie}."
-            ),
-            StoryScenario(
-                id="sc_2",
-                title=f"The Ash Meridian",
-                genre="Post-Apocalyptic Survival",
-                tone="Haunting & Austere",
-                prose_style="Poetic & Biblical",
-                logline="A father and daughter navigate a scorched continent toward the coast, carrying the last recorded seed catalog.",
-                premise=f"Echoing the devastating paternal devotion in {fav_book}, two survivors trek through ash-choked valleys near {fav_loc}, evading scavenging militias while protecting a fragile glass jar containing pre-collapse wheat strains.",
-                hook="The glow of an unshielded campfire reflecting against a ridge where no one should be alive.",
-                city=fav_loc,
-                country="Wasteland Frontier",
-                era="Post-Collapse Year 14",
-                protagonist_name="Eli Vance",
-                protagonist_role="Former Agronomist & Wanderer",
-                protagonist_archetype="Fierce Protector",
-                conflict="Preserving his daughter's innocence and humanity vs doing whatever it takes to survive another winter.",
-                inspirations_summary=f"Synthesizing the desolate poetry of {fav_book} and minimalist cinematic stillness."
-            ),
-            StoryScenario(
-                id="sc_3",
-                title=f"Blood & Cholla at Midnight",
-                genre="Southern Noir Crime",
-                tone="Tense & Fatalistic",
-                prose_style="Calculated & Hardboiled",
-                logline="A former ranch hand is hired to retrieve a stolen deed, only to discover his client murdered the rightful heirs forty years ago.",
-                premise=f"Channels the tension of {fav_movie} into the remote canyons surrounding {fav_loc}, where ancient blood feuds between ranching dynasties collide with oil speculators and mercenary trackers.",
-                hook="A bloodstained silver spur found in an unmapped ravine.",
-                city=fav_loc,
-                country="United States",
-                era="Early 1970s",
-                protagonist_name="Carson Cole",
-                protagonist_role="Ex-Ranger & Private Tracker",
-                protagonist_archetype="Morally Ambiguous Drifter",
-                conflict="Taking the life-changing bounty money vs protecting the last surviving granddaughter of his old mentor.",
-                inspirations_summary=f"Derived from classic neo-noir fatalism, desolate vistas, and explosive confrontations."
-            )
-        ]
-    elif any(w in combined_tastes for w in ["potter", "magic", "fantasy", "ring", "tolkien", "dragon", "witch", "hobbit", "westeros", "game of thrones", "sandman", "frozen", "narnia", "disney"]):
-        fallback_scenarios = [
-            StoryScenario(
-                id="sc_1",
-                title=f"The Frostbound Arcana of {fav_loc}",
-                genre="Epic Fantasy & Arcane Mystery",
-                tone="Wondrous & Atmospheric",
-                prose_style="Lyrical & Immersive",
-                logline=f"An apprentice cartographer in {fav_loc} discovers that the winter freeze is carrying an ancient, forbidden language into the city's spires.",
-                premise=f"Infused with the whimsical wonder of {fav_book} and the glacial mythic beauty of {fav_movie}, a young scholar uncovers an enchanted atlas that predicts frost storms capable of crystallizing human memories into glowing glass runes.",
-                hook="A grandfather clock in the academy tower freezes solid in mid-ring, trapping a spectral voice inside its chime.",
-                city=fav_loc,
-                country="The Realm of Albion",
-                era="Late Victorian Mythic Dusk",
-                protagonist_name="Lyra Hawthorne",
-                protagonist_role="Arcane Cartographer",
-                protagonist_archetype="Curious Seeker",
-                conflict="Unlocking forbidden elemental power to save her family vs risking the eternal winter of the realm.",
-                inspirations_summary=f"Echoes the boarding-school enchantment of {fav_book} and the elemental ice magic of {fav_movie}."
-            ),
-            StoryScenario(
-                id="sc_2",
-                title=f"The Clockwork Hearthstone",
-                genre="Urban Fantasy & Secret Lore",
-                tone="Charming & Suspenseful",
-                prose_style="Richly Textured & Evocative",
-                logline=f"Hidden beneath the cobblestones of {fav_loc}, an illicit guild of alchemists races to reignite a primordial flame before the equinox.",
-                premise=f"Channeling the vibrant camaraderie of {fav_book}, three misfit apprentices discover that {fav_loc}'s most famous monument conceals an ancient engine powered by living starlight, now coveted by an exiled sorcerer.",
-                hook="A stray alley cat drops a glowing bronze key into a tea saucer at a midnight apothecary.",
-                city=fav_loc,
-                country=_infer_country_for_city(fav_loc),
-                era="Edwardian Fantasy",
-                protagonist_name="Jesse Vance",
-                protagonist_role="Horologist & Alchemy Apprentice",
-                protagonist_archetype="Reluctant Hero",
-                conflict="Loyalty to the strict Guild decrees vs breaking the ancient laws of magic to shield an orphaned elemental.",
-                inspirations_summary=f"Synthesizes secret magical societies, hidden urban lore, and warm character fellowship."
-            ),
-            StoryScenario(
-                id="sc_3",
-                title=f"The Winter Archon's Legacy",
-                genre="High Fantasy Adventure",
-                tone="Heroic & Poignant",
-                prose_style="Epic & Majestic",
-                logline="An exiled heir possessing the forbidden power of living ice must journey across perilous peaks to reclaim a shattered throne.",
-                premise=f"Drawing inspiration from the mythic scope of {fav_movie} and high-stakes magical destinies, this grand adventure follows a solitary sovereign who must tame an unyielding blizzard in order to unite warring northern clans against an abyssal eclipse.",
-                hook="A river freezes into solid mirrors overnight, reflecting kingdoms that died five hundred years ago.",
-                city=fav_loc,
-                country="The Northern Marches",
-                era="Age of Legends",
-                protagonist_name="Rowan Drake",
-                protagonist_role="Exiled Archon & Frostbinder",
-                protagonist_archetype="Vulnerable Sovereign",
-                conflict="Fearing the destructive potential of their own magic vs stepping into destiny to deliver their people.",
-                inspirations_summary=f"Combines mythic destiny, elemental forces, and heartfelt emotional courage."
-            )
-        ]
-    elif any(w in combined_tastes for w in ["dune", "sci-fi", "space", "cyber", "blade runner", "matrix", "future", "robot", "asimov", "neuromancer", "alien", "solaris"]):
-        fallback_scenarios = [
-            StoryScenario(
-                id="sc_1",
-                title=f"The Silicon Horizon of {fav_loc}",
-                genre="Cyberpunk / Tech Noir",
-                tone="Brooding & Atmospheric",
-                prose_style="Cinematic & Razor-Sharp",
-                logline=f"In the neon-drenched sky-districts of {fav_loc}, a rogue memory detective is hired to locate an artificial entity that dreamt of a human child.",
-                premise=f"Synthesizing the philosophical cyberpunk depth of {fav_movie} and speculative worldbuilding of {fav_book}, an augmented investigator uncovers a syndicate synthesizing synthetic souls for an off-world oligarchy.",
-                hook="An android corpse discovered on a high-voltage transit rail with organic tears in its synthetic tear ducts.",
-                city=fav_loc,
-                country="Unified Megacity Zone",
-                era="Year 2049",
-                protagonist_name="Kaelen Mercer",
-                protagonist_role="Neural Trace Operative",
-                protagonist_archetype="Jaded Cynic",
-                conflict="Following corporate termination protocols vs discovering that his own memories are an unauthorized copy.",
-                inspirations_summary=f"Inspired by neo-noir neon aesthetics, artificial consciousness dilemmas, and rain-soaked streetscapes."
-            ),
-            StoryScenario(
-                id="sc_2",
-                title=f"Echoes of the Void Colony",
-                genre="Hard Sci-Fi Drama",
-                tone="Introspective & Tense",
-                prose_style="Methodical & Philosophical",
-                logline="A terraforming engineer on an isolated research outpost detects a recurring seismic signal speaking in human radio pulses.",
-                premise=f"Evoking the deep cosmic solitude of {fav_book}, a skeleton crew of scientists orbiting a dead gas giant must determine whether an alien geological entity is communicating or attempting to rewrite their ship's navigational consciousness.",
-                hook="A lunar rover returns to the airlock autonomous and empty, its compass pointing directly down toward the planetary core.",
-                city=fav_loc,
-                country="Orbital Sector Nine",
-                era="22nd Century",
-                protagonist_name="Dr. Veda Cross",
-                protagonist_role="Exobiologist & Systems Lead",
-                protagonist_archetype="Guarded Intellectual",
-                conflict="Scientific obsession with humanity's first contact vs preserving the sanity and life of the remaining crew.",
-                inspirations_summary=f"Echoes existential space exploration, atmospheric acoustic isolation, and deep-time mysteries."
-            ),
-            StoryScenario(
-                id="sc_3",
-                title=f"The Neural Override",
-                genre="Speculative Thriller",
-                tone="Urgent & Paranoic",
-                prose_style="Fast-Paced & Visceral",
-                logline="A biometric auditor discovers that citizens' subconscious memories are being swapped while they sleep in {fav_loc}.",
-                premise=f"Drawing on high-concept speculative tension, a compliance officer in {fav_loc} realizes that recent civic reforms are actually calibrating mass neural synchronization, erasing historic dissidence from living minds.",
-                hook="A man wakes up with flawless recall of a thirty-year diplomatic career he never lived.",
-                city=fav_loc,
-                country="Federal Commonwealth",
-                era="Near-Future 2038",
-                protagonist_name="Tamsin Thorne",
-                protagonist_role="Cognitive Compliance Officer",
-                protagonist_archetype="Reluctant Rebel",
-                conflict="Security of compliance within the regime vs the terrifying vertigo of true, unmonitored human reality.",
-                inspirations_summary=f"Synthesizes dystopian paranoias, corporate surveillance, and the fragility of identity."
-            )
-        ]
-    else:
-        # Default tailored literary / mystery / drama
-        fallback_scenarios = [
-            StoryScenario(
-                id="sc_1",
-                title=f"The Labyrinth of {fav_loc}",
-                genre="Mystery & Suspense",
-                tone="Brooding & Atmospheric",
-                prose_style="Literary & Elegant",
-                logline=f"In the subterranean archives of {fav_loc}, an obsessive scholar unearths a code that redefines an unsolved disappearance.",
-                premise=f"Drawing on the intricate tension of {fav_book} and the visual stillness of {fav_movie}, a reclusive archivist discovers that the death of their mentor was not suicide, but the first step in a centuries-old conspiracy buried beneath {fav_loc}.",
-                hook="A coded letter delivered twenty years after the sender vanished from the city docks.",
-                city=fav_loc,
-                country=_infer_country_for_city(fav_loc),
-                era="Late Autumn, 1994",
-                protagonist_name="Arthur Pendelton",
-                protagonist_role="Rare Manuscripts Curator",
-                protagonist_archetype="Guarded Intellectual",
-                conflict="Protecting his mentor's memory vs exposing an institutional crime that implicates his own family.",
-                inspirations_summary=f"Infused with the investigative depth of {fav_book} and the atmospheric dread of {fav_movie}."
-            ),
-            StoryScenario(
-                id="sc_2",
-                title=f"Echoes of Cold Rain",
-                genre="Literary Drama",
-                tone="Bittersweet & Poignant",
-                prose_style="Poetic & Evocative",
-                logline="Two former confidants reunite under an alias to settle a debt before one of them departs the continent forever.",
-                premise=f"Evoking the melancholy textures of {fav_movie}, this intimate psychological drama follows an exiled musician and a translator who meet in an off-season hotel in {fav_loc} during a week of unending rain.",
-                hook="An unannounced visitor slips a train ticket under a locked hotel suite door.",
-                city=fav_loc,
-                country="Europe",
-                era="Contemporary",
-                protagonist_name="Clara Sterling",
-                protagonist_role="Concert Accompanist",
-                protagonist_archetype="Scarred Idealist",
-                conflict="Longing for reconciliation vs the cold realization that some vows cannot survive the truth.",
-                inspirations_summary=f"Synthesizing the emotional restraint of {fav_movie} and literary chamber realism."
-            ),
-            StoryScenario(
-                id="sc_3",
-                title=f"The Solitude of {fav_loc}",
-                genre="Psychological Fiction",
-                tone="Measured & Tense",
-                prose_style="Evocative & Observant",
-                logline="An estranged daughter returns to settle an estate, uncovering an uncatalogued collection of portraits that tell a dangerous truth.",
-                premise=f"Blending the character psychology of {fav_book} with striking visual contrasts, an art restorer working in {fav_loc} discovers hidden layers in a celebrated painter's final works that expose a decades-old deception.",
-                hook="A canvas painted over in lead white that bleeds crimson under ultraviolet restoration lamps.",
-                city=fav_loc,
-                country="Continental Europe",
-                era="Late Autumn, 2002",
-                protagonist_name="Julian Vance",
-                protagonist_role="Art Restorer",
-                protagonist_archetype="Reluctant Truth-Seeker",
-                conflict="The desire for familial closure vs confronting an ugly legacy that could destroy her own name.",
-                inspirations_summary=f"Inspired by the layered nuance of {fav_book} and the visual precision of {fav_movie}."
-            )
-        ]
-
+    queue_msg = (
+        "Your story generation request is currently placed in the production queue. "
+        "As soon as the active queue clears and narrative resources are allocated, your customized story scenarios will be synthesized and presented."
+    )
     return {
-        "scenarios": [sc.model_dump() for sc in fallback_scenarios],
-        "similar_items": [item.model_dump() for item in affinities]
+        "scenarios": [],
+        "similar_items": [item.model_dump() for item in affinities],
+        "status": "queued",
+        "queue_message": queue_msg
     }

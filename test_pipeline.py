@@ -1,3 +1,5 @@
+import os
+os.environ["STORYTELLER_TEST_MODE"] = "1"
 import sys
 import asyncio
 

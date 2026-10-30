@@ -1014,6 +1014,12 @@ async function toggleNovelAutoContinue() {
         currentNovel.auto_continue = data.auto_continue;
         updateAutoContinueButtonUI(data.auto_continue);
 
+        if (data.status === "queued") {
+            showToast(data.message, "info");
+            startProgressPolling();
+            return;
+        }
+
         if (data.auto_continue) {
             showToast("Auto-continue enabled. Chapters will write continuously until completion.", "success");
             startProgressPolling();
@@ -1148,7 +1154,13 @@ function startProgressPolling() {
                 if (fillEl) fillEl.style.width = p.percentage + "%";
 
                 const detailEl = document.getElementById("progressDetail");
-                if (detailEl) detailEl.innerText = `Stage ${p.step_number} of ${p.total_steps} (Chapter ${p.current_episode} of ${p.total_episodes})`;
+                if (detailEl) {
+                    if (p.current_step && p.current_step.includes("Queue")) {
+                        detailEl.innerText = "Standing by in narrative production queue";
+                    } else {
+                        detailEl.innerText = `Stage ${p.step_number} of ${p.total_steps} (Chapter ${p.current_episode} of ${p.total_episodes})`;
+                    }
+                }
 
                 for (let i = 1; i <= 6; i++) {
                     const el = document.getElementById(`stage${i}Ind`);
@@ -1227,7 +1239,12 @@ async function triggerWriteNext() {
             showToast(err.detail || "Error starting chapter generation", "error");
             return;
         }
-        showToast("Writing next chapter...", "info");
+        const data = await res.json();
+        if (data.status === "queued") {
+            showToast(data.message, "info");
+        } else {
+            showToast("Writing next chapter...", "info");
+        }
         startProgressPolling();
     } catch (e) {
         showToast("Error: " + e.message, "error");
@@ -2442,13 +2459,17 @@ async function triggerQlooScenarioGeneration() {
 
         currentQlooScenarios = data.scenarios || [];
         renderQlooAffinities(data.similar_items || []);
-        renderQlooScenarios(currentQlooScenarios);
+        renderQlooScenarios(currentQlooScenarios, data.queue_message);
 
         if (resultsBox) {
             resultsBox.style.display = "block";
             resultsBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
-        showToast("Discovered 5 cultural affinities and synthesized 3 scenarios!", "success");
+        if (data.status === "queued" || (!currentQlooScenarios.length && data.queue_message)) {
+            showToast("Your request has been placed in the story generation queue.", "info");
+        } else {
+            showToast("Discovered 5 cultural affinities and synthesized 3 scenarios!", "success");
+        }
     } catch (e) {
         console.error("Qloo scenario generation error:", e);
         showToast("Could not generate scenarios: " + e.message, "error");
@@ -2497,11 +2518,24 @@ function renderQlooAffinities(items) {
     }).join("");
 }
 
-function renderQlooScenarios(scenarios) {
+function renderQlooScenarios(scenarios, queueMessage) {
     const container = document.getElementById("qlooScenariosContainer");
     if (!container) return;
     if (!scenarios || !scenarios.length) {
-        container.innerHTML = `<div style="font-size: 0.85rem; color: var(--text-tertiary);">No scenarios generated.</div>`;
+        const msg = queueMessage || "Your story generation request is currently placed in the production queue. As soon as the active queue clears and narrative resources are allocated, your customized story scenarios will be synthesized and presented.";
+        container.innerHTML = `
+            <div class="card" style="background: rgba(99, 102, 241, 0.06); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); padding: 26px 20px; text-align: center; margin-top: 10px;">
+                <div style="width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 50%; background: var(--accent-subtle); display: flex; align-items: center; justify-content: center; color: var(--accent);">
+                    ${ICONS.clock}
+                </div>
+                <h4 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin: 0 0 8px 0;">
+                    Story Generation Queue Active
+                </h4>
+                <p style="font-size: 0.88rem; color: var(--text-secondary); max-width: 580px; margin: 0 auto; line-height: 1.6;">
+                    ${escapeHtml(msg)}
+                </p>
+            </div>
+        `;
         return;
     }
 

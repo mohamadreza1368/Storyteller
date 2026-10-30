@@ -16,7 +16,7 @@ from app.models.character import Character, PersonaCore, CharacterSeed
 from app.models.episode import EpisodeResponse, EpisodeSummary, GenerationProgress, SetAutoContinueRequest
 from app.models.enums import NovelStatus, Genre, ProseStyle, Theme, Tone, Perspective, EndingType
 from app.storage.store import store
-from app.engine.pipeline import initialize_novel, generate_single_episode, run_novel_episodes, track_task, is_novel_active
+from app.engine.pipeline import initialize_novel, generate_single_episode, run_novel_episodes, track_task, is_novel_active, is_model_configured, update_progress
 from app.engine.image_client import chapter_image_client
 from app.engine.qloo_client import qloo_client, generate_scenarios_from_tastes
 
@@ -321,9 +321,26 @@ async def toggle_auto_continue(novel_id: str, req: SetAutoContinueRequest, user:
     bp.auto_continue = req.auto_continue
     store.save_blueprint(bp)
 
-    if bp.auto_continue and not is_novel_active(novel_id):
-        task = asyncio.create_task(run_novel_episodes(novel_id))
-        track_task(task)
+    if bp.auto_continue:
+        if not is_model_configured():
+            bp.auto_continue = False
+            store.save_blueprint(bp)
+            written = len(store.list_episodes(novel_id))
+            next_ep = written + 1
+            await update_progress(
+                novel_id, "In Story Generation Queue", 1, 6, 0, next_ep, bp.total_episodes,
+                is_active=False,
+                log_line="⏳ Story generation request placed in production queue. Chapter synthesis will begin once AI capacity is allocated."
+            )
+            return {
+                "auto_continue": False,
+                "status": "queued",
+                "message": "Your story generation request is currently placed in the production queue. Chapter synthesis will begin as soon as the queue clears and creative AI capacity is allocated."
+            }
+
+        if not is_novel_active(novel_id):
+            task = asyncio.create_task(run_novel_episodes(novel_id))
+            track_task(task)
 
     return {"auto_continue": bp.auto_continue}
 
@@ -339,6 +356,17 @@ async def write_next_episode(novel_id: str, user: User = Depends(get_current_use
     next_ep = written + 1
     if next_ep > bp.total_episodes:
         raise HTTPException(status_code=400, detail="All episodes for this novel have already been generated")
+
+    if not is_model_configured():
+        await update_progress(
+            novel_id, "In Story Generation Queue", 1, 6, 0, next_ep, bp.total_episodes,
+            is_active=False,
+            log_line="⏳ Story generation request placed in production queue. Chapter synthesis will begin once AI capacity is allocated."
+        )
+        return {
+            "status": "queued",
+            "message": "Your story generation request is currently placed in the production queue. Chapter synthesis will begin as soon as the queue clears and creative AI capacity is allocated."
+        }
 
     task = asyncio.create_task(generate_single_episode(novel_id, next_ep))
     track_task(task)
