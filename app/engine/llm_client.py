@@ -3,7 +3,7 @@ import json
 import time
 import inspect
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Union
 from app.config import settings
 from app.storage.store import store
 
@@ -28,8 +28,8 @@ async def _invoke_fallback(fallback_generator):
 
 import re
 
-def clean_and_parse_json(raw_text: str) -> Dict[str, Any]:
-    """Robustly extracts and parses JSON from LLM output, handling reasoning tags, markdown fences, and syntax errors."""
+def clean_and_parse_json(raw_text: str) -> Union[Dict[str, Any], List[Any]]:
+    """Robustly extracts and parses JSON objects and arrays from LLM output, handling reasoning tags and markdown fences."""
     if not raw_text or not raw_text.strip():
         raise ValueError("LLM returned an empty response.")
 
@@ -40,8 +40,8 @@ def clean_and_parse_json(raw_text: str) -> Dict[str, Any]:
     # If unclosed thinking tag remaining, strip from tag to end
     text = re.sub(r"<(think|thought)>.*$", "", text, flags=re.DOTALL).strip()
 
-    # 2. Extract from markdown code fences if present
-    fence_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, flags=re.DOTALL)
+    # 2. Extract from markdown code fences if present (supports both {...} and [...])
+    fence_match = re.search(r"```(?:json)?\s*([\{\[].*?[\}\]])\s*```", text, flags=re.DOTALL)
     if fence_match:
         text = fence_match.group(1).strip()
     else:
@@ -54,16 +54,23 @@ def clean_and_parse_json(raw_text: str) -> Dict[str, Any]:
             text = text[:-3]
         text = text.strip()
 
-        # Locate first '{' and last '}'
-        first_brace = text.find("{")
-        if first_brace != -1:
-            last_brace = text.rfind("}")
-            if last_brace != -1 and last_brace > first_brace:
-                text = text[first_brace:last_brace + 1]
+        # Check whether the JSON is an array ([...]) or an object ({...})
+        first_bracket = text.find("[")
+        first_obj = text.find("{")
+        if first_bracket != -1 and (first_obj == -1 or first_bracket < first_obj):
+            last_bracket = text.rfind("]")
+            if last_bracket != -1 and last_bracket > first_bracket:
+                text = text[first_bracket:last_bracket + 1]
             else:
-                text = text[first_brace:]
+                text = text[first_bracket:]
+        elif first_obj != -1:
+            last_brace = text.rfind("}")
+            if last_brace != -1 and last_brace > first_obj:
+                text = text[first_obj:last_brace + 1]
+            else:
+                text = text[first_obj:]
         else:
-            raise ValueError(f"No JSON object found in LLM response: {raw_text[:200]}")
+            raise ValueError(f"No JSON object or array found in LLM response: {raw_text[:200]}")
 
     # 3. Clean trailing commas before closing braces/brackets
     cleaned = re.sub(r",\s*([\]\}])", r"\1", text)
@@ -80,7 +87,7 @@ def clean_and_parse_json(raw_text: str) -> Dict[str, Any]:
     except json.JSONDecodeError:
         pass
 
-    # 6. Attempt repair of unclosed strings, trailing commas, and unclosed brackets
+    # 6. Attempt repair of unclosed strings, trailing commas, and unclosed brackets/braces
     stack = []
     in_string = False
     escape = False
