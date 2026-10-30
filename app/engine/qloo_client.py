@@ -11,6 +11,53 @@ from app.engine.llm_client import llm, clean_and_parse_json
 
 logger = logging.getLogger(__name__)
 
+def _infer_country_for_city(city: Optional[str]) -> str:
+    c_lower = (city or "").lower()
+    city_map = {
+        "istanbul": "Turkey",
+        "tokyo": "Japan",
+        "kyoto": "Japan",
+        "osaka": "Japan",
+        "paris": "France",
+        "lyon": "France",
+        "marseille": "France",
+        "london": "United Kingdom",
+        "edinburgh": "Scotland",
+        "glasgow": "Scotland",
+        "dublin": "Ireland",
+        "berlin": "Germany",
+        "munich": "Germany",
+        "rome": "Italy",
+        "venice": "Italy",
+        "florence": "Italy",
+        "milan": "Italy",
+        "madrid": "Spain",
+        "barcelona": "Spain",
+        "new york": "United States",
+        "texas": "United States",
+        "chicago": "United States",
+        "los angeles": "United States",
+        "san francisco": "United States",
+        "cairo": "Egypt",
+        "tehran": "Iran",
+        "beijing": "China",
+        "shanghai": "China",
+        "sydney": "Australia",
+        "melbourne": "Australia",
+        "toronto": "Canada",
+        "vancouver": "Canada",
+        "amsterdam": "Netherlands",
+        "vienna": "Austria",
+        "prague": "Czech Republic",
+        "budapest": "Hungary",
+        "athens": "Greece",
+        "lisbon": "Portugal",
+    }
+    for k, v in city_map.items():
+        if k in c_lower:
+            return v
+    return "United Kingdom" if not city else (city.title() + " Region")
+
 class CulturalAffinityItem(BaseModel):
     title: str = Field(..., description="Name of book, film, destination, or artist")
     category: str = Field(..., description="Category: book, movie, place, artist, or tag")
@@ -643,7 +690,7 @@ Please generate the 3 distinct, irresistible novel scenarios tailored to these i
                 temperature=0.75,
                 max_tokens=1800
             ),
-            timeout=5.0
+            timeout=30.0
         )
         parsed = clean_and_parse_json(raw_resp)
 
@@ -655,6 +702,8 @@ Please generate the 3 distinct, irresistible novel scenarios tailored to these i
 
         scenarios: List[StoryScenario] = []
         for i, s in enumerate(scenarios_data[:3]):
+            sc_city = s.get("city") or (locations[0] if locations else "Edinburgh")
+            sc_country = s.get("country") or _infer_country_for_city(sc_city)
             scenarios.append(StoryScenario(
                 id=s.get("id") or f"sc_{i+1}",
                 title=s.get("title") or f"Scenario {i+1}",
@@ -664,8 +713,8 @@ Please generate the 3 distinct, irresistible novel scenarios tailored to these i
                 logline=s.get("logline") or "An untold secret threatens the foundations of an ancient city.",
                 premise=s.get("premise") or "When a forgotten manuscript surfaces, two estranged rivals must decipher its warnings before the dawn.",
                 hook=s.get("hook") or "A midnight confession left in an empty chapel.",
-                city=s.get("city") or (locations[0] if locations else "Edinburgh"),
-                country=s.get("country") or "United Kingdom",
+                city=sc_city,
+                country=sc_country,
                 era=s.get("era") or "Contemporary",
                 protagonist_name=s.get("protagonist_name") or "Julian Vance",
                 protagonist_role=s.get("protagonist_role") or "Archival Researcher",
@@ -776,7 +825,7 @@ Please generate the 3 distinct, irresistible novel scenarios tailored to these i
                 premise=f"Channeling the vibrant camaraderie of {fav_book}, three misfit apprentices discover that {fav_loc}'s most famous monument conceals an ancient engine powered by living starlight, now coveted by an exiled sorcerer.",
                 hook="A stray alley cat drops a glowing bronze key into a tea saucer at a midnight apothecary.",
                 city=fav_loc,
-                country="United Kingdom",
+                country=_infer_country_for_city(fav_loc),
                 era="Edwardian Fantasy",
                 protagonist_name="Jesse Vance",
                 protagonist_role="Horologist & Alchemy Apprentice",
@@ -873,7 +922,7 @@ Please generate the 3 distinct, irresistible novel scenarios tailored to these i
                 premise=f"Drawing on the intricate tension of {fav_book} and the visual stillness of {fav_movie}, a reclusive archivist discovers that the death of their mentor was not suicide, but the first step in a centuries-old conspiracy buried beneath {fav_loc}.",
                 hook="A coded letter delivered twenty years after the sender vanished from the city docks.",
                 city=fav_loc,
-                country="United Kingdom",
+                country=_infer_country_for_city(fav_loc),
                 era="Late Autumn, 1994",
                 protagonist_name="Arthur Pendelton",
                 protagonist_role="Rare Manuscripts Curator",

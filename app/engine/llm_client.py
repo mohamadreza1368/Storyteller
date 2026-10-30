@@ -169,7 +169,7 @@ class LLMClient:
                 client = AsyncOpenAI(
                     api_key=key or "dummy",
                     base_url=target_base_url,
-                    timeout=10.0,
+                    timeout=15.0,
                     max_retries=0
                 )
                 res = await client.chat.completions.create(
@@ -232,7 +232,7 @@ class LLMClient:
                 client = AsyncOpenAI(
                     api_key=self.api_key or "dummy",
                     base_url=target_base_url,
-                    timeout=16.0,
+                    timeout=45.0,
                     max_retries=0
                 )
                 res = await client.chat.completions.create(
@@ -283,7 +283,7 @@ class LLMClient:
                 client = AsyncOpenAI(
                     api_key=self.api_key or "dummy",
                     base_url=target_base_url,
-                    timeout=28.0,
+                    timeout=60.0,
                     max_retries=0
                 )
                 res = await client.chat.completions.create(

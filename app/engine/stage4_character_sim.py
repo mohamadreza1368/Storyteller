@@ -127,15 +127,17 @@ Return strictly a JSON object matching this schema:
                             fallback_generator=lambda c=char, r=round_idx, sc=scene, h=scene_history: fallback_turn(c, r, sc, h)
                         )
                         elapsed = time.time() - start_t
-                        if elapsed > 14.0:
+                        if elapsed > 45.0:
                             consecutive_slow_or_failed += 1
                         else:
                             consecutive_slow_or_failed = 0
-                    except Exception:
+                    except Exception as e:
+                        logger.warning(f"Character actor LLM call error: {e}")
                         consecutive_slow_or_failed += 1
                         turn_data = await fallback_turn(char, round_idx, scene, scene_history)
 
-                    if consecutive_slow_or_failed >= 2:
+                    if consecutive_slow_or_failed >= 4:
+                        logger.warning("LLM circuit breaker activated for character actor turns.")
                         llm_circuit_broken = True
 
                 raw_action = turn_data.get("action", "")
