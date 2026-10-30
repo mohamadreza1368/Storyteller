@@ -26,65 +26,112 @@ async def _invoke_fallback(fallback_generator):
         logger.error(f"Fallback generator invocation error: {e}", exc_info=True)
         return None
 
+import re
+
 def clean_and_parse_json(raw_text: str) -> Dict[str, Any]:
-    """Robustly extracts and parses JSON from LLM output, handling markdown fences and formatting anomalies."""
+    """Robustly extracts and parses JSON from LLM output, handling reasoning tags, markdown fences, and syntax errors."""
+    if not raw_text or not raw_text.strip():
+        raise ValueError("LLM returned an empty response.")
+
     text = raw_text.strip()
-    if text.startswith("```json"):
-        text = text[7:]
-    elif text.startswith("```"):
-        text = text[3:]
-    if text.endswith("```"):
-        text = text[:-3]
-    text = text.strip()
 
-    # Locate outermost JSON object if surrounded by preamble/postscript
-    first_brace = text.find("{")
-    last_brace = text.rfind("}")
-    if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
-        text = text[first_brace:last_brace + 1]
+    # 1. Strip thinking / reasoning tags (<think>...</think>, <thought>...</thought>)
+    text = re.sub(r"<(think|thought)>.*?</\1>", "", text, flags=re.DOTALL)
+    # If unclosed thinking tag remaining, strip from tag to end
+    text = re.sub(r"<(think|thought)>.*$", "", text, flags=re.DOTALL).strip()
 
-    # Clean trailing commas before closing braces/brackets
-    import re
+    # 2. Extract from markdown code fences if present
+    fence_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, flags=re.DOTALL)
+    if fence_match:
+        text = fence_match.group(1).strip()
+    else:
+        # Strip standalone code fence markers
+        if text.startswith("```json"):
+            text = text[7:]
+        elif text.startswith("```"):
+            text = text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.strip()
+
+        # Locate first '{' and last '}'
+        first_brace = text.find("{")
+        if first_brace != -1:
+            last_brace = text.rfind("}")
+            if last_brace != -1 and last_brace > first_brace:
+                text = text[first_brace:last_brace + 1]
+            else:
+                text = text[first_brace:]
+        else:
+            raise ValueError(f"No JSON object found in LLM response: {raw_text[:200]}")
+
+    # 3. Clean trailing commas before closing braces/brackets
     cleaned = re.sub(r",\s*([\]\}])", r"\1", text)
 
+    # 4. Attempt direct parse
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError:
-        # Try raw text
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            # Fallback: attempt simple repair of unclosed JSON structures
-            stack = []
-            in_string = False
+        pass
+
+    # 5. Attempt parse on raw extracted slice
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # 6. Attempt repair of unclosed strings, trailing commas, and unclosed brackets
+    stack = []
+    in_string = False
+    escape = False
+    repaired_chars = []
+    for ch in text:
+        if escape:
             escape = False
-            for ch in text:
-                if escape:
-                    escape = False
-                    continue
-                if ch == "\\":
-                    escape = True
-                    continue
-                if ch == '"':
-                    in_string = not in_string
-                    continue
-                if not in_string:
-                    if ch in ("{", "["):
-                        stack.append(ch)
-                    elif ch == "}" and stack and stack[-1] == "{":
-                        stack.pop()
-                    elif ch == "]" and stack and stack[-1] == "[":
-                        stack.pop()
+            repaired_chars.append(ch)
+            continue
+        if ch == "\\":
+            escape = True
+            repaired_chars.append(ch)
+            continue
+        if ch == '"':
+            in_string = not in_string
+            repaired_chars.append(ch)
+            continue
+        if in_string:
+            # Replace literal newlines/tabs inside unescaped strings
+            if ch == "\n":
+                repaired_chars.append("\\n")
+                continue
+            if ch == "\r":
+                continue
+            if ch == "\t":
+                repaired_chars.append("\\t")
+                continue
+            repaired_chars.append(ch)
+            continue
 
-            repaired = text
-            if in_string:
-                repaired += '"'
-            while stack:
-                opener = stack.pop()
-                repaired += "}" if opener == "{" else "]"
+        if ch in ("{", "["):
+            stack.append(ch)
+        elif ch == "}" and stack and stack[-1] == "{":
+            stack.pop()
+        elif ch == "]" and stack and stack[-1] == "[":
+            stack.pop()
+        repaired_chars.append(ch)
 
-            repaired = re.sub(r",\s*([\]\}])", r"\1", repaired)
-            return json.loads(repaired)
+    repaired = "".join(repaired_chars)
+    if in_string:
+        repaired += '"'
+    while stack:
+        opener = stack.pop()
+        repaired += "}" if opener == "{" else "]"
+
+    repaired = re.sub(r",\s*([\]\}])", r"\1", repaired)
+
+    try:
+        return json.loads(repaired)
+    except json.JSONDecodeError as err:
+        raise ValueError(f"Failed to parse LLM JSON: {err}. Snippet: {repaired[:300]}") from err
 
 class LLMClient:
     def __init__(self):
@@ -232,8 +279,8 @@ class LLMClient:
                 client = AsyncOpenAI(
                     api_key=self.api_key or "dummy",
                     base_url=target_base_url,
-                    timeout=45.0,
-                    max_retries=0
+                    timeout=120.0,
+                    max_retries=1
                 )
                 res = await client.chat.completions.create(
                     model=self.model or "gpt-4o-mini",
@@ -241,20 +288,22 @@ class LLMClient:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": prompt_with_format}
                     ],
-                    max_tokens=4096,
+                    max_tokens=16384,
                     response_format={"type": "json_object"} if self.provider not in ("ollama", "custom") else None
                 )
-                content = res.choices[0].message.content or ""
+                choice = res.choices[0]
+                content = choice.message.content or ""
+                if not content and hasattr(choice.message, "reasoning_content") and choice.message.reasoning_content:
+                    content = choice.message.reasoning_content
                 return clean_and_parse_json(content)
 
         except Exception as e:
             logger.error(f"LLM Error ({self.provider}): {e}")
-            # Only use fallback generator if explicitly in test mode or running offline simulator
-            if os.environ.get("STORYTELLER_TEST_MODE") == "1" or self.provider == "mock":
-                if fallback_generator:
-                    res = await _invoke_fallback(fallback_generator)
-                    if isinstance(res, dict):
-                        return res
+            if fallback_generator:
+                logger.warning(f"Using stage fallback generator due to LLM response error: {e}")
+                res = await _invoke_fallback(fallback_generator)
+                if isinstance(res, dict):
+                    return res
             raise e
 
     async def generate_text(self, system_prompt: str, user_prompt: str, fallback_generator=None) -> str:
@@ -273,7 +322,10 @@ class LLMClient:
                     model=self.model or "gemini-2.5-flash",
                     contents=f"{system_prompt}\n\n{user_prompt}"
                 )
-                return response.text.strip()
+                text = (response.text or "").strip()
+                text = re.sub(r"<(think|thought)>.*?</\1>", "", text, flags=re.DOTALL)
+                text = re.sub(r"<(think|thought)>.*$", "", text, flags=re.DOTALL).strip()
+                return text
 
             elif self.provider in ("custom", "openai", "openrouter", "ollama"):
                 from openai import AsyncOpenAI
@@ -285,8 +337,8 @@ class LLMClient:
                 client = AsyncOpenAI(
                     api_key=self.api_key or "dummy",
                     base_url=target_base_url,
-                    timeout=60.0,
-                    max_retries=0
+                    timeout=120.0,
+                    max_retries=1
                 )
                 res = await client.chat.completions.create(
                     model=self.model or "gpt-4o-mini",
@@ -294,18 +346,26 @@ class LLMClient:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
-                    max_tokens=4096
+                    max_tokens=16384
                 )
-                return res.choices[0].message.content.strip()
+                choice = res.choices[0]
+                content = choice.message.content or ""
+                if not content and hasattr(choice.message, "reasoning_content") and choice.message.reasoning_content:
+                    content = choice.message.reasoning_content
+                content = re.sub(r"<(think|thought)>.*?</\1>", "", content, flags=re.DOTALL)
+                content = re.sub(r"<(think|thought)>.*$", "", content, flags=re.DOTALL).strip()
+                if not content and fallback_generator:
+                    res_fb = await _invoke_fallback(fallback_generator)
+                    return str(res_fb) if res_fb is not None else ""
+                return content
 
         except Exception as e:
             logger.error(f"LLM Error ({self.provider}): {e}")
-            # Only use fallback generator if explicitly in test mode or running offline simulator
-            if os.environ.get("STORYTELLER_TEST_MODE") == "1" or self.provider == "mock":
-                if fallback_generator:
-                    res = await _invoke_fallback(fallback_generator)
-                    if res is not None:
-                        return str(res)
+            if fallback_generator:
+                logger.warning(f"Using fallback text generator due to LLM error: {e}")
+                res = await _invoke_fallback(fallback_generator)
+                if res is not None:
+                    return str(res)
             raise e
 
     async def generate(self, prompt: str, system_prompt: str = "", temperature: float = 0.7, max_tokens: int = 1500) -> str:
